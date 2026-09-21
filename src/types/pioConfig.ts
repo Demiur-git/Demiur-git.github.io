@@ -73,3 +73,27 @@ export type Live2DWidgetConfig = {
 		mobileBreakpoint?: number; // 移动端断点，默认 768
 	};
 };
+
+// 轻量 2D OC 桌宠配置。素材未准备完成时会显示无人物特征的馆员书签占位。
+export type OcPetConfig = {
+	enable: boolean;
+	name: string;
+	position?: "bottom-left" | "bottom-right";
+	size?: {
+		desktop?: number;
+		mobile?: number;
+	};
+	assets?: {
+		idle?: string;
+		blink?: string;
+		interact?: string;
+	};
+	messages?: string[];
+	messageDuration?: number;
+	blinkInterval?: {
+		min?: number;
+		max?: number;
+	};
+	storageKey?: string;
+	zIndex?: number;
+};

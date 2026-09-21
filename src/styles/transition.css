@@ -9,8 +9,8 @@
 /* Main Content Transition */
 .transition-main {
     transition: 
-        opacity 120ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
-        transform 120ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        opacity 240ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
+        transform 240ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 /* Leaving Animation */
@@ -30,26 +30,152 @@ html.is-animating.is-leaving .transition-leaving {
 /* State: Changing (Swup) */
 html.is-changing .transition-main {
     transition: 
-        opacity 120ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
-        transform 120ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        opacity 240ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
+        transform 240ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 html.is-leaving .transition-main {
     transition: 
-        opacity 120ms cubic-bezier(0.55, 0.055, 0.675, 0.19),
-        transform 120ms cubic-bezier(0.55, 0.055, 0.675, 0.19);
+        opacity 240ms cubic-bezier(0.55, 0.055, 0.675, 0.19),
+        transform 240ms cubic-bezier(0.55, 0.055, 0.675, 0.19);
 }
 
 /* State: Animating (Entering) */
 html.is-animating .transition-main {
     opacity: 0;
-    transform: translateY(2rem);
+    transform: translateY(0.75rem);
 }
 
 /* State: Leaving */
 html.is-animating.is-leaving .transition-leaving {
-    transform: translateY(-2rem);
+    transform: translateY(-0.75rem);
     opacity: 0;
+}
+
+/* --------------------------------------------------------------------------
+   1.1 Library Page Turn Overlay
+   -------------------------------------------------------------------------- */
+
+#page-turn-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    overflow: hidden;
+    visibility: hidden;
+    pointer-events: none;
+    perspective: 1200px;
+}
+
+.page-turn-sheet {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding: clamp(1.25rem, 3vw, 3rem);
+    border-left: 1px solid rgb(120 91 48 / 35%);
+    background:
+        linear-gradient(90deg, rgb(53 40 24 / 20%), transparent 3.5%, transparent 96%, rgb(255 255 255 / 46%)),
+        radial-gradient(circle at 2px 2px, rgb(69 57 38 / 5%) 1px, transparent 1.25px) 0 0 / 9px 9px,
+        linear-gradient(135deg, #f1e5c9, #fffdf7 46%, #ead8b7);
+    box-shadow: -2rem 0 4rem rgb(26 30 24 / 24%);
+    color: #304a3e;
+    transform: translateX(104%) skewX(-1.2deg);
+    transform-origin: left center;
+    will-change: transform;
+}
+
+.page-turn-sheet::before {
+    position: absolute;
+    inset-block: 0;
+    left: 0;
+    width: clamp(1.2rem, 4vw, 4.5rem);
+    content: "";
+    background: linear-gradient(90deg, rgb(33 39 31 / 26%), rgb(86 70 43 / 10%) 35%, transparent);
+}
+
+.page-turn-catalog {
+    font-family: ui-monospace, "Cascadia Code", monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.18em;
+    opacity: 0.64;
+}
+
+.page-turn-stamp {
+    display: grid;
+    width: 4.2rem;
+    height: 4.2rem;
+    place-items: center;
+    border: 2px solid rgb(122 36 49 / 64%);
+    border-radius: 50%;
+    color: rgb(122 36 49 / 76%);
+    font-family: var(--font-library-serif);
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    transform: rotate(-8deg);
+}
+
+html.is-page-turning #page-turn-overlay {
+    visibility: visible;
+    pointer-events: auto;
+}
+
+html.page-turn-cover .page-turn-sheet {
+    animation: page-turn-cover 240ms cubic-bezier(0.55, 0.02, 0.35, 1) both;
+}
+
+html.page-turn-reveal .page-turn-sheet {
+    animation: page-turn-reveal 240ms cubic-bezier(0.45, 0, 0.22, 1) both;
+}
+
+@keyframes page-turn-cover {
+    from { transform: translateX(104%) skewX(-1.2deg); }
+    to { transform: translateX(0) skewX(0); }
+}
+
+@keyframes page-turn-reveal {
+    from { transform: translateX(0) skewX(0); }
+    to { transform: translateX(-104%) skewX(1.2deg); }
+}
+
+@media (max-width: 640px) {
+    .transition-main,
+    html.is-changing .transition-main,
+    html.is-leaving .transition-main {
+        transition-duration: 140ms;
+    }
+
+    .page-turn-sheet {
+        padding: 1rem;
+        transform: translateX(104%);
+    }
+
+    .page-turn-sheet::before {
+        width: 1.2rem;
+    }
+
+    .page-turn-stamp {
+        width: 3.2rem;
+        height: 3.2rem;
+        font-size: 0.62rem;
+    }
+
+    html.page-turn-cover .page-turn-sheet,
+    html.page-turn-reveal .page-turn-sheet {
+        animation-duration: 140ms;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .transition-main,
+    html.is-changing .transition-main,
+    html.is-leaving .transition-main {
+        transition-duration: 120ms;
+    }
+
+    #page-turn-overlay {
+        display: none;
+    }
 }
 
 /* Swup Fade Fallback */

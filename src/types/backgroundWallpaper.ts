@@ -99,6 +99,10 @@ export type BackgroundWallpaperConfig = {
 		zIndex?: number; // 层级，确保壁纸在合适的层级显示
 		opacity?: number; // 壁纸透明度，0-1之间
 		blur?: number; // 背景模糊程度，单位px
+		homeOpacity?: number; // 首页壁纸透明度，默认回退到 opacity
+		contentOpacity?: number; // 子页面壁纸透明度，默认回退到 opacity
+		homeBlur?: number; // 首页壁纸模糊程度，默认回退到 blur
+		contentBlur?: number; // 子页面壁纸模糊程度，默认回退到 blur
 		cardOpacity?: number; // 卡片背景透明度，0-1之间
 	};
 	// 全屏壁纸模式特有配置

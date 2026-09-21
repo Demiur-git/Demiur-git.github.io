@@ -256,6 +256,14 @@ html[data-wallpaper-mode="overlay"] #wallpaper-wrapper {
     transition: opacity 0.6s ease !important;
 }
 
+html[data-wallpaper-mode="overlay"] body.is-home #wallpaper-wrapper {
+    opacity: var(--overlay-home-opacity, var(--overlay-opacity, 0.8)) !important;
+}
+
+html[data-wallpaper-mode="overlay"] body:not(.is-home) #wallpaper-wrapper {
+    opacity: var(--overlay-content-opacity, var(--overlay-opacity, 0.8)) !important;
+}
+
 /* Overlay 模式下图片模糊效果 */
 #wallpaper-wrapper.wallpaper-overlay img {
     width: 100% !important;
@@ -276,6 +284,34 @@ html[data-wallpaper-mode="overlay"] #wallpaper-wrapper img {
     object-position: center !important;
     filter: blur(var(--overlay-blur, 0px));
     transform: scale(1.05);
+}
+
+html[data-wallpaper-mode="overlay"] body.is-home #wallpaper-wrapper img {
+    filter: blur(var(--overlay-home-blur, var(--overlay-blur, 0px)));
+}
+
+html[data-wallpaper-mode="overlay"] body:not(.is-home) #wallpaper-wrapper img {
+    filter: blur(var(--overlay-content-blur, var(--overlay-blur, 0px)));
+}
+
+html[data-wallpaper-mode="overlay"] #wallpaper-wrapper::after {
+    position: absolute;
+    inset: 0;
+    content: "";
+    pointer-events: none;
+    background: color-mix(in oklch, var(--page-bg) 48%, transparent);
+}
+
+html[data-wallpaper-mode="overlay"] body:not(.is-home) #wallpaper-wrapper::after {
+    background: color-mix(in oklch, var(--page-bg) 72%, transparent);
+}
+
+:root.dark[data-wallpaper-mode="overlay"] #wallpaper-wrapper::after {
+    background: color-mix(in oklch, #07120f 68%, transparent);
+}
+
+:root.dark[data-wallpaper-mode="overlay"] body:not(.is-home) #wallpaper-wrapper::after {
+    background: color-mix(in oklch, #07120f 82%, transparent);
 }
 
 /* ============================================
@@ -662,4 +698,3 @@ html[data-wallpaper-mode="fullscreen"][data-fullscreen-layout="classic"] #wallpa
         min-height: calc(100vh - 5.5rem) !important;
     }
 }
-

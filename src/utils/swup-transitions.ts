@@ -18,6 +18,53 @@ import {
 } from "@/utils/setting-utils";
 import { pathsEqual, url } from "@/utils/url-utils";
 
+let pageTurnActive = false;
+let pageTurnCleanupTimer: ReturnType<typeof setTimeout> | undefined;
+
+function shouldTurnPage(destination: string): boolean {
+	if (window.matchMedia("(prefers-reduced-motion: reduce)").matches)
+		return false;
+	try {
+		const next = new URL(destination, window.location.href);
+		return (
+			next.origin === window.location.origin &&
+			(next.pathname !== window.location.pathname ||
+				next.search !== window.location.search)
+		);
+	} catch {
+		return false;
+	}
+}
+
+function startPageTurn(destination: string): void {
+	clearTimeout(pageTurnCleanupTimer);
+	pageTurnActive = shouldTurnPage(destination);
+	if (!pageTurnActive) return;
+	const root = document.documentElement;
+	root.classList.remove("page-turn-reveal");
+	root.classList.add("is-page-turning", "page-turn-cover");
+}
+
+function revealPageTurn(): void {
+	if (!pageTurnActive) return;
+	const root = document.documentElement;
+	root.classList.remove("page-turn-cover");
+	root.classList.add("page-turn-reveal");
+}
+
+function finishPageTurn(): void {
+	if (!pageTurnActive) return;
+	const delay = window.matchMedia("(max-width: 640px)").matches ? 150 : 250;
+	pageTurnCleanupTimer = setTimeout(() => {
+		document.documentElement.classList.remove(
+			"is-page-turning",
+			"page-turn-cover",
+			"page-turn-reveal",
+		);
+		pageTurnActive = false;
+	}, delay);
+}
+
 /**
  * 进度条：WAAPI 驱动 transform/opacity（合成线程动画）。
  * 替代原 width 关键帧 + `void offsetWidth` 强制回流方案——后者在大型文章 DOM 上
@@ -87,6 +134,7 @@ function registerSwupHooks(): void {
 			if (!isSamePage) {
 				// 添加页面切换保护，防止导航栏闪烁
 				document.documentElement.classList.add("is-page-transitioning");
+				startPageTurn(targetHref);
 			}
 
 			const navbar = document.getElementById("navbar-wrapper");
@@ -102,6 +150,7 @@ function registerSwupHooks(): void {
 		},
 	);
 	window.swup.hooks.on("content:replace", () => {
+		revealPageTurn();
 		initializeFloatingPanels();
 
 		// 侧边栏组件可见性由 page:view 统一更新（含 refreshSidebarStickyState 的
@@ -134,6 +183,8 @@ function registerSwupHooks(): void {
 		}
 	});
 	window.swup.hooks.on("visit:start", (visit: { to: { url: string } }) => {
+		// link:click 已覆盖普通导航；visit:start 补足浏览器前进/后退。
+		if (!pageTurnActive) startPageTurn(visit.to.url);
 		// Start progress bar（WAAPI 合成线程动画，不强制回流）
 		startProgressBar();
 
@@ -292,6 +343,7 @@ function registerSwupHooks(): void {
 	window.swup.hooks.on("visit:end", (_visit: { to: { url: string } }) => {
 		// Finish progress bar（WAAPI：快速填满后淡出）
 		finishProgressBar();
+		finishPageTurn();
 
 		setTimeout(() => {
 			// Just make the transition looks better
