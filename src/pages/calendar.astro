@@ -1,36 +1,13 @@
 ---
-import { Icon } from "astro-icon/components";
-import Calendar from "@/components/widget/Calendar.astro";
+import CalendarWorkspace from "@/components/pages/calendar/CalendarWorkspace.svelte";
+import { calendarPageConfig } from "@/config";
 import MainGridLayout from "@/layouts/MainGridLayout.astro";
-import "@/styles/pages/common.css";
-
-const calendarWidgetConfig = {
-	type: "calendar" as const,
-	enable: true,
-	showTitle: false,
-	position: "top" as const,
-	specificConfig: {
-		calendar: {
-			showHeatmap: false,
-		},
-	},
-};
 ---
 
-<MainGridLayout title="日历" description="查看日期与文章记录">
-	<section class="page-shell">
-		<header class="card-base page-header">
-			<div class="page-heading">
-				<div class="page-icon" aria-hidden="true">
-					<Icon name="material-symbols:calendar-month-outline-rounded" />
-				</div>
-				<div>
-					<h2>日历</h2>
-					<p>查看日期与文章记录。</p>
-				</div>
-			</div>
-		</header>
-
-		<Calendar class="block" widgetConfig={calendarWidgetConfig} />
-	</section>
+<MainGridLayout title="日历" description="重要日期、日程与计划">
+	<CalendarWorkspace
+		client:load
+		importantDates={calendarPageConfig.importantDates}
+		schedules={calendarPageConfig.schedules}
+	/>
 </MainGridLayout>

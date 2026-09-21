@@ -62,6 +62,7 @@ pnpm dev
 
 ## 内容与配置
 
+- [项目文件树与职责说明](./docs/PROJECT_STRUCTURE.md)
 - 网站配置位于 `src/config/`。
 - 页面路由位于 `src/pages/`。
 - 文章、笔记等内容位于 `src/content/`。

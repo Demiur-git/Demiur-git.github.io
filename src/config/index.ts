@@ -26,6 +26,10 @@ export type {
 	BooknavGroup,
 	BooknavItem,
 	BooknavPageConfig,
+	CalendarImportantDate,
+	CalendarPageConfig,
+	CalendarScheduleItem,
+	CalendarScheduleStatus,
 	CommentConfig,
 	CoverImageConfig,
 	DisplaySettingsConfig,
@@ -35,6 +39,7 @@ export type {
 	GalleryConfig,
 	HomeIntroConfig,
 	HomeIntroLink,
+	ImportantDateCategory,
 	LicenseConfig,
 	MermaidConfig,
 	MusicPlayerConfig,
@@ -65,6 +70,7 @@ export { announcementConfig } from "./announcementConfig"; // 公告配置
 // 样式配置
 export { backgroundWallpaper } from "./backgroundWallpaper"; // 背景壁纸配置
 export { booknavConfig, booknavPageConfig } from "./booknavConfig"; // 书签导航配置
+export { calendarPageConfig } from "./calendarPageConfig"; // 日历页面配置
 // 功能配置
 export { commentConfig } from "./commentConfig"; // 评论系统配置
 export { coverImageConfig } from "./coverImageConfig"; // 封面图配置

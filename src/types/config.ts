@@ -1,6 +1,13 @@
 export type { AnalyticsConfig } from "./analyticsConfig";
 export type { AnnouncementConfig } from "./announcementConfig";
 export type {
+	CalendarImportantDate,
+	CalendarPageConfig,
+	CalendarScheduleItem,
+	CalendarScheduleStatus,
+	ImportantDateCategory,
+} from "./calendarPageConfig";
+export type {
 	BackgroundWallpaperConfig,
 	FullscreenWallpaperLayout,
 } from "./backgroundWallpaper";
