@@ -1,0 +1,68 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { formatDate } from '../utils/date';
+
+const articles = (await getCollection('articles', ({ data }) => !data.draft)).sort(
+	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+);
+const notes = (await getCollection('notes', ({ data }) => !data.draft))
+	.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()).slice(0, 3);
+const featured = articles.find(({ data }) => data.featured) ?? articles[0];
+---
+
+<BaseLayout>
+	<section class="hero shell">
+		<div class="hero-main">
+			<p class="eyebrow"><span>独立记录</span> / NOTES & ESSAYS</p>
+			<h1>记录正在形成的想法，<em>以及值得反复阅读的事。</em></h1>
+			<p class="hero-intro">关于技术、设计与日常观察的个人出版物。保持好奇，也保留修订判断的自由。</p>
+		</div>
+		<aside class="hero-index">
+			<span class="index-label">本期索引</span><strong>01</strong>
+			<p>主页<br />笔记<br />文章</p><i>ISSUE / 2026</i>
+		</aside>
+	</section>
+
+	<section class="ticker shell" aria-label="网站主题">
+		<span>THINKING IN PUBLIC</span><span>✳</span><span>DESIGN & TECHNOLOGY</span><span>✳</span><span>NOTES FOR LATER</span>
+	</section>
+
+	{featured && (
+		<section class="feature shell">
+			<div class="section-label"><span>本期文章</span><i>FEATURE / 01</i></div>
+			<a class="feature-card" href={`/articles/${featured.id}`}>
+				<div class="feature-visual" aria-hidden="true">
+					<div class="visual-orbit"></div><span>READ<br />SLOWLY</span><strong>↘</strong>
+				</div>
+				<div class="feature-copy">
+					<div class="entry-meta"><span>{formatDate(featured.data.pubDate)}</span><span>{featured.data.readingTime}</span></div>
+					<h2>{featured.data.title}</h2><p>{featured.data.description}</p>
+					<div class="tag-list">{featured.data.tags.map((tag) => <span>#{tag}</span>)}</div>
+				</div>
+			</a>
+		</section>
+	)}
+
+	<section class="home-notes shell">
+		<div class="section-heading">
+			<div><p class="eyebrow">FIELD NOTES</p><h2>最近笔记</h2></div>
+			<a href="/notes">查看全部 <span>→</span></a>
+		</div>
+		<div class="note-grid">
+			{notes.map((note) => (
+				<a class="note-card" href={`/notes/${note.id}`}>
+					<div class="note-number">N° {String(note.data.number).padStart(3, '0')}</div>
+					<h3>{note.data.title}</h3><p>{note.data.description}</p>
+					<div class="note-card-footer"><span>{formatDate(note.data.pubDate)}</span><span>↗</span></div>
+				</a>
+			))}
+		</div>
+	</section>
+
+	<section class="manifesto shell">
+		<p>EDITOR'S NOTE</p>
+		<blockquote>“不追逐每一个声音。只留下那些经过时间之后，仍然值得继续思考的内容。”</blockquote>
+		<span>— 关于本站</span>
+	</section>
+</BaseLayout>

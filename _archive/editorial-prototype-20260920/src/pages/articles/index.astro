@@ -1,0 +1,39 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { formatDate } from '../../utils/date';
+
+const articles = (await getCollection('articles', ({ data }) => !data.draft)).sort(
+	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+);
+const [lead, ...rest] = articles;
+---
+
+<BaseLayout title="文章" description="经过组织、展开与持续修订的长篇写作。">
+	<section class="collection-hero articles-hero shell">
+		<div><p class="eyebrow">LONGFORM / 长篇写作</p><h1>文章</h1></div>
+		<p>经过组织、展开与持续修订的长篇写作。关注技术、设计与个人工作方法。</p>
+		<strong>{String(articles.length).padStart(2, '0')}</strong>
+	</section>
+	{lead && (
+		<section class="article-lead shell">
+			<a href={`/articles/${lead.id}`}>
+				<div class="lead-index"><span>FEATURED STORY</span><strong>01</strong><i>↘</i></div>
+				<div class="lead-copy">
+					<div class="entry-meta"><span>{formatDate(lead.data.pubDate)}</span><span>{lead.data.readingTime}</span></div>
+					<h2>{lead.data.title}</h2><p>{lead.data.description}</p>
+					<div class="tag-list">{lead.data.tags.map((tag) => <span>#{tag}</span>)}</div>
+				</div>
+			</a>
+		</section>
+	)}
+	<section class="article-list shell">
+		{rest.map((article, index) => (
+			<a class="article-row" href={`/articles/${article.id}`}>
+				<span class="article-order">{String(index + 2).padStart(2, '0')}</span>
+				<div><p>{article.data.tags.join(' / ')}</p><h2>{article.data.title}</h2><span>{article.data.description}</span></div>
+				<aside><time datetime={article.data.pubDate.toISOString()}>{formatDate(article.data.pubDate)}</time><small>{article.data.readingTime}</small><i>↗</i></aside>
+			</a>
+		))}
+	</section>
+</BaseLayout>

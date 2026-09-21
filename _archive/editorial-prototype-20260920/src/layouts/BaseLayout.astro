@@ -1,0 +1,30 @@
+---
+import SiteFooter from '../components/SiteFooter.astro';
+import SiteHeader from '../components/SiteHeader.astro';
+import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
+import '../styles/global.css';
+
+interface Props { title?: string; description?: string; }
+const { title, description = SITE_DESCRIPTION } = Astro.props;
+const pageTitle = title ? `${title} — ${SITE_TITLE}` : `${SITE_TITLE} — 笔记与文章`;
+---
+
+<!doctype html>
+<html lang="zh-CN">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="generator" content={Astro.generator} />
+		<meta name="description" content={description} />
+		<meta name="theme-color" content="#f1efe8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" href="/favicon.ico" />
+		<title>{pageTitle}</title>
+	</head>
+	<body>
+		<a class="skip-link" href="#main-content">跳到正文</a>
+		<SiteHeader />
+		<main id="main-content"><slot /></main>
+		<SiteFooter />
+	</body>
+</html>

@@ -1,0 +1,27 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { formatDate } from '../../utils/date';
+
+const notes = (await getCollection('notes', ({ data }) => !data.draft)).sort(
+	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+);
+---
+
+<BaseLayout title="笔记" description="短想法、过程记录和留给未来的线索。">
+	<section class="collection-hero shell">
+		<div><p class="eyebrow">FIELD NOTES / 随手记录</p><h1>笔记</h1></div>
+		<p>短想法、过程记录和留给未来的线索。它们不一定完整，但会保持清楚。</p>
+		<strong>{String(notes.length).padStart(2, '0')}</strong>
+	</section>
+	<section class="note-index shell">
+		<div class="index-head"><span>编号</span><span>标题 / 摘要</span><span>日期</span><span></span></div>
+		{notes.map((note) => (
+			<a class="note-row" href={`/notes/${note.id}`}>
+				<span class="row-number">{String(note.data.number).padStart(3, '0')}</span>
+				<span class="row-copy"><strong>{note.data.title}</strong><small>{note.data.description}</small></span>
+				<time datetime={note.data.pubDate.toISOString()}>{formatDate(note.data.pubDate)}</time><i>↗</i>
+			</a>
+		))}
+	</section>
+</BaseLayout>
