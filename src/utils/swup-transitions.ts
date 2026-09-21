@@ -1,4 +1,9 @@
-import { expressiveCodeConfig, navbarMode, siteConfig } from "@/config";
+import {
+	expressiveCodeConfig,
+	navbarMode,
+	pageTransitionConfig,
+	siteConfig,
+} from "@/config";
 import type { WALLPAPER_MODE } from "@/types/config";
 import { scheduleContentOverflowEnhancements } from "@/utils/content-overflow-utils";
 import { initializeFloatingPanels } from "@/utils/floating-panel-utils";
@@ -19,9 +24,11 @@ import {
 import { pathsEqual, url } from "@/utils/url-utils";
 
 let pageTurnActive = false;
-let pageTurnCleanupTimer: ReturnType<typeof setTimeout> | undefined;
+let pageTurnReadyAt = 0;
+let pageTurnRevealReadyAt = 0;
 
 function shouldTurnPage(destination: string): boolean {
+	if (!pageTransitionConfig.enable) return false;
 	if (window.matchMedia("(prefers-reduced-motion: reduce)").matches)
 		return false;
 	try {
@@ -36,12 +43,35 @@ function shouldTurnPage(destination: string): boolean {
 	}
 }
 
+function clearPageTurnState(): void {
+	document.documentElement.classList.remove(
+		"is-page-turning",
+		"page-turn-cover",
+		"page-turn-reveal",
+	);
+	pageTurnActive = false;
+	pageTurnReadyAt = 0;
+	pageTurnRevealReadyAt = 0;
+}
+
+async function waitUntil(deadline: number): Promise<void> {
+	if (!pageTurnActive || deadline <= 0) return;
+	const remaining = Math.max(0, deadline - performance.now());
+	if (remaining > 0) {
+		await new Promise<void>((resolve) => window.setTimeout(resolve, remaining));
+	}
+}
+
 function startPageTurn(destination: string): void {
-	clearTimeout(pageTurnCleanupTimer);
+	clearPageTurnState();
 	pageTurnActive = shouldTurnPage(destination);
 	if (!pageTurnActive) return;
+	const { cover, write, hold } = pageTransitionConfig.timing;
+	pageTurnReadyAt = performance.now() + cover + write + hold;
+	// 连续导航时强制提交清理状态，确保同名 CSS 动画能够从头开始。
+	const overlay = document.getElementById("page-turn-overlay");
+	if (overlay) void overlay.offsetWidth;
 	const root = document.documentElement;
-	root.classList.remove("page-turn-reveal");
 	root.classList.add("is-page-turning", "page-turn-cover");
 }
 
@@ -50,19 +80,13 @@ function revealPageTurn(): void {
 	const root = document.documentElement;
 	root.classList.remove("page-turn-cover");
 	root.classList.add("page-turn-reveal");
+	pageTurnRevealReadyAt =
+		performance.now() + pageTransitionConfig.timing.reveal;
 }
 
 function finishPageTurn(): void {
 	if (!pageTurnActive) return;
-	const delay = window.matchMedia("(max-width: 640px)").matches ? 150 : 250;
-	pageTurnCleanupTimer = setTimeout(() => {
-		document.documentElement.classList.remove(
-			"is-page-turning",
-			"page-turn-cover",
-			"page-turn-reveal",
-		);
-		pageTurnActive = false;
-	}, delay);
+	clearPageTurnState();
 }
 
 /**
@@ -134,7 +158,6 @@ function registerSwupHooks(): void {
 			if (!isSamePage) {
 				// 添加页面切换保护，防止导航栏闪烁
 				document.documentElement.classList.add("is-page-transitioning");
-				startPageTurn(targetHref);
 			}
 
 			const navbar = document.getElementById("navbar-wrapper");
@@ -149,6 +172,10 @@ function registerSwupHooks(): void {
 			}
 		},
 	);
+	window.swup.hooks.before("content:replace", async () => {
+		// 页面加载较快时等待站名写完；加载较慢时只等待剩余时间。
+		await waitUntil(pageTurnReadyAt);
+	});
 	window.swup.hooks.on("content:replace", () => {
 		revealPageTurn();
 		initializeFloatingPanels();
@@ -182,9 +209,13 @@ function registerSwupHooks(): void {
 			}
 		}
 	});
+	window.swup.hooks.on("animation:in:await", async () => {
+		// 保证揭页完整离场后再结束本次访问，避免遮罩被提前清理。
+		await waitUntil(pageTurnRevealReadyAt);
+	});
 	window.swup.hooks.on("visit:start", (visit: { to: { url: string } }) => {
-		// link:click 已覆盖普通导航；visit:start 补足浏览器前进/后退。
-		if (!pageTurnActive) startPageTurn(visit.to.url);
+		// visit:start 同时覆盖普通链接和浏览器前进/后退。
+		startPageTurn(visit.to.url);
 		// Start progress bar（WAAPI 合成线程动画，不强制回流）
 		startProgressBar();
 
@@ -351,6 +382,12 @@ function registerSwupHooks(): void {
 			document.documentElement.classList.remove("is-page-transitioning");
 			scrollFunction();
 		}, 200);
+	});
+	window.swup.hooks.on("visit:abort", () => {
+		clearPageTurnState();
+	});
+	window.swup.hooks.on("fetch:error", () => {
+		clearPageTurnState();
 	});
 }
 

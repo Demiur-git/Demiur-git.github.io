@@ -9,8 +9,8 @@
 /* Main Content Transition */
 .transition-main {
     transition: 
-        opacity 240ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
-        transform 240ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        opacity 350ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
+        transform 350ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 /* Leaving Animation */
@@ -30,14 +30,14 @@ html.is-animating.is-leaving .transition-leaving {
 /* State: Changing (Swup) */
 html.is-changing .transition-main {
     transition: 
-        opacity 240ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
-        transform 240ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        opacity 350ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
+        transform 350ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 html.is-leaving .transition-main {
     transition: 
-        opacity 240ms cubic-bezier(0.55, 0.055, 0.675, 0.19),
-        transform 240ms cubic-bezier(0.55, 0.055, 0.675, 0.19);
+        opacity 300ms cubic-bezier(0.55, 0.055, 0.675, 0.19),
+        transform 300ms cubic-bezier(0.55, 0.055, 0.675, 0.19);
 }
 
 /* State: Animating (Entering) */
@@ -57,6 +57,15 @@ html.is-animating.is-leaving .transition-leaving {
    -------------------------------------------------------------------------- */
 
 #page-turn-overlay {
+    --page-paper-start: #eee0c3;
+    --page-paper-center: #fffaf0;
+    --page-paper-end: #e7d3ad;
+    --page-ink: #315244;
+    --page-ink-soft: rgb(49 82 68 / 62%);
+    --page-accent: #8a3440;
+    --page-edge: rgb(88 67 38 / 30%);
+    --page-shadow: rgb(26 30 24 / 24%);
+
     position: fixed;
     inset: 0;
     z-index: 40;
@@ -66,6 +75,17 @@ html.is-animating.is-leaving .transition-leaving {
     perspective: 1200px;
 }
 
+:root.dark #page-turn-overlay {
+    --page-paper-start: #0d1714;
+    --page-paper-center: #17251f;
+    --page-paper-end: #0b1411;
+    --page-ink: #d3b878;
+    --page-ink-soft: rgb(211 184 120 / 62%);
+    --page-accent: #b9747d;
+    --page-edge: rgb(211 184 120 / 18%);
+    --page-shadow: rgb(0 0 0 / 42%);
+}
+
 .page-turn-sheet {
     position: absolute;
     inset: 0;
@@ -73,13 +93,13 @@ html.is-animating.is-leaving .transition-leaving {
     align-items: flex-end;
     justify-content: space-between;
     padding: clamp(1.25rem, 3vw, 3rem);
-    border-left: 1px solid rgb(120 91 48 / 35%);
+    border-left: 1px solid var(--page-edge);
     background:
-        linear-gradient(90deg, rgb(53 40 24 / 20%), transparent 3.5%, transparent 96%, rgb(255 255 255 / 46%)),
-        radial-gradient(circle at 2px 2px, rgb(69 57 38 / 5%) 1px, transparent 1.25px) 0 0 / 9px 9px,
-        linear-gradient(135deg, #f1e5c9, #fffdf7 46%, #ead8b7);
-    box-shadow: -2rem 0 4rem rgb(26 30 24 / 24%);
-    color: #304a3e;
+        linear-gradient(90deg, var(--page-shadow), transparent 3.5%, transparent 96%, var(--page-edge)),
+        radial-gradient(circle at 2px 2px, var(--page-edge) 0.75px, transparent 1px) 0 0 / 9px 9px,
+        linear-gradient(135deg, var(--page-paper-start), var(--page-paper-center) 46%, var(--page-paper-end));
+    box-shadow: -2rem 0 4rem var(--page-shadow);
+    color: var(--page-ink);
     transform: translateX(104%) skewX(-1.2deg);
     transform-origin: left center;
     will-change: transform;
@@ -91,7 +111,87 @@ html.is-animating.is-leaving .transition-leaving {
     left: 0;
     width: clamp(1.2rem, 4vw, 4.5rem);
     content: "";
-    background: linear-gradient(90deg, rgb(33 39 31 / 26%), rgb(86 70 43 / 10%) 35%, transparent);
+    background: linear-gradient(90deg, var(--page-shadow), var(--page-edge) 35%, transparent);
+}
+
+.page-turn-writing {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: min(76vw, 52rem);
+    text-align: center;
+    opacity: 0;
+    transform: translate(-50%, -50%);
+}
+
+.page-turn-overline {
+    display: block;
+    margin-bottom: clamp(0.8rem, 2vh, 1.4rem);
+    font-family: ui-monospace, "Cascadia Code", monospace;
+    font-size: clamp(0.58rem, 1vw, 0.72rem);
+    letter-spacing: 0.22em;
+    color: var(--page-ink-soft);
+}
+
+.page-turn-title {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+    max-width: 100%;
+    font-family: var(--font-library-serif);
+    font-size: inherit;
+    font-variation-settings: "wght" 620;
+    line-height: 1.25;
+    letter-spacing: 0.06em;
+}
+
+.page-turn-script {
+    position: relative;
+    display: inline-block;
+    width: min(100%, var(--script-width));
+    max-width: 100%;
+    font-size: clamp(2.1rem, 7vw, 5.6rem);
+}
+
+.page-turn-character {
+    display: inline-block;
+    opacity: 0;
+    clip-path: inset(0 100% 0 0);
+    filter: blur(3px);
+    text-shadow: 0 0 0 transparent;
+}
+
+.page-turn-pen {
+    position: absolute;
+    top: 58%;
+    left: 0;
+    width: clamp(2rem, 4vw, 3.2rem);
+    height: auto;
+    overflow: visible;
+    opacity: 0;
+    color: var(--page-ink);
+    filter: drop-shadow(0 4px 5px var(--page-shadow));
+    transform: translate(-50%, -50%) rotate(-8deg);
+}
+
+.page-turn-pen .pen-body {
+    fill: var(--page-paper-end);
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linejoin: round;
+}
+
+.page-turn-pen .pen-detail,
+.page-turn-pen .pen-glint {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+}
+
+.page-turn-pen .pen-glint {
+    stroke: var(--page-accent);
 }
 
 .page-turn-catalog {
@@ -106,9 +206,9 @@ html.is-animating.is-leaving .transition-leaving {
     width: 4.2rem;
     height: 4.2rem;
     place-items: center;
-    border: 2px solid rgb(122 36 49 / 64%);
+    border: 2px solid color-mix(in oklch, var(--page-accent) 72%, transparent);
     border-radius: 50%;
-    color: rgb(122 36 49 / 76%);
+    color: color-mix(in oklch, var(--page-accent) 82%, transparent);
     font-family: var(--font-library-serif);
     font-size: 0.72rem;
     letter-spacing: 0.14em;
@@ -121,11 +221,38 @@ html.is-page-turning #page-turn-overlay {
 }
 
 html.page-turn-cover .page-turn-sheet {
-    animation: page-turn-cover 240ms cubic-bezier(0.55, 0.02, 0.35, 1) both;
+    animation: page-turn-cover var(--page-cover) cubic-bezier(0.55, 0.02, 0.35, 1) both;
+}
+
+html.page-turn-cover .page-turn-writing {
+    animation: page-writing-stage var(--page-write) ease-out var(--page-cover) both;
+}
+
+html.page-turn-cover .page-turn-character {
+    animation: page-ink-character var(--char-duration) cubic-bezier(0.2, 0.72, 0.2, 1) var(--char-delay) both;
+}
+
+html.page-turn-cover .page-turn-pen {
+    animation: page-pen-writing var(--page-write) cubic-bezier(0.22, 0.7, 0.25, 1) var(--page-cover) both;
 }
 
 html.page-turn-reveal .page-turn-sheet {
-    animation: page-turn-reveal 240ms cubic-bezier(0.45, 0, 0.22, 1) both;
+    animation: page-turn-reveal var(--page-reveal) cubic-bezier(0.45, 0, 0.22, 1) both;
+}
+
+html.page-turn-reveal .page-turn-writing {
+    opacity: 1;
+    animation: page-writing-away var(--page-reveal-fade) ease-in both;
+}
+
+html.page-turn-reveal .page-turn-character {
+    opacity: 1;
+    clip-path: inset(0);
+    filter: none;
+}
+
+html.page-turn-reveal .page-turn-pen {
+    display: none;
 }
 
 @keyframes page-turn-cover {
@@ -138,16 +265,55 @@ html.page-turn-reveal .page-turn-sheet {
     to { transform: translateX(-104%) skewX(1.2deg); }
 }
 
+@keyframes page-writing-stage {
+    0% { opacity: 0; }
+    8%, 100% { opacity: 1; }
+}
+
+@keyframes page-ink-character {
+    0% {
+        opacity: 0;
+        clip-path: inset(0 100% 0 0);
+        filter: blur(3px);
+        text-shadow: 0 0 0 transparent;
+    }
+    58% {
+        opacity: 0.9;
+        filter: blur(0.7px);
+        text-shadow: 0 0 0.18em var(--page-ink-soft);
+    }
+    100% {
+        opacity: 1;
+        clip-path: inset(0);
+        filter: none;
+        text-shadow: 0 0 0 transparent;
+    }
+}
+
+@keyframes page-pen-writing {
+    0% { left: 0; opacity: 0; transform: translate(-50%, -50%) rotate(-8deg); }
+    5% { opacity: 1; }
+    48% { transform: translate(-50%, -56%) rotate(-4deg); }
+    92% { opacity: 1; }
+    100% { left: 100%; opacity: 0; transform: translate(-50%, -50%) rotate(-8deg); }
+}
+
+@keyframes page-writing-away {
+    from { opacity: 1; filter: blur(0); }
+    to { opacity: 0; filter: blur(2px); }
+}
+
 @media (max-width: 640px) {
     .transition-main,
     html.is-changing .transition-main,
     html.is-leaving .transition-main {
-        transition-duration: 140ms;
+        transition-duration: 350ms;
     }
 
     .page-turn-sheet {
         padding: 1rem;
         transform: translateX(104%);
+        box-shadow: -0.8rem 0 1.6rem var(--page-shadow);
     }
 
     .page-turn-sheet::before {
@@ -160,9 +326,24 @@ html.page-turn-reveal .page-turn-sheet {
         font-size: 0.62rem;
     }
 
-    html.page-turn-cover .page-turn-sheet,
-    html.page-turn-reveal .page-turn-sheet {
-        animation-duration: 140ms;
+    .page-turn-writing {
+        width: 82vw;
+    }
+
+    .page-turn-title {
+        line-height: 1.35;
+    }
+
+    .page-turn-script {
+        font-size: clamp(1.8rem, 12vw, 3rem);
+    }
+
+    .page-turn-pen {
+        top: 58%;
+    }
+
+    .page-turn-catalog {
+        display: none;
     }
 }
 

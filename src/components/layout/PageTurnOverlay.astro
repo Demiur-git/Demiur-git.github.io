@@ -1,6 +1,39 @@
-<div id="page-turn-overlay" aria-hidden="true">
+---
+import { pageTransitionConfig, siteConfig } from "@/config";
+
+const title = pageTransitionConfig.text?.trim() || siteConfig.title;
+const characters = Array.from(title);
+const { cover, write, hold, reveal } = pageTransitionConfig.timing;
+const characterStep = write / Math.max(characters.length, 1);
+---
+
+<div
+	id="page-turn-overlay"
+	aria-hidden="true"
+	style={`--page-cover:${cover}ms;--page-write:${write}ms;--page-hold:${hold}ms;--page-reveal:${reveal}ms;--page-reveal-fade:${reveal * 0.55}ms;`}
+>
 	<div class="page-turn-sheet">
-		<span class="page-turn-catalog">PRIVATE LIBRARY · PAGE TURN</span>
+		<div class="page-turn-writing">
+			<span class="page-turn-overline">PRIVATE LIBRARY · TURNING A NEW PAGE</span>
+			<div class="page-turn-script" style={`--script-width:${Math.max(2, characters.length * 1.15)}em;`}>
+				<div class="page-turn-title" aria-label={title}>
+					{characters.map((character, index) => (
+						<span
+							class="page-turn-character"
+							style={`--char-delay:${cover + characterStep * index}ms;--char-duration:${Math.max(150, characterStep * 1.8)}ms;`}
+						>
+							{character === " " ? "\u00a0" : character}
+						</span>
+					))}
+				</div>
+				<svg class="page-turn-pen" viewBox="0 0 48 48" role="presentation">
+					<path class="pen-body" d="M36.8 5.8 42.2 11 18.6 34.7l-8.4 3.1 3-8.5L36.8 5.8Z" />
+					<path class="pen-detail" d="m31.7 10.9 5.4 5.3M13.2 29.3l5.4 5.4M10.2 37.8l5.1-1.9" />
+					<path class="pen-glint" d="m39.5 4.7.8-2.3M43.2 7.4l2.2-.9M42 3.9l1.5-1.7" />
+				</svg>
+			</div>
+		</div>
+		<span class="page-turn-catalog">CATALOG · NEXT VOLUME</span>
 		<span class="page-turn-stamp">阅览中</span>
 	</div>
 </div>
