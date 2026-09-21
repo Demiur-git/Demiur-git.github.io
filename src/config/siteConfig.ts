@@ -59,7 +59,7 @@ export const siteConfig: SiteConfig = {
 	// 主题色
 	themeColor: {
 		// 主题色的默认色相，范围从 0 到 360。例如：红色：0，青色：200，蓝绿色：250，粉色：345
-		hue: 225,
+		hue: 135,
 		// 默认模式："light" 亮色，"dark" 暗色，"system" 跟随系统
 		defaultMode: "system",
 	},
@@ -72,16 +72,14 @@ export const siteConfig: SiteConfig = {
 	// 网站Card样式配置
 	card: {
 		// 是否开启卡片边框和阴影，开启后让网站更有立体感
-		border: false,
+		border: true,
 		// 是否让卡片风格跟随主题色相
 		followTheme: false,
 	},
 
 	// Favicon 配置
 	// 如果启用了OpenGraph图片功能，数组中需要包含png格式的favicon图标
-	favicon: [
-		{ src: "/favicon.svg" },
-	],
+	favicon: [{ src: "/favicon.svg" }],
 
 	// 导航栏配置
 	navbar: {
@@ -96,7 +94,7 @@ export const siteConfig: SiteConfig = {
 		// 使用 Astro 图标库时不需要设置 valueDark，图标会自动跟随主题亮暗色切换
 		logo: {
 			type: "icon",
-			value: "material-symbols:edit-square-outline",
+			value: "material-symbols:local-library-outline-rounded",
 		},
 		// 导航栏标题
 		title: "你的名字",

@@ -1,0 +1,214 @@
+/* 日系学院图书馆：全站视觉基底 */
+:root {
+	--library-paper: #f3efe5;
+	--library-surface: #fffdf8;
+	--library-ink: #302c27;
+	--library-wood: #6b4b36;
+	--library-moss: #566b54;
+	--library-burgundy: #9a5a63;
+	--library-brass: #b2925f;
+	--library-rule: rgb(89 72 54 / 16%);
+	--library-soft-shadow: 0 18px 45px rgb(69 51 36 / 9%);
+	--font-library-serif: "Noto Serif SC Variable", "Songti SC", SimSun, serif;
+	--font-library-sans: "Noto Sans SC Variable", "Microsoft YaHei", system-ui, sans-serif;
+
+	--primary: var(--library-moss);
+	--page-bg: var(--library-paper);
+	--card-bg: var(--library-surface);
+	--card-bg-transparent: rgb(255 253 248 / var(--card-transparent-opacity, 0.82));
+	--btn-content: var(--library-moss);
+	--btn-regular-bg: #e9ebdf;
+	--btn-regular-bg-hover: #dfe4d5;
+	--btn-regular-bg-active: #d3dac8;
+	--btn-plain-bg-hover: rgb(86 107 84 / 10%);
+	--btn-plain-bg-active: rgb(86 107 84 / 16%);
+	--btn-card-bg-hover: #faf7ef;
+	--btn-card-bg-active: #efe9dc;
+	--deep-text: var(--library-ink);
+	--title-active: var(--library-burgundy);
+	--content-meta: rgb(48 44 39 / 68%);
+	--line-divider: var(--library-rule);
+	--line-color: rgb(89 72 54 / 20%);
+	--meta-divider: rgb(89 72 54 / 28%);
+	--muted: #ece8de;
+	--selection-bg: #dce3d5;
+	--link-underline: rgb(86 107 84 / 28%);
+	--link-hover: rgb(86 107 84 / 10%);
+	--link-active: rgb(86 107 84 / 18%);
+	--float-panel-bg: #fffdf8;
+	--radius-large: 0.9rem;
+}
+
+:root.dark {
+	--library-paper: #171a1d;
+	--library-surface: #22262a;
+	--library-ink: #eee8dc;
+	--library-wood: #8b6a50;
+	--library-moss: #82967c;
+	--library-burgundy: #c07c87;
+	--library-brass: #d2b47a;
+	--library-rule: rgb(238 232 220 / 11%);
+	--library-soft-shadow: 0 20px 50px rgb(0 0 0 / 24%);
+
+	--primary: var(--library-moss);
+	--page-bg: var(--library-paper);
+	--card-bg: var(--library-surface);
+	--card-bg-transparent: rgb(34 38 42 / var(--card-transparent-opacity, 0.84));
+	--btn-content: var(--library-moss);
+	--btn-regular-bg: #303934;
+	--btn-regular-bg-hover: #39443d;
+	--btn-regular-bg-active: #435047;
+	--btn-plain-bg-hover: rgb(130 150 124 / 12%);
+	--btn-plain-bg-active: rgb(130 150 124 / 20%);
+	--btn-card-bg-hover: #282d31;
+	--btn-card-bg-active: #30363b;
+	--deep-text: var(--library-ink);
+	--title-active: var(--library-burgundy);
+	--content-meta: rgb(238 232 220 / 65%);
+	--line-divider: var(--library-rule);
+	--line-color: rgb(238 232 220 / 15%);
+	--meta-divider: rgb(238 232 220 / 24%);
+	--muted: #292e32;
+	--selection-bg: #3b4b3c;
+	--link-underline: rgb(130 150 124 / 30%);
+	--link-hover: rgb(130 150 124 / 13%);
+	--link-active: rgb(130 150 124 / 21%);
+	--float-panel-bg: #22262a;
+}
+
+html,
+body {
+	background-color: var(--page-bg);
+}
+
+body {
+	min-height: 100vh;
+	background-image:
+		radial-gradient(circle at 12% 8%, rgb(178 146 95 / 8%) 0 1px, transparent 1.5px),
+		radial-gradient(circle at 82% 30%, rgb(86 107 84 / 6%) 0 1px, transparent 1.5px),
+		linear-gradient(112deg, transparent 0 48%, rgb(107 75 54 / 2%) 49% 50%, transparent 51% 100%);
+	background-size: 31px 31px, 43px 43px, 180px 180px;
+	color: var(--library-ink);
+	font-family: var(--font-library-sans);
+}
+
+:root.dark body {
+	background-image:
+		radial-gradient(circle at 12% 8%, rgb(210 180 122 / 5%) 0 1px, transparent 1.5px),
+		radial-gradient(circle at 82% 30%, rgb(130 150 124 / 5%) 0 1px, transparent 1.5px),
+		linear-gradient(112deg, transparent 0 48%, rgb(255 255 255 / 1.5%) 49% 50%, transparent 51% 100%);
+}
+
+::selection {
+	background: var(--selection-bg);
+	color: var(--library-ink);
+}
+
+:where(h1, h2, h3, .post-card-title, .library-serif) {
+	font-family: var(--font-library-serif);
+	font-variation-settings: "wght" 650;
+}
+
+.card-base,
+.card-base-transparent {
+	border: 1px solid var(--library-rule);
+	box-shadow: var(--library-soft-shadow);
+}
+
+.card-base {
+	background:
+		linear-gradient(145deg, rgb(255 255 255 / 22%), transparent 34%),
+		var(--card-bg);
+}
+
+:root.dark .card-base {
+	background:
+		linear-gradient(145deg, rgb(255 255 255 / 3%), transparent 34%),
+		var(--card-bg);
+}
+
+/* 导航栏作为一条安静的馆藏目录条。 */
+#navbar {
+	border-radius: 0 0 0.9rem 0.9rem;
+}
+
+#navbar > div {
+	border: 1px solid var(--library-rule);
+	border-top: 0;
+	background:
+		linear-gradient(90deg, rgb(178 146 95 / 7%), transparent 22%, transparent 78%, rgb(86 107 84 / 6%)),
+		var(--card-bg) !important;
+	box-shadow: 0 10px 30px rgb(69 51 36 / 7%);
+}
+
+#navbar .navbar-logo {
+	color: var(--library-burgundy);
+}
+
+#navbar .library-navbar-brand {
+	font-family: var(--font-library-serif) !important;
+	font-weight: 700;
+	letter-spacing: 0.06em;
+}
+
+#navbar a,
+#navbar button {
+	letter-spacing: 0.025em;
+}
+
+#navbar .dropdown-container > :is(a, button) {
+	position: relative;
+}
+
+#navbar .dropdown-container > :is(a, button)::after {
+	position: absolute;
+	right: 0.85rem;
+	bottom: 0.28rem;
+	left: 0.85rem;
+	height: 1px;
+	content: "";
+	background: var(--library-brass);
+	transform: scaleX(0);
+	transform-origin: center;
+	transition: transform 180ms ease;
+}
+
+#navbar .dropdown-container > :is(a, button):hover::after,
+#navbar .dropdown-container > :is(a, button):focus-visible::after {
+	transform: scaleX(1);
+}
+
+#navbar .dropdown-content {
+	min-width: 11rem;
+	border: 1px solid var(--library-rule) !important;
+	border-left: 3px solid var(--library-wood) !important;
+	background:
+		repeating-linear-gradient(0deg, transparent 0 1.85rem, rgb(107 75 54 / 5%) 1.9rem),
+		var(--float-panel-bg) !important;
+	box-shadow: 0 18px 38px rgb(69 51 36 / 14%) !important;
+}
+
+#navbar .dropdown-item {
+	border-radius: 0.45rem;
+}
+
+.post-card-wrapper {
+	border-left: 3px solid var(--library-moss);
+}
+
+.post-card-wrapper .post-card-title {
+	letter-spacing: 0.01em;
+}
+
+@media (max-width: 767px) {
+	#navbar,
+	#navbar > div {
+		border-radius: 0 !important;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	#navbar .dropdown-container > :is(a, button)::after {
+		transition: none;
+	}
+}

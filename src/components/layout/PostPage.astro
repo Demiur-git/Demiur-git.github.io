@@ -1,6 +1,7 @@
 ---
 import type { CollectionEntry } from "astro:content";
 import { getPostUrlBySlug } from "@utils/url-utils";
+import { Icon } from "astro-icon/components";
 import PostCard from "@/components/layout/PostCard.astro";
 import { siteConfig } from "@/config";
 
@@ -40,13 +41,16 @@ const coverPositionClass =
 >
 	{
 		page.data.length === 0 && (
-			<section class="card-base px-8 py-16 text-center">
+			<section class="library-empty-state card-base px-8 py-16 text-center">
+				<span class="library-empty-icon" aria-hidden="true">
+					<Icon name="material-symbols:auto-stories-outline-rounded" />
+				</span>
 				<p class="text-xs font-semibold tracking-[0.18em] text-(--primary) uppercase">
-					Index
+					Awaiting Collection
 				</p>
-				<h2 class="mt-3 text-2xl font-bold text-90">内容正在整理中</h2>
+				<h2 class="mt-3 text-2xl font-bold text-90">馆藏正在整理中</h2>
 				<p class="mx-auto mt-3 max-w-md text-sm leading-7 text-50">
-					这里将汇集最新文章与长期写作，第一篇内容发布后会自动出现在这里。
+					第一篇文字入藏后，会自动出现在这张最近更新的借阅卡上。
 				</p>
 			</section>
 		)
@@ -373,6 +377,26 @@ const coverPositionClass =
 </style>
 
 <style>
+	.library-empty-state {
+		position: relative;
+		background:
+			repeating-linear-gradient(0deg, transparent 0 2rem, color-mix(in srgb, var(--library-wood) 5%, transparent) 2.05rem),
+			var(--card-bg);
+	}
+
+	.library-empty-icon {
+		display: grid;
+		width: 3.8rem;
+		height: 3.8rem;
+		place-items: center;
+		margin: 0 auto 1rem;
+		border: 1px solid color-mix(in srgb, var(--library-moss) 24%, transparent);
+		border-radius: 50%;
+		background: color-mix(in srgb, var(--library-moss) 8%, transparent);
+		color: var(--library-moss);
+		font-size: 1.8rem;
+	}
+
   /* 布局切换动画 */
   #post-list-container {
     /* 限制过渡属性为 opacity 和 transform，避免响应父元素位置变化 */

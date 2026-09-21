@@ -1,13 +1,6 @@
 export type { AnalyticsConfig } from "./analyticsConfig";
 export type { AnnouncementConfig } from "./announcementConfig";
 export type {
-	CalendarImportantDate,
-	CalendarPageConfig,
-	CalendarScheduleItem,
-	CalendarScheduleStatus,
-	ImportantDateCategory,
-} from "./calendarPageConfig";
-export type {
 	BackgroundWallpaperConfig,
 	FullscreenWallpaperLayout,
 } from "./backgroundWallpaper";
@@ -17,6 +10,13 @@ export type {
 	BooknavItem,
 	BooknavPageConfig,
 } from "./booknavConfig";
+export type {
+	CalendarImportantDate,
+	CalendarPageConfig,
+	CalendarScheduleItem,
+	CalendarScheduleStatus,
+	ImportantDateCategory,
+} from "./calendarPageConfig";
 export type { CommentConfig } from "./commentConfig";
 export type { CoverImageConfig } from "./coverImageConfig";
 export type { DisplaySettingsConfig } from "./displaySettingsConfig";
@@ -31,7 +31,13 @@ export type {
 export type { FontSelectionConfig } from "./fontConfig";
 export type { FriendLink, FriendsPageConfig } from "./friendsConfig";
 export type { GalleryAlbum, GalleryConfig } from "./galleryConfig";
-export type { HomeIntroConfig, HomeIntroLink } from "./homeIntroConfig";
+export type {
+	HomeCatalogEntry,
+	HomeCatalogTone,
+	HomeHeroArtwork,
+	HomeIntroConfig,
+	HomeIntroLink,
+} from "./homeIntroConfig";
 export type { LicenseConfig } from "./licenseConfig";
 export type { MermaidConfig } from "./mermaidConfig";
 export type { MusicPlayerConfig } from "./musicConfig";

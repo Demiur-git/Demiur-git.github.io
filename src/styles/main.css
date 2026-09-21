@@ -1,4 +1,6 @@
 @import 'tailwindcss';
+@import '@fontsource-variable/noto-sans-sc';
+@import '@fontsource-variable/noto-serif-sc';
 @import './layout-styles.css';
 @import './navbar.css';
 @import './banner-title.css';
@@ -9,6 +11,7 @@
 @import './display-settings.css';
 @import './categories.css';
 @import './layout-base.css';
+@import './library-theme.css';
 
 @plugin '@tailwindcss/typography';
 

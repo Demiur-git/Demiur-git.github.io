@@ -29,6 +29,8 @@ personal_pages/
 │   ├── run-pagefind.ts              # 生成站内搜索索引
 │   └── subset-fonts.ts              # 字体子集处理
 ├── src/                             # 网站主要源代码
+│   ├── assets/                      # 由 Astro 优化的图片等源资源
+│   │   └── images/                  # 首页插画与内容图片
 │   ├── components/                  # 可复用界面组件
 │   │   ├── analytics/               # 访问统计接入
 │   │   ├── comment/                 # 评论系统接入
@@ -43,7 +45,7 @@ personal_pages/
 │   │   ├── siteConfig.ts            # 站点名称、语言、页面功能开关
 │   │   ├── navBarConfig.ts          # 顶部导航与下拉子页面
 │   │   ├── calendarPageConfig.ts     # 重要日期、日程与计划数据
-│   │   ├── homeIntroConfig.ts       # 首页介绍及 QQ/B站/GitHub 链接
+│   │   ├── homeIntroConfig.ts       # 首页介绍、馆藏入口、插画及社交链接
 │   │   ├── profileConfig.ts         # 本人资料与头像
 │   │   ├── readingPlanConfig.ts     # 读书计划数据
 │   │   ├── galleryConfig.ts         # 相册设置
@@ -78,6 +80,7 @@ personal_pages/
 │   ├── plugins/                     # Markdown、Mermaid、PlantUML 等处理插件
 │   ├── styles/                      # 全局样式与页面样式
 │   │   ├── main.css                 # 全局样式入口
+│   │   ├── library-theme.css        # 日系学院图书馆主题变量与通用样式
 │   │   ├── navbar.css               # 导航栏样式
 │   │   ├── markdown.css             # Markdown 正文样式
 │   │   └── pages/                   # 各功能页面专用样式
@@ -119,7 +122,7 @@ src/styles/ 视觉样式  +  src/utils/ 数据处理
 | --- | --- |
 | 网站名称、语言、页面开关 | `src/config/siteConfig.ts` |
 | 顶部导航与下拉菜单 | `src/config/navBarConfig.ts` |
-| 首页介绍与社交链接 | `src/config/homeIntroConfig.ts`、`src/components/layout/HomeIntro.astro` |
+| 首页介绍、馆藏入口与社交链接 | `src/config/homeIntroConfig.ts`、`src/components/layout/HomeIntro.astro` |
 | 姓名、头像与个人简介 | `src/config/profileConfig.ts` |
 | “关于本人”页面 | `src/pages/about/me.astro` |
 | “关于网站”页面 | `src/pages/about/site.astro`、`src/content/spec/about.md` |
@@ -129,7 +132,7 @@ src/styles/ 视觉样式  +  src/utils/ 数据处理
 | 项目 | `src/content/projects/`、`src/pages/projects/` |
 | 笔记 | `src/content/dynamic/`、`src/pages/dynamic/` |
 | 文章 | `src/content/posts/`、`src/pages/posts/[...slug].astro` |
-| 全站颜色与基础样式 | `src/styles/main.css`、`src/styles/variables.styl` |
+| 全站颜色与图书馆主题 | `src/styles/main.css`、`src/styles/library-theme.css`、`src/styles/variables.styl` |
 | 导航栏视觉效果 | `src/styles/navbar.css`、`src/components/layout/Navbar.astro` |
 | 侧栏布局 | `src/config/sidebarConfig.ts`、`src/components/layout/SideBar.astro` |
 | 构建与部署 | `package.json`、`astro.config.mjs`、`.github/workflows/` |
