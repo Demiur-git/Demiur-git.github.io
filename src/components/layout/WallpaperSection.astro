@@ -14,15 +14,36 @@ import type { BackgroundImages } from "@/utils/layout-utils";
 interface Props {
 	state: BannerVisibilityState;
 	backgroundImages: BackgroundImages;
+	darkBackgroundImages: BackgroundImages;
 	title?: string;
 	bannerPostMeta?: BannerPostMeta;
 }
 
-const { state, backgroundImages, title, bannerPostMeta } = Astro.props;
+const { state, backgroundImages, darkBackgroundImages, title, bannerPostMeta } =
+	Astro.props;
 const wallpaperPosition = state.isFullscreenMode
 	? (backgroundWallpaper.fullscreen?.position ??
 		backgroundWallpaper.banner?.position)
 	: backgroundWallpaper.banner?.position;
+
+const pairThemeImages = (light: string[], dark: string[]) => {
+	const lightImages = light.length > 0 ? light : dark;
+	const darkImages = dark.length > 0 ? dark : lightImages;
+	const length = Math.max(lightImages.length, darkImages.length);
+	return Array.from({ length }, (_, index) => ({
+		light: lightImages[index % lightImages.length],
+		dark: darkImages[index % darkImages.length],
+	}));
+};
+
+const mobileImagePairs = pairThemeImages(
+	backgroundImages.mobile,
+	darkBackgroundImages.mobile,
+);
+const desktopImagePairs = pairThemeImages(
+	backgroundImages.desktop,
+	darkBackgroundImages.desktop,
+);
 ---
 
 <!-- Wallpaper - 如果允许切换则始终渲染，否则只渲染当前模式 -->
@@ -38,13 +59,26 @@ const wallpaperPosition = state.isFullscreenMode
          data-carousel-interval={state.bannerCarouselInterval}
          data-carousel-effect={state.bannerCarouselEffect}>
         {/* 图片放在 <template> 里，浏览器不会发起请求；由轮播脚本挑中随机那张后克隆进 DOM */}
-        {backgroundImages.mobile.map((src, index) => (
+        {mobileImagePairs.map((pair, index) => (
             <div class:list={["slide-item block lg:hidden", index === 0 && "active"]} data-index={index}>
-                <template>
+                <template data-wallpaper-theme="light">
                     <ImageWrapper
                         alt="Mobile background image of the blog"
                         class="object-cover h-full w-full"
-                        src={src}
+                        src={pair.light}
+                        position={wallpaperPosition}
+                        width={828}
+                        widths={[640, 828]}
+                        sizes="100vw"
+                        loading="eager"
+                        quality={state.mobileQuality}
+                    />
+                </template>
+                <template data-wallpaper-theme="dark">
+                    <ImageWrapper
+                        alt="Mobile nighttime background image of the blog"
+                        class="object-cover h-full w-full"
+                        src={pair.dark}
                         position={wallpaperPosition}
                         width={828}
                         widths={[640, 828]}
@@ -55,13 +89,26 @@ const wallpaperPosition = state.isFullscreenMode
                 </template>
             </div>
         ))}
-        {backgroundImages.desktop.map((src, index) => (
+        {desktopImagePairs.map((pair, index) => (
             <div class:list={["slide-item hidden lg:block", index === 0 && "active"]} data-index={index}>
-                <template>
+                <template data-wallpaper-theme="light">
                     <ImageWrapper
                         alt="Desktop background image of the blog"
                         class="object-cover h-full"
-                        src={src}
+                        src={pair.light}
+                        position={wallpaperPosition}
+                        width={1920}
+                        widths={[1280, 1920]}
+                        sizes="100vw"
+                        loading="eager"
+                        quality={state.configQuality}
+                    />
+                </template>
+                <template data-wallpaper-theme="dark">
+                    <ImageWrapper
+                        alt="Desktop nighttime background image of the blog"
+                        class="object-cover h-full"
+                        src={pair.dark}
                         position={wallpaperPosition}
                         width={1920}
                         widths={[1280, 1920]}
@@ -114,13 +161,26 @@ const wallpaperPosition = state.isFullscreenMode
     <div class="relative h-full w-full" id="banner-images-container">
         {/* 两侧都放在 <template> 里，由下面的脚本按 matchMedia 只实例化匹配的那一侧，
             避免桌面端白下一张手机图（display:none 挡不住 loading="eager"） */}
-        {backgroundImages.mobile.length > 0 && (
+        {mobileImagePairs.length > 0 && (
             <div class="banner-image-slot absolute inset-0 block lg:hidden">
-                <template>
+                <template data-wallpaper-theme="light">
                     <ImageWrapper
                         alt="Mobile background image of the blog"
                         class="object-cover h-full w-full"
-                        src={backgroundImages.mobile[0]}
+                        src={mobileImagePairs[0].light}
+                        position={wallpaperPosition}
+                        width={828}
+                        widths={[640, 828]}
+                        sizes="100vw"
+                        loading="eager"
+                        quality={state.mobileQuality}
+                    />
+                </template>
+                <template data-wallpaper-theme="dark">
+                    <ImageWrapper
+                        alt="Mobile nighttime background image of the blog"
+                        class="object-cover h-full w-full"
+                        src={mobileImagePairs[0].dark}
                         position={wallpaperPosition}
                         width={828}
                         widths={[640, 828]}
@@ -131,13 +191,26 @@ const wallpaperPosition = state.isFullscreenMode
                 </template>
             </div>
         )}
-        {backgroundImages.desktop.length > 0 && (
+        {desktopImagePairs.length > 0 && (
             <div class="banner-image-slot absolute inset-0 hidden lg:block">
-                <template>
+                <template data-wallpaper-theme="light">
                     <ImageWrapper
                         alt="Desktop background image of the blog"
                         class="object-cover h-full"
-                        src={backgroundImages.desktop[0]}
+                        src={desktopImagePairs[0].light}
+                        position={wallpaperPosition}
+                        width={1920}
+                        widths={[1280, 1920]}
+                        sizes="100vw"
+                        loading="eager"
+                        quality={state.configQuality}
+                    />
+                </template>
+                <template data-wallpaper-theme="dark">
+                    <ImageWrapper
+                        alt="Desktop nighttime background image of the blog"
+                        class="object-cover h-full"
+                        src={desktopImagePairs[0].dark}
                         position={wallpaperPosition}
                         width={1920}
                         widths={[1280, 1920]}
@@ -187,6 +260,170 @@ const wallpaperPosition = state.isFullscreenMode
     </div>
     )}
 
+    <!-- 当前主题图片优先加载；目标图就绪后才交叉淡入，另一主题在空闲时预载。 -->
+    <script is:inline data-swup-ignore-script>
+        (function initWallpaperThemeManager() {
+            if (window.__wallpaperThemeManager) return;
+
+            function currentTheme() {
+                return document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+            }
+
+            function revealImage(layer) {
+                var placeholder = layer.querySelector('.lqip-placeholder');
+                var image = layer.querySelector('img');
+                if (image) image.style.opacity = '1';
+                if (placeholder) placeholder.classList.add('loaded');
+            }
+
+            function setActiveLayer(host, theme) {
+                var layers = host.querySelectorAll('.wallpaper-theme-layer');
+                for (var i = 0; i < layers.length; i++) {
+                    layers[i].classList.toggle(
+                        'is-theme-active',
+                        layers[i].dataset.wallpaperThemeLayer === theme
+                    );
+                }
+            }
+
+            function materialize(host, high, requestedTheme, shouldActivate) {
+                if (!host) return Promise.resolve(false);
+                var theme = requestedTheme || currentTheme();
+                var activate = shouldActivate !== false;
+                var existing = host.querySelector(
+                    '.wallpaper-theme-layer[data-wallpaper-theme-layer="' + theme + '"]'
+                );
+                if (existing) {
+                    if (existing.dataset.ready === 'true' && activate) setActiveLayer(host, theme);
+                    var existingReady = existing.__readyPromise || Promise.resolve(existing.dataset.ready === 'true');
+                    return existingReady.then(function (ok) {
+                        if (ok && activate && currentTheme() === theme) setActiveLayer(host, theme);
+                        return ok;
+                    });
+                }
+
+                var template = host.querySelector(
+                    'template[data-wallpaper-theme="' + theme + '"]'
+                );
+                if (!template && theme === 'dark') {
+					return materialize(host, high, 'light', false).then(function (ok) {
+						if (ok && activate) setActiveLayer(host, 'light');
+						return ok;
+					});
+                }
+                if (!template) return Promise.resolve(false);
+
+                var layer = document.createElement('div');
+                layer.className = 'wallpaper-theme-layer';
+                layer.dataset.wallpaperThemeLayer = theme;
+                var fragment = template.content.cloneNode(true);
+                var image = fragment.querySelector('img');
+                var placeholder = fragment.querySelector('.lqip-placeholder');
+                if (image && high) {
+                    image.setAttribute('fetchpriority', 'high');
+                    image.classList.remove('opacity-0', 'transition-opacity', 'duration-500', 'ease-out');
+                    image.style.opacity = '1';
+                    if (placeholder) placeholder.style.transition = 'none';
+                }
+                layer.appendChild(fragment);
+                host.appendChild(layer);
+                template.remove();
+
+				var readyPromise = new Promise(function (resolve) {
+					var settled = false;
+					function ready(ok) {
+						if (settled) return;
+						settled = true;
+						if (!ok) {
+                            layer.remove();
+                            if (theme === 'dark') {
+								materialize(host, high, 'light', false).then(function (fallbackReady) {
+									if (fallbackReady && activate) setActiveLayer(host, 'light');
+									resolve(fallbackReady);
+								});
+                                return;
+                            }
+                            resolve(false);
+                            return;
+                        }
+                        layer.dataset.ready = 'true';
+                        revealImage(layer);
+                        if (activate && currentTheme() === theme) setActiveLayer(host, theme);
+                        resolve(true);
+                    }
+
+					if (!image) ready(false);
+					else if (image.complete && image.naturalWidth > 0) ready(true);
+					else {
+						image.addEventListener('load', function () { ready(true); }, { once: true });
+						image.addEventListener('error', function () { ready(false); }, { once: true });
+					}
+                });
+                layer.__readyPromise = readyPromise;
+                return readyPromise;
+            }
+
+            function isCurrentDevice(host) {
+                var desktop = window.innerWidth >= 1024;
+                if (desktop && host.classList.contains('lg:hidden')) return false;
+                if (!desktop && host.classList.contains('hidden') && !host.classList.contains('lg:hidden')) return false;
+                return true;
+            }
+
+            function activeHosts() {
+                var hosts = document.querySelectorAll(
+                    '#banner-images-container .banner-image-slot, #banner-images-container .slide-item.active, [data-theme-image]'
+                );
+                var active = [];
+                for (var i = 0; i < hosts.length; i++) {
+                    if (isCurrentDevice(hosts[i])) active.push(hosts[i]);
+                }
+                return active;
+            }
+
+            function syncTheme() {
+                var theme = currentTheme();
+                var hosts = activeHosts();
+                for (var i = 0; i < hosts.length; i++) {
+                    var high = hosts[i].dataset.themePriority === 'high';
+                    materialize(hosts[i], high, theme, true);
+                }
+            }
+
+            function preloadOppositeTheme() {
+                var opposite = currentTheme() === 'dark' ? 'light' : 'dark';
+                var hosts = activeHosts();
+                for (var i = 0; i < hosts.length; i++) materialize(hosts[i], false, opposite, false);
+            }
+
+            function schedulePreload() {
+                var idle = window.requestIdleCallback || function (callback) {
+                    return setTimeout(callback, 1500);
+                };
+                idle(preloadOppositeTheme);
+            }
+
+            window.__wallpaperThemeManager = {
+                currentTheme: currentTheme,
+                materialize: materialize,
+                syncTheme: syncTheme,
+                schedulePreload: schedulePreload
+            };
+            window.addEventListener('theme-change', syncTheme);
+			document.addEventListener('swup:contentReplaced', function () {
+				requestAnimationFrame(syncTheme);
+			});
+			document.addEventListener('astro:page-load', syncTheme);
+			if (document.readyState === 'loading') {
+				document.addEventListener('DOMContentLoaded', syncTheme, { once: true });
+			} else {
+				syncTheme();
+			}
+            if (document.readyState === 'complete') schedulePreload();
+            else window.addEventListener('load', schedulePreload, { once: true });
+        })();
+    </script>
+
     <!-- 壁纸轮播脚本（基于 CSS transition） -->
     {state.hasMultipleImages && (
     <script is:inline data-swup-ignore-script>
@@ -213,50 +450,10 @@ const wallpaperPosition = state.isFullscreenMode
                 return mode === WALLPAPER_BANNER || mode === 'fullscreen';
             }
 
-            // 图片淡入：Layout 里的全局 initImageLoadFadeIn 只在解析期扫一次，
-            // 之后克隆进来的图片得自己接管，否则会一直停在 opacity-0
-            function fadeInWhenLoaded(root) {
-                var ph = root.querySelector('.lqip-placeholder');
-                var img = root.querySelector('img');
-                if (!img) return;
-                function done() {
-                    img.style.opacity = '1';
-                    if (ph) ph.classList.add('loaded');
-                }
-                if (img.complete && img.naturalWidth > 0) {
-                    done();
-                } else {
-                    img.addEventListener('load', done, { once: true });
-                    img.addEventListener('error', function () {
-                        if (ph) ph.classList.add('loaded');
-                    }, { once: true });
-                }
-            }
-
-            // 把 <template> 里的图片实例化进 DOM —— 插入的那一刻才开始下载
+            // 图片由主题管理器按需实例化；首次只下载当前主题。
             function materialize(slideEl, high) {
-                if (!slideEl) return false;
-                var tpl = slideEl.querySelector('template');
-                if (!tpl) return false;
-                var frag = tpl.content.cloneNode(true);
-                if (high) {
-                    var img = frag.querySelector('img');
-                    // 必须在插入前写，插入即发起请求
-                    if (img) {
-                        img.setAttribute('fetchpriority', 'high');
-                        // 这张是 LCP 元素，不做淡入：图片没下完时 <img> 本来就不画东西，
-                        // 那 500ms 过渡只是把已经能看的画面又藏半秒，Chrome 会把 LCP 往后记。
-                        img.classList.remove('opacity-0', 'transition-opacity', 'duration-500', 'ease-out');
-                        img.style.opacity = '1';
-                    }
-                    // LQIP 占位层是 absolute + z-index:0，盖在 img 上面，
-                    // 它那 0.5s 淡出同样会挡住 LCP
-                    var ph = frag.querySelector('.lqip-placeholder');
-                    if (ph) ph.style.transition = 'none';
-                }
-                slideEl.appendChild(frag);
-                tpl.remove();
-                fadeInWhenLoaded(slideEl);
+                if (!slideEl || !window.__wallpaperThemeManager) return false;
+                window.__wallpaperThemeManager.materialize(slideEl, high);
                 return true;
             }
 
@@ -475,36 +672,8 @@ const wallpaperPosition = state.isFullscreenMode
             if (!container) return;
 
             function materialize(slot, high) {
-                var tpl = slot.querySelector('template');
-                if (!tpl) return;
-                var frag = tpl.content.cloneNode(true);
-                var img = frag.querySelector('img');
-                var phFrag = frag.querySelector('.lqip-placeholder');
-                if (img && high) {
-                    img.setAttribute('fetchpriority', 'high');
-                    // 这张是 LCP 元素，不做淡入：图片没下完时 <img> 本来就不画东西，
-                    // 那 500ms 过渡只是把已经能看的画面又藏半秒，Chrome 会把 LCP 往后记。
-                    img.classList.remove('opacity-0', 'transition-opacity', 'duration-500', 'ease-out');
-                    img.style.opacity = '1';
-                    // LQIP 占位层盖在 img 上面（z-index:0），它那 0.5s 淡出同样会挡住 LCP
-                    if (phFrag) phFrag.style.transition = 'none';
-                }
-                slot.appendChild(frag);
-                tpl.remove();
-                // Layout 的全局淡入只扫解析期的图片，克隆进来的要自己接管
-                var ph = slot.querySelector('.lqip-placeholder');
-                if (!img) return;
-                function done() {
-                    img.style.opacity = '1';
-                    if (ph) ph.classList.add('loaded');
-                }
-                if (img.complete && img.naturalWidth > 0) done();
-                else {
-                    img.addEventListener('load', done, { once: true });
-                    img.addEventListener('error', function () {
-                        if (ph) ph.classList.add('loaded');
-                    }, { once: true });
-                }
+				if (!window.__wallpaperThemeManager) return;
+				window.__wallpaperThemeManager.materialize(slot, high);
             }
 
             function sync() {

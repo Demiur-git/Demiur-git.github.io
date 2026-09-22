@@ -120,6 +120,36 @@
     z-index: 10;
     pointer-events: auto;
 }
+
+/* 亮暗主题图片共用的按需加载与交叉淡入层。未激活的主题保持在 DOM 中，
+   主题切换时无需先清空当前画面。 */
+.wallpaper-theme-layer {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 350ms ease;
+}
+
+.wallpaper-theme-layer.is-theme-active {
+    opacity: 1;
+}
+
+.wallpaper-theme-layer > *,
+.wallpaper-theme-layer > picture,
+.wallpaper-theme-layer > picture > img {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .wallpaper-theme-layer {
+        transition: none;
+    }
+}
 /* Fade 效果 */
 .effect-fade .slide-item {
     transition-property: opacity;
@@ -227,7 +257,7 @@
     height: 100vh !important;
     height: 100lvh !important;
     z-index: var(--overlay-z-index, -1) !important;
-    opacity: var(--overlay-opacity, 0.8) !important;
+    opacity: 1 !important;
     pointer-events: none !important;
     overflow: hidden !important;
     top: 0 !important;
@@ -246,7 +276,7 @@ html[data-wallpaper-mode="overlay"] #wallpaper-wrapper {
     height: 100vh !important;
     height: 100lvh !important;
     z-index: var(--overlay-z-index, -1) !important;
-    opacity: var(--overlay-opacity, 0.8) !important;
+    opacity: 1 !important;
     pointer-events: none !important;
     overflow: hidden !important;
     top: 0 !important;
@@ -257,11 +287,11 @@ html[data-wallpaper-mode="overlay"] #wallpaper-wrapper {
 }
 
 html[data-wallpaper-mode="overlay"] body.is-home #wallpaper-wrapper {
-    opacity: var(--overlay-home-opacity, var(--overlay-opacity, 0.8)) !important;
+    opacity: 1 !important;
 }
 
 html[data-wallpaper-mode="overlay"] body:not(.is-home) #wallpaper-wrapper {
-    opacity: var(--overlay-content-opacity, var(--overlay-opacity, 0.8)) !important;
+    opacity: 1 !important;
 }
 
 /* Overlay 模式下图片模糊效果 */
@@ -272,7 +302,7 @@ html[data-wallpaper-mode="overlay"] body:not(.is-home) #wallpaper-wrapper {
     object-position: center !important;
     filter: blur(var(--overlay-blur, 0px));
     /* 放大图片，让模糊后的暗角被容器 overflow:hidden 裁掉 */
-    transform: scale(1.05);
+    transform: scale(1.01);
 }
 
 /* 首帧即让图片全屏覆盖并居中（镜像 .wallpaper-overlay img 规则）：
@@ -283,7 +313,7 @@ html[data-wallpaper-mode="overlay"] #wallpaper-wrapper img {
     object-fit: cover !important;
     object-position: center !important;
     filter: blur(var(--overlay-blur, 0px));
-    transform: scale(1.05);
+    transform: scale(1.01);
 }
 
 html[data-wallpaper-mode="overlay"] body.is-home #wallpaper-wrapper img {
@@ -295,23 +325,38 @@ html[data-wallpaper-mode="overlay"] body:not(.is-home) #wallpaper-wrapper img {
 }
 
 html[data-wallpaper-mode="overlay"] #wallpaper-wrapper::after {
-    position: absolute;
-    inset: 0;
-    content: "";
-    pointer-events: none;
-    background: color-mix(in oklch, var(--page-bg) 48%, transparent);
+    display: none;
 }
 
 html[data-wallpaper-mode="overlay"] body:not(.is-home) #wallpaper-wrapper::after {
-    background: color-mix(in oklch, var(--page-bg) 72%, transparent);
+    display: none;
 }
 
 :root.dark[data-wallpaper-mode="overlay"] #wallpaper-wrapper::after {
-    background: color-mix(in oklch, #07120f 68%, transparent);
+    display: none;
 }
 
 :root.dark[data-wallpaper-mode="overlay"] body:not(.is-home) #wallpaper-wrapper::after {
-    background: color-mix(in oklch, #07120f 82%, transparent);
+    display: none;
+}
+
+/* Overlay 模式只让真实壁纸承担页面底色；加载失败时由 wrapper 的 --page-bg 回退。 */
+html[data-wallpaper-mode="overlay"],
+html[data-wallpaper-mode="overlay"] body {
+    background-color: transparent !important;
+}
+
+html[data-wallpaper-mode="overlay"] body {
+    background-image: none !important;
+}
+
+html[data-wallpaper-mode="overlay"] #wallpaper-wrapper,
+html[data-wallpaper-mode="overlay"] #banner-images-container {
+    background-color: var(--page-bg);
+}
+
+html[data-wallpaper-mode="overlay"] #wallpaper-wrapper [class~="dark:bg-black/10"] {
+    background-color: transparent !important;
 }
 
 /* ============================================

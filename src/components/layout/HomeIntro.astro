@@ -42,18 +42,36 @@ import { url } from "@/utils/url-utils";
 		</div>
 
 		<figure class="hero-artwork" aria-hidden="true">
-			<Picture
-				src={homeIntroConfig.heroArtwork.src}
-				alt={homeIntroConfig.heroArtwork.alt}
-				formats={["avif"]}
-				fallbackFormat="webp"
-				widths={[560, 840, 1120]}
-				sizes="(max-width: 899px) 100vw, 48vw"
-				loading="eager"
-				fetchpriority="high"
-				class="hero-artwork-image"
-				style={`object-position: ${homeIntroConfig.heroArtwork.position ?? "center"};`}
-			/>
+			<div class="hero-theme-images" data-theme-image data-theme-priority="high">
+				<template data-wallpaper-theme="light">
+					<Picture
+						src={homeIntroConfig.heroArtwork.src}
+						alt={homeIntroConfig.heroArtwork.alt}
+						formats={["avif"]}
+						fallbackFormat="webp"
+						widths={[560, 840, 1120]}
+						sizes="(max-width: 899px) 100vw, 48vw"
+						loading="eager"
+						fetchpriority="high"
+						class="hero-artwork-image"
+						style={`object-position: ${homeIntroConfig.heroArtwork.position ?? "center"};`}
+					/>
+				</template>
+				<template data-wallpaper-theme="dark">
+					<Picture
+						src={homeIntroConfig.heroArtwork.darkSrc ?? homeIntroConfig.heroArtwork.src}
+						alt={homeIntroConfig.heroArtwork.alt}
+						formats={["avif"]}
+						fallbackFormat="webp"
+						widths={[560, 840, 1120]}
+						sizes="(max-width: 899px) 100vw, 48vw"
+						loading="eager"
+						fetchpriority="high"
+						class="hero-artwork-image"
+						style={`object-position: ${homeIntroConfig.heroArtwork.position ?? "center"};`}
+					/>
+				</template>
+			</div>
 			<div class="artwork-wash"></div>
 			<div class="checkout-slip">
 				<span>OPEN SHELF</span>
@@ -263,6 +281,11 @@ import { url } from "@/utils/url-utils";
 		height: 100%;
 	}
 
+	.hero-theme-images {
+		position: absolute;
+		inset: 0;
+	}
+
 	.hero-artwork :global(.hero-artwork-image) {
 		object-fit: cover;
 		filter: saturate(0.84) contrast(0.96);
@@ -318,7 +341,12 @@ import { url } from "@/utils/url-utils";
 		align-items: end;
 		justify-content: space-between;
 		gap: 1.5rem;
-		padding: 0 0.25rem;
+		border: 1px solid var(--library-rule);
+		border-radius: 0.8rem;
+		padding: 0.72rem 0.9rem;
+		background: color-mix(in srgb, var(--card-bg) 84%, transparent);
+		box-shadow: 0 8px 24px rgb(45 34 26 / 5%);
+		backdrop-filter: blur(10px);
 	}
 
 	.section-heading p {
@@ -452,18 +480,10 @@ import { url } from "@/utils/url-utils";
 
 	.latest-heading {
 		margin-bottom: -1rem;
-		padding-top: 0.35rem;
-		border-top: 1px solid var(--library-rule);
-	}
-
-	:global(:root.dark) .hero-artwork :global(.hero-artwork-image) {
-		filter: brightness(0.62) saturate(0.68) contrast(1.05);
 	}
 
 	:global(:root.dark) .artwork-wash {
-		background:
-			linear-gradient(90deg, var(--card-bg) 0, transparent 14%),
-			linear-gradient(180deg, rgb(15 18 20 / 12%), rgb(15 18 20 / 46%));
+		background: linear-gradient(90deg, var(--card-bg) 0, transparent 14%);
 	}
 
 	@media (max-width: 899px) {

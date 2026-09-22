@@ -20,6 +20,7 @@ export type HomeCatalogEntry = {
 
 export type HomeHeroArtwork = {
 	src: ImageMetadata;
+	darkSrc?: ImageMetadata;
 	alt: string;
 	position?: string;
 };

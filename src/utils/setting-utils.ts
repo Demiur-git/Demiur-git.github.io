@@ -516,6 +516,16 @@ export function getDefaultOverlayCardOpacity(): number {
 }
 
 export function getStoredOverlayOpacity(): number {
+	const switchable = displaySettingsConfig.overlaySwitchable;
+	const opacitySwitchable =
+		switchable === true ||
+		(typeof switchable === "object" && switchable.opacity === true);
+	if (!opacitySwitchable) {
+		if (typeof localStorage !== "undefined") {
+			localStorage.removeItem("overlayOpacity");
+		}
+		return getDefaultOverlayOpacity();
+	}
 	if (
 		typeof localStorage === "undefined" ||
 		typeof localStorage.getItem !== "function"
@@ -534,6 +544,16 @@ export function getStoredOverlayOpacity(): number {
 }
 
 export function getStoredOverlayBlur(): number {
+	const switchable = displaySettingsConfig.overlaySwitchable;
+	const blurSwitchable =
+		switchable === true ||
+		(typeof switchable === "object" && switchable.blur === true);
+	if (!blurSwitchable) {
+		if (typeof localStorage !== "undefined") {
+			localStorage.removeItem("overlayBlur");
+		}
+		return getDefaultOverlayBlur();
+	}
 	if (
 		typeof localStorage === "undefined" ||
 		typeof localStorage.getItem !== "function"

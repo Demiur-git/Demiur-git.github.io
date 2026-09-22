@@ -161,6 +161,9 @@ export function getBannerVisibilityState(
 		!!title;
 
 	const backgroundImages = getBackgroundImages();
+	const darkBackgroundImages = getBackgroundImages(
+		backgroundWallpaper.darkSrc ?? backgroundWallpaper.src,
+	);
 	const configQuality = getImageQuality();
 	const mobileQuality = Math.round(configQuality * 0.9);
 	const bannerCarouselEnabledDefault =
@@ -174,7 +177,10 @@ export function getBannerVisibilityState(
 	const bannerCarouselEffect =
 		backgroundWallpaper.common?.carousel?.transitionEffect ?? "fade";
 	const hasMultipleImages =
-		backgroundImages.desktop.length > 1 || backgroundImages.mobile.length > 1;
+		backgroundImages.desktop.length > 1 ||
+		backgroundImages.mobile.length > 1 ||
+		darkBackgroundImages.desktop.length > 1 ||
+		darkBackgroundImages.mobile.length > 1;
 
 	return {
 		isBannerMode,

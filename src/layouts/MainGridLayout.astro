@@ -17,6 +17,7 @@ import {
 	live2dWidgetConfig,
 	navbarMode,
 	ocPetConfig,
+	backgroundWallpaper,
 	sidebarLayoutConfig,
 	siteConfig,
 } from "@/config";
@@ -53,6 +54,9 @@ interface Props {
 }
 
 const backgroundImages = getBackgroundImages();
+const darkBackgroundImages = getBackgroundImages(
+	backgroundWallpaper.darkSrc ?? backgroundWallpaper.src,
+);
 
 const {
 	title,
@@ -101,7 +105,7 @@ const {
 <slot slot="head" name="head" />
 <HeaderTopRow navbarMode={navbarMode} navbarWidthFull={navbarWidthFull} />
 
-<WallpaperSection state={banner} backgroundImages={backgroundImages} title={title} bannerPostMeta={bannerPostMeta} />
+<WallpaperSection state={banner} backgroundImages={backgroundImages} darkBackgroundImages={darkBackgroundImages} title={title} bannerPostMeta={bannerPostMeta} />
 <PageTurnOverlay />
 
 <!-- Main content -->

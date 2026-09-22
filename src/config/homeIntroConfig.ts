@@ -1,4 +1,5 @@
 import libraryReadingDesk from "@/assets/images/library-reading-desk.png";
+import libraryReadingDeskNight from "@/assets/images/library-reading-desk-night.png";
 import type { HomeIntroConfig } from "@/types/homeIntroConfig";
 
 export const homeIntroConfig: HomeIntroConfig = {
@@ -8,6 +9,7 @@ export const homeIntroConfig: HomeIntroConfig = {
 		"这里收藏笔记、文章、阅读与持续发生的实践。请随意翻阅，也许会在某一页遇见值得带走的线索。",
 	heroArtwork: {
 		src: libraryReadingDesk,
+		darkSrc: libraryReadingDeskNight,
 		alt: "",
 		position: "64% center",
 	},

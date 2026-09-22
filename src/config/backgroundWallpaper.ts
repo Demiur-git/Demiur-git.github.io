@@ -9,6 +9,11 @@ export const backgroundWallpaper: BackgroundWallpaperConfig = {
 		desktop: "assets/images/library-reading-desk.png",
 		mobile: "assets/images/library-reading-desk.png",
 	},
+	// 暗色主题使用同构夜景；未配置时会自动回退到上面的白天图。
+	darkSrc: {
+		desktop: "assets/images/library-reading-desk-night.png",
+		mobile: "assets/images/library-reading-desk-night.png",
+	},
 	common: {
 		homeText: {
 			enable: false,
@@ -27,11 +32,13 @@ export const backgroundWallpaper: BackgroundWallpaperConfig = {
 		},
 	},
 	overlay: {
-		zIndex: -1,
-		homeOpacity: 0.28,
-		contentOpacity: 0.12,
-		homeBlur: 1,
-		contentBlur: 5,
+		zIndex: 0,
+		opacity: 1,
+		homeOpacity: 1,
+		contentOpacity: 1,
+		blur: 2,
+		homeBlur: 2,
+		contentBlur: 2,
 		cardOpacity: 0.9,
 	},
 };

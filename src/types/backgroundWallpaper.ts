@@ -1,16 +1,19 @@
 export type FullscreenWallpaperLayout = "classic" | "hero";
 
+export type BackgroundWallpaperSource =
+	| string
+	| string[]
+	| {
+			desktop?: string | string[];
+			mobile?: string | string[];
+			playerUrl?: string | string[];
+	  };
+
 export type BackgroundWallpaperConfig = {
 	mode: "banner" | "fullscreen" | "overlay" | "none"; // 壁纸模式：banner横幅模式、fullscreen全屏壁纸、overlay全屏透明覆盖模式或none纯色背景
 	playerEnable?: boolean; // 是否启用背景视频播放，默认false
-	src:
-		| string
-		| string[]
-		| {
-				desktop?: string | string[];
-				mobile?: string | string[];
-				playerUrl?: string | string[]; // 背景视频播放地址，支持单个视频路径或数组（多视频列表循环）
-		  }; // 支持单个图片、图片数组或分别设置桌面端和移动端图片
+	src: BackgroundWallpaperSource; // 支持单个图片、图片数组或分别设置桌面端和移动端图片
+	darkSrc?: BackgroundWallpaperSource; // 暗色主题图片；未配置时回退到 src
 	// 横幅壁纸和全屏壁纸共享配置
 	common?: {
 		dimOpacity?: number; // 横幅文字遮罩暗度，0-1之间，值越大越暗，默认0.15

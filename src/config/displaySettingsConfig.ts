@@ -40,10 +40,10 @@ export const displaySettingsConfig: DisplaySettingsConfig =
 		// ── 壁纸 (Wallpaper) ──────────────────────────────────
 
 		// 壁纸模式切换开关
-		wallpaperModeSwitchable: true,
+		wallpaperModeSwitchable: false,
 
 		// 全屏壁纸布局切换开关（classic / hero）
-		fullscreenLayoutSwitchable: true,
+		fullscreenLayoutSwitchable: false,
 
 		// 水波纹动画开关
 		wavesSwitchable: true,
@@ -60,8 +60,8 @@ export const displaySettingsConfig: DisplaySettingsConfig =
 		// 全屏壁纸/透明覆盖模式参数调节开关
 		// 设为 false 关闭所有滑块，或用对象形式单独控制每个滑块
 		overlaySwitchable: {
-			opacity: true,
-			blur: true,
+			opacity: false,
+			blur: false,
 			cardOpacity: true,
 		},
 
