@@ -7,8 +7,14 @@ export const pageTransitionConfig: PageTransitionConfig = {
 	text: siteConfig.title,
 	timing: {
 		cover: 300,
-		write: 650,
+		write: 950,
 		hold: 100,
 		reveal: 350,
+	},
+	writing: {
+		mode: "auto",
+		style: "fountain",
+		inkBleed: 0.48,
+		penLift: true,
 	},
 };

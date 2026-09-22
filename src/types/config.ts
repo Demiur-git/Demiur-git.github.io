@@ -50,6 +50,7 @@ export type {
 export type {
 	PageTransitionConfig,
 	PageTransitionTiming,
+	PageTransitionWritingConfig,
 } from "./pageTransitionConfig";
 export type {
 	Live2DWidgetConfig,

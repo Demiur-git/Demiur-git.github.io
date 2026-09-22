@@ -44,6 +44,7 @@ function shouldTurnPage(destination: string): boolean {
 }
 
 function clearPageTurnState(): void {
+	document.dispatchEvent(new Event("firefly:page-turn-writing-reset"));
 	document.documentElement.classList.remove(
 		"is-page-turning",
 		"page-turn-cover",
@@ -67,12 +68,21 @@ function startPageTurn(destination: string): void {
 	pageTurnActive = shouldTurnPage(destination);
 	if (!pageTurnActive) return;
 	const { cover, write, hold } = pageTransitionConfig.timing;
-	pageTurnReadyAt = performance.now() + cover + write + hold;
+	const startedAt = performance.now();
+	pageTurnReadyAt = startedAt + cover + write + hold;
 	// 连续导航时强制提交清理状态，确保同名 CSS 动画能够从头开始。
 	const overlay = document.getElementById("page-turn-overlay");
 	if (overlay) void overlay.offsetWidth;
 	const root = document.documentElement;
 	root.classList.add("is-page-turning", "page-turn-cover");
+	document.dispatchEvent(
+		new CustomEvent("firefly:page-turn-writing-start", {
+			detail: {
+				startAt: startedAt + cover,
+				duration: write,
+			},
+		}),
+	);
 }
 
 function revealPageTurn(): void {

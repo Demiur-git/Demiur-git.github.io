@@ -49,6 +49,7 @@ export type {
 	NavBarConfig,
 	PageTransitionConfig,
 	PageTransitionTiming,
+	PageTransitionWritingConfig,
 	PlantUMLConfig,
 	ProfileConfig,
 	ReadingPlanConfig,

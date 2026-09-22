@@ -118,7 +118,7 @@ html.is-animating.is-leaving .transition-leaving {
     position: absolute;
     top: 50%;
     left: 50%;
-    width: min(76vw, 52rem);
+    width: min(82vw, 60rem);
     text-align: center;
     opacity: 0;
     transform: translate(-50%, -50%);
@@ -133,25 +133,88 @@ html.is-animating.is-leaving .transition-leaving {
     color: var(--page-ink-soft);
 }
 
-.page-turn-title {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
+.page-turn-script {
+    position: relative;
     width: 100%;
     max-width: 100%;
+    margin-inline: auto;
+}
+
+.page-turn-title-svg {
+    display: block;
+    width: 100%;
+    max-height: clamp(7.5rem, 24vh, 13rem);
+    margin-inline: auto;
+    overflow: visible;
+}
+
+.page-turn-glyph {
+    fill: var(--page-ink);
     font-family: var(--font-library-serif);
-    font-size: inherit;
+    font-size: 96px;
+    font-variation-settings: "wght" 620;
+    font-weight: 620;
+    paint-order: stroke fill;
+}
+
+.page-turn-mask-stroke {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+}
+
+.page-turn-glyphs-dry {
+    opacity: 0.96;
+}
+
+.page-turn-glyphs-wet {
+    opacity: 0;
+    mix-blend-mode: multiply;
+}
+
+:root.dark .page-turn-glyphs-wet {
+    mix-blend-mode: screen;
+}
+
+.page-turn-auto-pen {
+    opacity: 0;
+    color: var(--page-ink);
+    filter: drop-shadow(0 3px 3px var(--page-shadow));
+    transition: opacity 28ms linear;
+    will-change: transform, opacity;
+}
+
+.page-turn-auto-pen[data-active="true"] {
+    opacity: 1;
+}
+
+.page-turn-auto-pen .pen-body {
+    fill: var(--page-paper-end);
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linejoin: round;
+}
+
+.page-turn-auto-pen .pen-detail {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+}
+
+.page-turn-pen-drop {
+    fill: var(--page-ink);
+    opacity: 0.76;
+}
+
+.page-turn-title-fallback {
+    display: none;
+    flex-wrap: wrap;
+    justify-content: center;
+    font-family: var(--font-library-serif);
+    font-size: clamp(2.1rem, 7vw, 5.6rem);
     font-variation-settings: "wght" 620;
     line-height: 1.25;
     letter-spacing: 0.06em;
-}
-
-.page-turn-script {
-    position: relative;
-    display: inline-block;
-    width: min(100%, var(--script-width));
-    max-width: 100%;
-    font-size: clamp(2.1rem, 7vw, 5.6rem);
 }
 
 .page-turn-character {
@@ -162,36 +225,12 @@ html.is-animating.is-leaving .transition-leaving {
     text-shadow: 0 0 0 transparent;
 }
 
-.page-turn-pen {
-    position: absolute;
-    top: 58%;
-    left: 0;
-    width: clamp(2rem, 4vw, 3.2rem);
-    height: auto;
-    overflow: visible;
-    opacity: 0;
-    color: var(--page-ink);
-    filter: drop-shadow(0 4px 5px var(--page-shadow));
-    transform: translate(-50%, -50%) rotate(-8deg);
+#page-turn-overlay[data-writing-fallback="true"] .page-turn-title-svg {
+    display: none;
 }
 
-.page-turn-pen .pen-body {
-    fill: var(--page-paper-end);
-    stroke: currentColor;
-    stroke-width: 2;
-    stroke-linejoin: round;
-}
-
-.page-turn-pen .pen-detail,
-.page-turn-pen .pen-glint {
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.8;
-    stroke-linecap: round;
-}
-
-.page-turn-pen .pen-glint {
-    stroke: var(--page-accent);
+#page-turn-overlay[data-writing-fallback="true"] .page-turn-title-fallback {
+    display: flex;
 }
 
 .page-turn-catalog {
@@ -228,12 +267,16 @@ html.page-turn-cover .page-turn-writing {
     animation: page-writing-stage var(--page-write) ease-out var(--page-cover) both;
 }
 
-html.page-turn-cover .page-turn-character {
+html.page-turn-cover #page-turn-overlay[data-writing-fallback="true"] .page-turn-character {
     animation: page-ink-character var(--char-duration) cubic-bezier(0.2, 0.72, 0.2, 1) var(--char-delay) both;
 }
 
-html.page-turn-cover .page-turn-pen {
-    animation: page-pen-writing var(--page-write) cubic-bezier(0.22, 0.7, 0.25, 1) var(--page-cover) both;
+html.page-turn-cover .page-turn-mask-stroke {
+    animation: page-ink-stroke var(--stroke-duration) cubic-bezier(0.3, 0.05, 0.25, 1) var(--stroke-delay) both;
+}
+
+html.page-turn-cover .page-turn-glyphs-wet {
+    animation: page-wet-ink var(--page-write) ease-out var(--page-cover) both;
 }
 
 html.page-turn-reveal .page-turn-sheet {
@@ -251,8 +294,16 @@ html.page-turn-reveal .page-turn-character {
     filter: none;
 }
 
-html.page-turn-reveal .page-turn-pen {
-    display: none;
+html.page-turn-reveal .page-turn-mask-stroke {
+    stroke-dashoffset: 0;
+}
+
+html.page-turn-reveal .page-turn-glyphs-wet {
+    opacity: 0.12;
+}
+
+html.page-turn-reveal .page-turn-auto-pen {
+    opacity: 0;
 }
 
 @keyframes page-turn-cover {
@@ -290,12 +341,16 @@ html.page-turn-reveal .page-turn-pen {
     }
 }
 
-@keyframes page-pen-writing {
-    0% { left: 0; opacity: 0; transform: translate(-50%, -50%) rotate(-8deg); }
-    5% { opacity: 1; }
-    48% { transform: translate(-50%, -56%) rotate(-4deg); }
-    92% { opacity: 1; }
-    100% { left: 100%; opacity: 0; transform: translate(-50%, -50%) rotate(-8deg); }
+@keyframes page-ink-stroke {
+    from { stroke-dashoffset: 1; }
+    to { stroke-dashoffset: 0; }
+}
+
+@keyframes page-wet-ink {
+    0% { opacity: 0; }
+    8% { opacity: 0.66; }
+    72% { opacity: 0.42; }
+    100% { opacity: 0.14; }
 }
 
 @keyframes page-writing-away {
@@ -330,16 +385,16 @@ html.page-turn-reveal .page-turn-pen {
         width: 82vw;
     }
 
-    .page-turn-title {
-        line-height: 1.35;
+    .page-turn-title-svg {
+        max-height: 10rem;
     }
 
-    .page-turn-script {
+    .page-turn-glyphs-wet {
+        filter: none;
+    }
+
+    .page-turn-title-fallback {
         font-size: clamp(1.8rem, 12vw, 3rem);
-    }
-
-    .page-turn-pen {
-        top: 58%;
     }
 
     .page-turn-catalog {

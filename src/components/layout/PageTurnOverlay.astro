@@ -1,22 +1,135 @@
 ---
 import { pageTransitionConfig, siteConfig } from "@/config";
+import { createPageWritingLayout } from "@/utils/page-writing-paths";
 
 const title = pageTransitionConfig.text?.trim() || siteConfig.title;
 const characters = Array.from(title);
 const { cover, write, hold, reveal } = pageTransitionConfig.timing;
+const { inkBleed, penLift } = pageTransitionConfig.writing;
 const characterStep = write / Math.max(characters.length, 1);
+const writingLayout = createPageWritingLayout(title, penLift);
+const wetInkBlur = Math.max(0.18, Math.min(1.4, inkBleed * 1.8));
+const wetInkSpread = Math.max(0.4, Math.min(2.4, inkBleed * 2.5));
 ---
 
 <div
 	id="page-turn-overlay"
 	aria-hidden="true"
+	data-pen-lift={penLift.toString()}
 	style={`--page-cover:${cover}ms;--page-write:${write}ms;--page-hold:${hold}ms;--page-reveal:${reveal}ms;--page-reveal-fade:${reveal * 0.55}ms;`}
 >
 	<div class="page-turn-sheet">
 		<div class="page-turn-writing">
 			<span class="page-turn-overline">PRIVATE LIBRARY · TURNING A NEW PAGE</span>
-			<div class="page-turn-script" style={`--script-width:${Math.max(2, characters.length * 1.15)}em;`}>
-				<div class="page-turn-title" aria-label={title}>
+			<div class="page-turn-script">
+				<svg
+					class="page-turn-title-svg"
+					viewBox={`0 0 ${writingLayout.viewWidth} ${writingLayout.viewHeight}`}
+					role="presentation"
+					preserveAspectRatio="xMidYMid meet"
+				>
+					<defs>
+						<filter
+							id="page-writing-wet-ink"
+							x="-12%"
+							y="-12%"
+							width="124%"
+							height="124%"
+						>
+							<feTurbulence
+								type="fractalNoise"
+								baseFrequency="0.018 0.075"
+								numOctaves="1"
+								seed="17"
+								result="paperNoise"
+							/>
+							<feDisplacementMap
+								in="SourceGraphic"
+								in2="paperNoise"
+								scale={wetInkSpread}
+								xChannelSelector="R"
+								yChannelSelector="G"
+								result="roughInk"
+							/>
+							<feGaussianBlur in="roughInk" stdDeviation={wetInkBlur} />
+						</filter>
+						{
+							writingLayout.glyphs.map((glyph) => (
+								<mask
+									id={glyph.maskId}
+									maskUnits="userSpaceOnUse"
+									x="0"
+									y="0"
+									width={writingLayout.viewWidth}
+									height={writingLayout.viewHeight}
+								>
+									<rect
+										width={writingLayout.viewWidth}
+										height={writingLayout.viewHeight}
+										fill="black"
+									/>
+									{glyph.strokes.map((stroke) => (
+										<path
+											class="page-turn-mask-stroke"
+											d={stroke.d}
+											pathLength="1"
+											fill="none"
+											stroke="white"
+											stroke-width={glyph.width >= 90 ? 34 : 28}
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											data-start={stroke.startRatio}
+											data-end={stroke.endRatio}
+											style={`--stroke-delay:${cover + stroke.startRatio * write}ms;--stroke-duration:${Math.max(42, (stroke.endRatio - stroke.startRatio) * write)}ms;`}
+										/>
+									))}
+								</mask>
+							))
+						}
+					</defs>
+
+					<g class="page-turn-glyphs page-turn-glyphs-dry">
+						{
+							writingLayout.glyphs.map((glyph) => (
+								<text
+									class="page-turn-glyph"
+									x={glyph.x}
+									y={glyph.baseline}
+									text-anchor="middle"
+									mask={`url(#${glyph.maskId})`}
+								>
+									{glyph.character}
+								</text>
+							))
+						}
+					</g>
+					<g
+						class="page-turn-glyphs page-turn-glyphs-wet"
+						filter="url(#page-writing-wet-ink)"
+					>
+						{
+							writingLayout.glyphs.map((glyph) => (
+								<text
+									class="page-turn-glyph"
+									x={glyph.x}
+									y={glyph.baseline}
+									text-anchor="middle"
+									mask={`url(#${glyph.maskId})`}
+								>
+									{glyph.character}
+								</text>
+							))
+						}
+					</g>
+
+					<g id="page-turn-auto-pen" class="page-turn-auto-pen">
+						<circle class="page-turn-pen-drop" r="2.4" cx="0" cy="0"></circle>
+						<path class="pen-body" d="M 0 0 L 11 -22 L 18 -28 L 22 -24 L 16 -17 Z"></path>
+						<path class="pen-detail" d="M 0 0 L 16 -26 M 11 -22 L 16 -17"></path>
+					</g>
+				</svg>
+
+				<div class="page-turn-title-fallback" aria-label={title}>
 					{characters.map((character, index) => (
 						<span
 							class="page-turn-character"
@@ -26,14 +139,94 @@ const characterStep = write / Math.max(characters.length, 1);
 						</span>
 					))}
 				</div>
-				<svg class="page-turn-pen" viewBox="0 0 48 48" role="presentation">
-					<path class="pen-body" d="M36.8 5.8 42.2 11 18.6 34.7l-8.4 3.1 3-8.5L36.8 5.8Z" />
-					<path class="pen-detail" d="m31.7 10.9 5.4 5.3M13.2 29.3l5.4 5.4M10.2 37.8l5.1-1.9" />
-					<path class="pen-glint" d="m39.5 4.7.8-2.3M43.2 7.4l2.2-.9M42 3.9l1.5-1.7" />
-				</svg>
 			</div>
 		</div>
 		<span class="page-turn-catalog">CATALOG · NEXT VOLUME</span>
 		<span class="page-turn-stamp">阅览中</span>
 	</div>
 </div>
+
+<script>
+	const START_EVENT = "firefly:page-turn-writing-start";
+	const RESET_EVENT = "firefly:page-turn-writing-reset";
+	let writingFrame = 0;
+
+	type WritingEventDetail = {
+		startAt: number;
+		duration: number;
+	};
+
+	function getWritingElements() {
+		const overlay = document.getElementById("page-turn-overlay");
+		const pen = document.getElementById("page-turn-auto-pen");
+		const paths = Array.from(
+			document.querySelectorAll<SVGPathElement>(".page-turn-mask-stroke"),
+		);
+		return { overlay, pen, paths };
+	}
+
+	function resetWritingPen() {
+		if (writingFrame) cancelAnimationFrame(writingFrame);
+		writingFrame = 0;
+		const { pen } = getWritingElements();
+		pen?.removeAttribute("transform");
+		pen?.setAttribute("data-active", "false");
+	}
+
+	function startWritingPen(event: Event) {
+		resetWritingPen();
+		const { overlay, pen, paths } = getWritingElements();
+		if (!overlay || !pen || paths.length === 0 || !(paths[0] instanceof SVGPathElement)) {
+			overlay?.setAttribute("data-writing-fallback", "true");
+			return;
+		}
+		overlay.removeAttribute("data-writing-fallback");
+
+		const { startAt, duration } = (event as CustomEvent<WritingEventDetail>).detail;
+		const penLift = overlay.dataset.penLift === "true";
+
+		const draw = (now: number) => {
+			const progress = Math.max(0, Math.min(1, (now - startAt) / duration));
+			const activePath = paths.find((path) => {
+				const start = Number(path.dataset.start || 0);
+				const end = Number(path.dataset.end || 1);
+				return progress >= start && progress <= end;
+			});
+
+			if (activePath && now >= startAt && progress < 1) {
+				const start = Number(activePath.dataset.start || 0);
+				const end = Number(activePath.dataset.end || 1);
+				const localProgress = Math.max(0, Math.min(1, (progress - start) / (end - start)));
+				const length = activePath.getTotalLength();
+				const point = activePath.getPointAtLength(length * localProgress);
+				const nextPoint = activePath.getPointAtLength(
+					Math.min(length, length * localProgress + 0.8),
+				);
+				const angle =
+					(Math.atan2(nextPoint.y - point.y, nextPoint.x - point.x) * 180) /
+					Math.PI;
+				const settle = Math.min(1, localProgress / 0.1);
+				const lift = penLift ? (1 - settle) * 3.5 : 0;
+				pen.setAttribute(
+					"transform",
+					`translate(${point.x} ${point.y - lift}) rotate(${angle})`,
+				);
+				pen.setAttribute("data-active", "true");
+			} else {
+				pen.setAttribute("data-active", "false");
+			}
+
+			if (progress < 1) {
+				writingFrame = requestAnimationFrame(draw);
+			} else {
+				writingFrame = 0;
+				pen.setAttribute("data-active", "false");
+			}
+		};
+
+		writingFrame = requestAnimationFrame(draw);
+	}
+
+	document.addEventListener(START_EVENT, startWritingPen);
+	document.addEventListener(RESET_EVENT, resetWritingPen);
+</script>
