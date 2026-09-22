@@ -157,10 +157,10 @@ const logoVariants = await Promise.all(
     </script>
     <div class:list={[
         className,
-        "overflow-visible! h-18 px-4"
+        "navbar-book-shell overflow-visible! h-20 px-4"
     ]}>
-        <div class="mx-auto h-full w-full max-w-(--page-width) grid grid-cols-[auto_minmax(0,1fr)_auto] items-center">
-            <a href={url('/')} class="btn-plain scale-animation rounded-lg h-13 px-3 md:px-5 font-bold active:scale-95">
+        <div class="navbar-book-page mx-auto h-full w-full max-w-(--page-width) grid grid-cols-[auto_minmax(0,1fr)_auto] items-center">
+            <a href={url('/')} class="navbar-book-spine btn-plain rounded-lg h-14 px-3 md:px-5 font-bold">
                 <div class:list={[
                     "library-navbar-brand flex flex-row items-center text-md",
                     siteConfig.navbar.followTheme ? "text-(--primary)" : "dark:text-white text-black"
@@ -189,17 +189,17 @@ const logoVariants = await Promise.all(
                     {navbarTitle}
                 </div>
             </a>
-            <div class:list={[
+            <nav aria-label="主导航" class:list={[
                 "hidden lg:flex items-center space-x-1 col-start-2",
                 isNavbarMenuCentered
                     ? "justify-center"
                     : "justify-start pl-2"
             ]}>
-                {links.map((l) => {
-                    return <DropdownMenu link={l} />;
+                {links.map((l, index) => {
+                    return <DropdownMenu link={l} index={index} />;
                 })}
-            </div>
-            <div class="flex col-start-3 justify-self-end">
+            </nav>
+            <div class="navbar-page-tools flex col-start-3 justify-self-end">
                 <!--<SearchPanel client:load>-->
                 <Search
                     client:load

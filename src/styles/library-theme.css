@@ -11,6 +11,13 @@
 	--library-soft-shadow: 0 18px 45px rgb(69 51 36 / 9%);
 	--font-library-serif: "Noto Serif SC Variable", "Songti SC", SimSun, serif;
 	--font-library-sans: "Noto Sans SC Variable", "Microsoft YaHei", system-ui, sans-serif;
+	--font-site-handwriting: var(
+		--font-navbar-title,
+		"Kaiti SC",
+		STKaiti,
+		KaiTi,
+		cursive
+	);
 
 	--primary: var(--library-moss);
 	--page-bg: var(--library-paper);
@@ -127,18 +134,79 @@ body {
 		var(--card-bg);
 }
 
-/* 导航栏作为一条安静的馆藏目录条。 */
+/* 书本式导航：外层是横放书册，菜单是夹在页芯中的章节书签。 */
 #navbar {
-	border-radius: 0 0 0.9rem 0.9rem;
+	--nav-book-cover: #755044;
+	--nav-book-cover-deep: #53382f;
+	--nav-book-page: #fffaf0;
+	--nav-book-page-deep: #e7d8bd;
+	--nav-book-ink: #3c342d;
+	--nav-book-muted: rgb(60 52 45 / 58%);
+	--nav-book-rule: rgb(107 75 54 / 16%);
+	border-radius: 0 0 1rem 1rem;
 }
 
-#navbar > div {
-	border: 1px solid var(--library-rule);
+:root.dark #navbar {
+	--nav-book-cover: #243d32;
+	--nav-book-cover-deep: #14271f;
+	--nav-book-page: #202a24;
+	--nav-book-page-deep: #121c17;
+	--nav-book-ink: #eee8dc;
+	--nav-book-muted: rgb(238 232 220 / 62%);
+	--nav-book-rule: rgb(210 180 122 / 14%);
+}
+
+#navbar > .navbar-book-shell {
+	position: relative;
+	isolation: isolate;
+	border: 1px solid color-mix(in srgb, var(--nav-book-cover-deep) 72%, transparent);
 	border-top: 0;
+	border-bottom: 5px solid var(--nav-book-cover-deep);
+	border-radius: 0 0 1rem 1rem;
 	background:
-		linear-gradient(90deg, rgb(178 146 95 / 7%), transparent 22%, transparent 78%, rgb(86 107 84 / 6%)),
-		var(--card-bg) !important;
-	box-shadow: 0 10px 30px rgb(69 51 36 / 7%);
+		linear-gradient(90deg, rgb(255 255 255 / 10%), transparent 16%, transparent 84%, rgb(0 0 0 / 8%)),
+		linear-gradient(180deg, var(--nav-book-page) 0 87%, var(--nav-book-page-deep) 87% 100%) !important;
+	box-shadow:
+		inset 0 -1px 0 rgb(255 255 255 / 44%),
+		0 2px 0 color-mix(in srgb, var(--nav-book-page-deep) 72%, transparent),
+		0 10px 24px rgb(49 33 24 / 16%);
+}
+
+#navbar > .navbar-book-shell::after {
+	position: absolute;
+	right: 1.2rem;
+	bottom: -4px;
+	left: 1.2rem;
+	z-index: 0;
+	height: 5px;
+	border-top: 1px solid color-mix(in srgb, var(--library-brass) 42%, transparent);
+	border-bottom: 1px solid color-mix(in srgb, var(--nav-book-cover-deep) 80%, transparent);
+	content: "";
+	background: repeating-linear-gradient(0deg, var(--nav-book-page-deep) 0 1px, color-mix(in srgb, var(--nav-book-page) 78%, var(--nav-book-page-deep)) 1px 2px);
+	pointer-events: none;
+}
+
+#navbar .navbar-book-page {
+	position: relative;
+	z-index: 1;
+	color: var(--nav-book-ink);
+}
+
+#navbar .navbar-book-spine {
+	position: relative;
+	align-self: center;
+	margin: 0;
+	border: 0;
+	border-radius: 0;
+	background: transparent;
+	box-shadow: none;
+	color: var(--nav-book-ink);
+	transform: translateY(2px);
+	transition: color 180ms ease;
+}
+
+#navbar .navbar-book-spine::after {
+	display: none;
 }
 
 #navbar .navbar-logo {
@@ -146,9 +214,11 @@ body {
 }
 
 #navbar .library-navbar-brand {
-	font-family: var(--font-library-serif) !important;
-	font-weight: 700;
-	letter-spacing: 0.06em;
+	font-family: var(--font-site-handwriting) !important;
+	font-size: 1.16rem;
+	font-weight: 400;
+	letter-spacing: 0.035em;
+	text-shadow: 0 1px 0 color-mix(in srgb, var(--library-brass) 18%, transparent);
 }
 
 #navbar a,
@@ -156,40 +226,227 @@ body {
 	letter-spacing: 0.025em;
 }
 
-#navbar .dropdown-container > :is(a, button) {
+#navbar .library-nav-tab {
 	position: relative;
+	z-index: 1;
+	padding: 0 0.16rem;
+	transform: translateY(-5px);
 }
 
-#navbar .dropdown-container > :is(a, button)::after {
+#navbar .library-nav-tab + .library-nav-tab::before {
 	position: absolute;
-	right: 0.85rem;
-	bottom: 0.28rem;
-	left: 0.85rem;
-	height: 1px;
+	top: 0.72rem;
+	bottom: 0.72rem;
+	left: -0.18rem;
+	width: 1px;
 	content: "";
-	background: var(--library-brass);
-	transform: scaleX(0);
-	transform-origin: center;
-	transition: transform 180ms ease;
+	background: color-mix(in srgb, var(--library-wood) 24%, transparent);
 }
 
-#navbar .dropdown-container > :is(a, button):hover::after,
-#navbar .dropdown-container > :is(a, button):focus-visible::after {
-	transform: scaleX(1);
+#navbar .library-nav-trigger {
+	position: relative;
+	z-index: 0;
+	border: 0;
+	border-radius: 0;
+	background: transparent;
+	color: var(--nav-book-muted);
+	transition: color 180ms ease;
+}
+
+#navbar .library-nav-trigger::before {
+	display: none;
+}
+
+#navbar .library-nav-trigger::after {
+	position: absolute;
+	bottom: 0.18rem;
+	left: 50%;
+	z-index: 1;
+	width: 1.5rem;
+	height: 2px;
+	content: "";
+	background: var(--library-burgundy);
+	opacity: 0;
+	transform: translateX(-50%) scaleX(0.45);
+	transition: opacity 180ms ease, transform 180ms ease;
+}
+
+#navbar .library-nav-tab:hover .library-nav-trigger,
+#navbar .library-nav-trigger:focus-visible {
+	color: var(--library-burgundy);
+}
+
+#navbar .library-nav-tab[data-active="true"] {
+	z-index: 2;
+}
+
+#navbar .library-nav-tab[data-active="true"] .library-nav-trigger {
+	color: var(--library-burgundy);
+}
+
+#navbar .library-nav-tab[data-active="true"] .library-nav-trigger::after {
+	opacity: 1;
+	transform: translateX(-50%) scaleX(1);
+}
+
+#navbar .dropdown-menu {
+	/* 从浅色页芯与深色书边的交界处抽出，并由卡片覆盖下层书边。 */
+	padding-top: 0.95rem;
 }
 
 #navbar .dropdown-content {
-	min-width: 11rem;
-	border: 1px solid var(--library-rule) !important;
-	border-left: 3px solid var(--library-wood) !important;
+	position: relative;
+	top: 0 !important;
+	min-width: 13.5rem;
+	overflow: hidden;
+	border: 1px solid color-mix(in srgb, var(--library-wood) 32%, transparent) !important;
+	border-left: 4px solid var(--library-wood) !important;
+	border-radius: 0.3rem 0.8rem 0.8rem 0.3rem !important;
+	padding: 0.7rem !important;
 	background:
-		repeating-linear-gradient(0deg, transparent 0 1.85rem, rgb(107 75 54 / 5%) 1.9rem),
-		var(--float-panel-bg) !important;
-	box-shadow: 0 18px 38px rgb(69 51 36 / 14%) !important;
+		linear-gradient(90deg, transparent 0 2.35rem, rgb(154 90 99 / 18%) 2.35rem 2.42rem, transparent 2.42rem),
+		linear-gradient(145deg, rgb(255 255 255 / 38%), transparent 42%),
+		var(--nav-book-page) !important;
+	box-shadow:
+		4px 5px 0 -2px var(--nav-book-page-deep),
+		0 20px 42px rgb(45 31 22 / 22%) !important;
+}
+
+#navbar .dropdown-content::before {
+	position: absolute;
+	top: 0.5rem;
+	bottom: 0.5rem;
+	left: 0.45rem;
+	width: 0.55rem;
+	content: "";
+	background: radial-gradient(circle, color-mix(in srgb, var(--library-wood) 45%, transparent) 0 2px, transparent 2.5px) center top / 0.55rem 1.45rem repeat-y;
+	opacity: 0.65;
+	pointer-events: none;
+}
+
+#navbar .catalog-card-heading {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	margin: 0 0 0.38rem 1.4rem;
+	border-bottom: 1px dashed color-mix(in srgb, var(--library-brass) 45%, transparent);
+	padding: 0.12rem 0.35rem 0.48rem 0.25rem;
+	color: var(--library-moss);
+	font-family: var(--font-code);
+	font-size: 0.56rem;
+	font-weight: 700;
+	letter-spacing: 0.14em;
 }
 
 #navbar .dropdown-item {
-	border-radius: 0.45rem;
+	position: relative;
+	isolation: isolate;
+	justify-content: flex-start !important;
+	gap: 0;
+	margin: 0 !important;
+	border-left: 2px solid transparent;
+	border-radius: 0.28rem;
+	padding-right: 0.55rem;
+	padding-left: 0.45rem;
+	color: var(--nav-book-ink);
+	transition: color 180ms ease, background-color 180ms ease, border-color 180ms ease, padding-left 180ms ease;
+}
+
+#navbar .dropdown-item::after {
+	position: absolute;
+	top: calc(50% + 0.6875rem);
+	right: 0.25rem;
+	left: 0.35rem;
+	z-index: -1;
+	height: 1px;
+	content: "";
+	background: var(--nav-book-rule);
+	pointer-events: none;
+}
+
+#navbar .catalog-item-title {
+	display: inline-flex;
+	height: 1.5rem;
+	align-items: center;
+	line-height: 1.5rem;
+}
+
+#navbar .dropdown-item:hover,
+#navbar .dropdown-item:focus-visible,
+#navbar .dropdown-item[data-active="true"] {
+	border-left-color: var(--library-burgundy);
+	background: color-mix(in srgb, var(--library-burgundy) 9%, transparent);
+	color: var(--library-burgundy);
+	padding-left: 0.62rem;
+}
+
+#navbar .dropdown-item[data-active="true"] .catalog-item-mark {
+	border-color: currentColor;
+	opacity: 1;
+}
+
+#navbar .catalog-item-number {
+	display: inline-flex;
+	width: 1.55rem;
+	flex: 0 0 1.55rem;
+	align-items: center;
+	align-self: stretch;
+	justify-content: flex-start;
+	color: var(--library-brass);
+	font-family: var(--font-code);
+	font-size: 0.56rem;
+	line-height: 1;
+	letter-spacing: 0.08em;
+	transform: translateY(1px);
+}
+
+#navbar .catalog-item-mark {
+	margin-left: auto;
+	border: 1px solid color-mix(in srgb, currentColor 36%, transparent);
+	border-radius: 0.18rem;
+	padding: 0.08rem 0.25rem;
+	font-family: var(--font-code);
+	font-size: 0.48rem;
+	letter-spacing: 0.1em;
+	opacity: 0.48;
+}
+
+/* 搜索与主题等功能按钮成为书页边缘的工具签。 */
+#navbar .navbar-page-tools {
+	align-items: center;
+	gap: 0.18rem;
+	padding-left: 0.55rem;
+	transform: translateY(-5px);
+}
+
+#navbar .navbar-page-tools > button,
+#navbar .navbar-page-tools > div > button,
+#navbar #search-switch {
+	border: 1px solid var(--nav-book-rule);
+	border-radius: 0.42rem 0.42rem 0.15rem 0.15rem;
+	background: color-mix(in srgb, var(--nav-book-page) 84%, var(--library-brass) 16%);
+	box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--library-brass) 22%, transparent);
+}
+
+#navbar #search-bar {
+	position: relative;
+	border: 1px solid var(--nav-book-rule);
+	border-radius: 0.35rem 0.35rem 0.15rem 0.15rem;
+	background:
+		repeating-linear-gradient(0deg, transparent 0 0.68rem, var(--nav-book-rule) 0.68rem 0.72rem),
+		color-mix(in srgb, var(--nav-book-page) 88%, var(--library-brass) 12%);
+	box-shadow: inset 3px 0 0 color-mix(in srgb, var(--library-burgundy) 35%, transparent);
+}
+
+#navbar :is(#search-panel, #theme-mode-panel, #display-setting, #music-nav-panel) {
+	border: 1px solid color-mix(in srgb, var(--library-wood) 30%, transparent) !important;
+	border-left: 3px solid var(--library-wood) !important;
+	border-radius: 0.35rem 0.8rem 0.8rem 0.35rem !important;
+	background:
+		repeating-linear-gradient(0deg, transparent 0 2.35rem, var(--nav-book-rule) 2.35rem 2.4rem),
+		var(--nav-book-page) !important;
+	box-shadow: 4px 5px 0 -2px var(--nav-book-page-deep), 0 18px 38px rgb(45 31 22 / 20%) !important;
 }
 
 .post-card-wrapper {
@@ -203,12 +460,30 @@ body {
 @media (max-width: 767px) {
 	#navbar,
 	#navbar > div {
-		border-radius: 0 !important;
+		border-radius: 0 0 0.7rem 0.7rem !important;
+	}
+
+	#navbar > .navbar-book-shell {
+		border-bottom-width: 4px;
+	}
+
+	#navbar .navbar-book-spine {
+		margin-left: -1rem;
+		padding-right: 0.65rem;
+		padding-left: 0.9rem;
+	}
+
+	#navbar .navbar-page-tools {
+		padding-left: 0.25rem;
 	}
 }
 
 @media (prefers-reduced-motion: reduce) {
-	#navbar .dropdown-container > :is(a, button)::after {
+	#navbar .library-nav-trigger,
+	#navbar .library-nav-trigger::before,
+	#navbar .library-nav-trigger::after,
+	#navbar .dropdown-item,
+	#navbar .navbar-book-spine {
 		transition: none;
 	}
 }

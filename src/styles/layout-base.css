@@ -8,6 +8,16 @@
     min-height: calc(100vh - var(--content-top, 5.5rem));
   }
 
+  /* 短页面让页脚落在视口底部，长页面仍由内容自然撑开。
+     content-panel 自身已有最小高度，但绝对定位子级不会自动继承，
+     因此由 inner 建立纵向弹性布局承接剩余空间。 */
+  #content-panel-inner {
+    display: flex;
+    min-height: calc(100vh - var(--content-top, 5.5rem));
+    min-height: calc(100svh - var(--content-top, 5.5rem));
+    flex-direction: column;
+  }
+
   /* #main-grid 列几何全部来自 --cols-* / --*-display-*（computeGridColumns 生成）；
      子元素不做定位：侧栏包裹层是 display:contents，真正的 grid item 是内层元素 */
   #main-grid {

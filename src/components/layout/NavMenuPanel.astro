@@ -17,16 +17,19 @@ const navTitle = siteConfig.navbar.title || siteConfig.title;
     <!-- 抽屉：MD3 侧边导航，右侧滑入，占满整高，内部滚动 -->
     <aside class="mobile-menu-drawer" role="dialog" aria-modal="true" aria-label="导航菜单">
         <header class="mobile-menu-header">
-            <span class="mobile-menu-title">{navTitle}</span>
+            <div class="mobile-menu-heading">
+                <span class="mobile-menu-kicker">PRIVATE LIBRARY · CONTENTS</span>
+                <span class="mobile-menu-title">{navTitle}</span>
+            </div>
             <button type="button" class="mobile-menu-close" aria-label="关闭菜单">
                 <Icon name="material-symbols:close-rounded" class="text-[1.5rem]" />
             </button>
         </header>
         <nav class="mobile-menu-list">
             {processedLinks.map((link, index) => (
-                <div class="mobile-menu-item-root">
+                <div class="mobile-menu-item-root" data-mobile-nav-group>
                     {link.children && link.children.length > 0 ? (
-                        /* 有子菜单的项目：MD3 手风琴 */
+                        /* 有子菜单的项目：书页目录手风琴 */
                         <div class="mobile-dropdown" data-mobile-dropdown>
                             <button
                                 type="button"
@@ -35,6 +38,7 @@ const navTitle = siteConfig.navbar.title || siteConfig.title;
                                 aria-expanded="false"
                                 aria-controls={`mobile-submenu-${index}`}
                             >
+								<span class="mobile-menu-folio" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
 								{link.icon && <Icon name={link.icon} class="mobile-menu-item-icon" />}
                                 <span class="mobile-menu-item-label">{link.name}</span>
                                 <Icon name="material-symbols:keyboard-arrow-down-rounded"
@@ -42,13 +46,14 @@ const navTitle = siteConfig.navbar.title || siteConfig.title;
                                 />
                             </button>
                             <div id={`mobile-submenu-${index}`} class="mobile-submenu" data-mobile-submenu inert aria-hidden="true">
-                                {link.children.map((child) => (
+                                {link.children.map((child, childIndex) => (
                                     <a
                                         href={child.external ? child.url : url(child.url)}
                                         class="mobile-menu-item"
                                         data-nav-href={child.external ? undefined : url(child.url)}
                                         target={child.external ? "_blank" : null}
                                     >
+										<span class="mobile-menu-folio" aria-hidden="true">{String(childIndex + 1).padStart(2, "0")}</span>
 										{child.icon && <Icon name={child.icon} class="mobile-menu-item-icon" />}
                                         <span class="mobile-menu-item-label">{child.name}</span>
                                         {child.external && <Icon
@@ -67,6 +72,7 @@ const navTitle = siteConfig.navbar.title || siteConfig.title;
                             data-nav-href={link.external ? undefined : url(link.url)}
                             target={link.external ? "_blank" : null}
                         >
+							<span class="mobile-menu-folio" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
 							{link.icon && <Icon name={link.icon} class="mobile-menu-item-icon" />}
                             <span class="mobile-menu-item-label">{link.name}</span>
 							{!link.external && <Icon
@@ -82,24 +88,32 @@ const navTitle = siteConfig.navbar.title || siteConfig.title;
                 </div>
             ))}
         </nav>
+        <footer class="mobile-menu-colophon" aria-hidden="true">
+            <span>LIBRARY INDEX</span>
+            <span>PAGE 01</span>
+        </footer>
     </aside>
 </div>
 
 <style>
     @reference "../../styles/main.css";
 
-    /* ---- 手风琴子菜单 ---- */
+    /* ---- 目录页手风琴 ---- */
     .mobile-submenu {
         overflow: hidden;
         max-height: 0;
-        transition: max-height 0.3s var(--ease-standard);
+        margin-left: 24px;
+        border-left: 1px solid transparent;
+        transition: max-height 0.24s var(--ease-standard), margin 0.24s var(--ease-standard), border-color 0.24s var(--ease-standard);
         display: flex;
         flex-direction: column;
-        gap: 4px;
+        gap: 2px;
     }
     .mobile-dropdown[data-expanded="true"] .mobile-submenu {
         max-height: 60vh;
-        margin-top: 4px; /* 触发器与子项之间留距 */
+        margin-top: 4px;
+        margin-bottom: 8px;
+        border-left-color: color-mix(in srgb, var(--drawer-accent) 35%, transparent);
     }
 
     /* MD3 抽屉：面板改成透明全屏定位层，动画放在「遮罩/抽屉」子层上 */
@@ -138,32 +152,46 @@ const navTitle = siteConfig.navbar.title || siteConfig.title;
         pointer-events: auto;
     }
 
-    /* ---- 抽屉面板：fixed 锚定视口占满整高 ---- */
+    /* ---- 抽屉面板：一本从右侧展开的目录册 ---- */
     .mobile-menu-drawer {
-        /* MD3 color roles */
-        --drawer-on-surface: var(--deep-text);
-        --drawer-on-surface-variant: color-mix(in oklch, var(--deep-text) 70%, transparent);
-        --drawer-hover: color-mix(in oklch, var(--primary) 8%, transparent);
-        --drawer-selected-bg: color-mix(in oklch, var(--primary) 14%, transparent);
+        --drawer-paper: #fffaf0;
+        --drawer-paper-deep: #eadcc3;
+        --drawer-cover: #755044;
+        --drawer-ink: #3c342d;
+        --drawer-muted: rgb(60 52 45 / 62%);
+        --drawer-rule: rgb(107 75 54 / 15%);
+        --drawer-accent: var(--library-burgundy);
 
         position: fixed;
         top: 0;
         right: 0;
         bottom: 0;
-        width: min(70vw, 340px);
+        width: min(82vw, 370px);
         display: flex;
         flex-direction: column;
-        background: var(--card-bg);
-        border-radius: var(--radius-large) 0 0 var(--radius-large); /* 仅左侧，跟随主题统一圆角 */
-        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.28);
+        border-left: 8px solid var(--drawer-cover);
+        border-radius: 0.7rem 0 0 0.7rem;
+        background:
+            linear-gradient(90deg, rgb(0 0 0 / 7%), transparent 1.2rem),
+            repeating-linear-gradient(0deg, transparent 0 2.95rem, var(--drawer-rule) 2.95rem 3rem),
+            linear-gradient(145deg, rgb(255 255 255 / 50%), transparent 38%),
+            var(--drawer-paper);
+        box-shadow:
+            -4px 0 0 var(--drawer-paper-deep),
+            -18px 0 48px rgba(0, 0, 0, 0.3);
         overflow: hidden;
         transform: translateX(100%);
         transition: transform 0.3s var(--ease-decelerate);
     }
     :root.dark .mobile-menu-drawer {
-        --drawer-on-surface: rgba(255, 255, 255, 0.87);
-        --drawer-on-surface-variant: rgba(255, 255, 255, 0.62);
-        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+        --drawer-paper: #1c2922;
+        --drawer-paper-deep: #101a15;
+        --drawer-cover: #172f26;
+        --drawer-ink: #eee8dc;
+        --drawer-muted: rgb(238 232 220 / 64%);
+        --drawer-rule: rgb(210 180 122 / 13%);
+        --drawer-accent: var(--library-brass);
+        box-shadow: -4px 0 0 var(--drawer-paper-deep), -18px 0 48px rgba(0, 0, 0, 0.62);
     }
 
     /* 跟随导航栏毛玻璃（与 navbar.css 的下拉/面板同款）。
@@ -171,17 +199,25 @@ const navTitle = siteConfig.navbar.title || siteConfig.title;
        data-wallpaper-mode="none" 时无壁纸可模糊，落回上面的不透明卡片。 */
     html:not([data-wallpaper-mode="none"])[data-has-wallpaper] .mobile-menu-drawer,
     html:not([data-wallpaper-mode="none"]) body.wallpaper-transparent .mobile-menu-drawer {
-        background: rgba(255, 255, 255, 0.55) !important;
-        backdrop-filter: blur(var(--navbar-panel-blur, 20px)) saturate(1.5) !important;
-        box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
-        border: 1px solid rgba(0, 0, 0, 0.06) !important;
+        border: 0 !important;
+        border-left: 8px solid var(--drawer-cover) !important;
+        background:
+            linear-gradient(90deg, rgb(0 0 0 / 7%), transparent 1.2rem),
+            repeating-linear-gradient(0deg, transparent 0 2.95rem, var(--drawer-rule) 2.95rem 3rem),
+            color-mix(in srgb, var(--drawer-paper) 94%, transparent) !important;
+        backdrop-filter: blur(12px) saturate(1.08) !important;
+        box-shadow: -4px 0 0 var(--drawer-paper-deep), -18px 0 48px rgba(0, 0, 0, 0.3) !important;
     }
     :root.dark:not([data-wallpaper-mode="none"])[data-has-wallpaper] .mobile-menu-drawer,
     :root.dark:not([data-wallpaper-mode="none"]) body.wallpaper-transparent .mobile-menu-drawer {
-        background: rgba(23, 23, 23, 0.6) !important;
-        backdrop-filter: blur(var(--navbar-panel-blur, 20px)) saturate(1.5) !important;
-        box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border: 0 !important;
+        border-left: 8px solid var(--drawer-cover) !important;
+        background:
+            linear-gradient(90deg, rgb(0 0 0 / 16%), transparent 1.2rem),
+            repeating-linear-gradient(0deg, transparent 0 2.95rem, var(--drawer-rule) 2.95rem 3rem),
+            color-mix(in srgb, var(--drawer-paper) 95%, transparent) !important;
+        backdrop-filter: blur(12px) saturate(1.08) !important;
+        box-shadow: -4px 0 0 var(--drawer-paper-deep), -18px 0 48px rgba(0, 0, 0, 0.62) !important;
     }
     #nav-menu-panel:not(.float-panel-closed) .mobile-menu-drawer {
         transform: translateX(0);
@@ -193,13 +229,30 @@ const navTitle = siteConfig.navbar.title || siteConfig.title;
         align-items: center;
         justify-content: space-between;
         gap: 16px;
-        padding: 20px 16px 12px 24px;
+        min-height: 88px;
+        border-bottom: 1px solid color-mix(in srgb, var(--drawer-accent) 28%, transparent);
+        padding: 18px 16px 14px 24px;
         flex-shrink: 0;
     }
+    .mobile-menu-heading {
+        display: flex;
+        min-width: 0;
+        flex-direction: column;
+        gap: 3px;
+    }
+    .mobile-menu-kicker {
+        color: var(--drawer-accent);
+        font-family: var(--font-code);
+        font-size: 0.52rem;
+        font-weight: 700;
+        letter-spacing: 0.13em;
+    }
     .mobile-menu-title {
-        font-weight: 600;
-        font-size: 1.125rem;
-        color: var(--drawer-on-surface);
+		font-family: var(--font-site-handwriting);
+		font-weight: 400;
+		font-size: 1.28rem;
+		letter-spacing: 0.035em;
+        color: var(--drawer-ink);
         user-select: none;
         white-space: nowrap;
         overflow: hidden;
@@ -208,17 +261,21 @@ const navTitle = siteConfig.navbar.title || siteConfig.title;
     .mobile-menu-close {
         width: 40px;
         height: 40px;
-        border-radius: var(--radius-lg);
+        border: 1px solid color-mix(in srgb, var(--drawer-accent) 34%, transparent);
+        border-radius: 50%;
         flex-shrink: 0;
         display: flex;
         align-items: center;
         justify-content: center;
-        color: var(--drawer-on-surface-variant);
-        transition: background-color 0.2s, color 0.2s;
+        background: color-mix(in srgb, var(--drawer-paper) 84%, var(--drawer-accent) 16%);
+        color: var(--drawer-muted);
+        box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--drawer-paper) 76%, transparent);
+        transition: background-color 0.2s, color 0.2s, transform 0.2s;
     }
     .mobile-menu-close:hover {
-        background: var(--drawer-hover);
-        color: var(--drawer-on-surface);
+        background: color-mix(in srgb, var(--drawer-paper) 72%, var(--drawer-accent) 28%);
+        color: var(--drawer-accent);
+        transform: rotate(4deg);
     }
 
     /* ---- 列表 ---- */
@@ -226,48 +283,64 @@ const navTitle = siteConfig.navbar.title || siteConfig.title;
         flex: 1;
         overflow-y: auto;
         overscroll-behavior: contain;
-        padding: 8px 12px 16px;
+        padding: 12px 16px 18px 20px;
         display: flex;
         flex-direction: column;
-        gap: 6px;
+        gap: 3px;
     }
 
-    /* ---- MD3 导航项：leading icon + label，pill 状态层 ---- */
+    /* ---- 章节标签与馆藏目录行 ---- */
     .mobile-menu-item {
         display: flex;
         align-items: center;
-        gap: 16px;
+        gap: 11px;
         width: 100%;
-        min-height: 56px;
-        padding: 0 16px;
+        min-height: 50px;
+        padding: 0 10px 0 8px;
         border: none;
-        border-radius: var(--radius-large);
+        border-bottom: 1px solid var(--drawer-rule);
+        border-left: 3px solid transparent;
+        border-radius: 0.18rem;
         background: transparent;
-        color: var(--drawer-on-surface-variant);
-        font-size: 1rem;
-        font-weight: 500;
+        color: var(--drawer-muted);
+        font-family: var(--font-library-serif);
+        font-size: 0.96rem;
+        font-weight: 600;
         line-height: 1.25;
         cursor: pointer;
         user-select: none;
         text-align: left;
-        transition: background-color 0.2s, color 0.2s;
+        transition: background-color 0.2s, color 0.2s, border-color 0.2s, padding-left 0.2s;
     }
     .mobile-menu-item:hover {
-        background: var(--drawer-hover);
-        color: var(--drawer-on-surface);
+        border-left-color: color-mix(in srgb, var(--drawer-accent) 55%, transparent);
+        background: color-mix(in srgb, var(--drawer-accent) 8%, transparent);
+        color: var(--drawer-ink);
+        padding-left: 12px;
     }
     .mobile-menu-item:active {
-        background: color-mix(in oklch, var(--primary) 12%, transparent);
+        background: color-mix(in srgb, var(--drawer-accent) 14%, transparent);
     }
-    .mobile-menu-item[data-active="true"] {
-        background: var(--drawer-selected-bg);
-        color: var(--primary);
+    .mobile-menu-item[data-active="true"],
+    .mobile-menu-item-root[data-active="true"] > .mobile-dropdown > .mobile-menu-item {
+        border-left-color: var(--drawer-accent);
+        background:
+            linear-gradient(90deg, color-mix(in srgb, var(--drawer-accent) 16%, transparent), transparent 76%);
+        color: var(--drawer-accent);
+    }
+    .mobile-menu-folio {
+        width: 1.45rem;
+        flex: 0 0 1.45rem;
+        color: var(--library-brass);
+        font-family: var(--font-code);
+        font-size: 0.56rem;
+        letter-spacing: 0.08em;
     }
     .mobile-menu-item-icon {
         flex-shrink: 0;
-        font-size: 1.5rem;
-        width: 1.5rem;
-        height: 1.5rem;
+        font-size: 1.25rem;
+        width: 1.25rem;
+        height: 1.25rem;
     }
     .mobile-menu-item-label {
         flex: 1;
@@ -284,12 +357,46 @@ const navTitle = siteConfig.navbar.title || siteConfig.title;
         transform: rotate(180deg);
     }
     .mobile-menu-item-external {
-        color: var(--drawer-on-surface-variant);
+        color: var(--drawer-muted);
     }
 
     /* ---- 子项缩进 ---- */
     .mobile-submenu .mobile-menu-item {
-        padding-left: 52px;
+        min-height: 44px;
+        padding-left: 14px;
+        font-family: var(--font-library-sans);
+        font-size: 0.88rem;
+    }
+
+    .mobile-menu-colophon {
+        display: flex;
+        flex-shrink: 0;
+        align-items: center;
+        justify-content: space-between;
+        border-top: 1px solid color-mix(in srgb, var(--drawer-accent) 24%, transparent);
+        padding: 11px 18px 13px 24px;
+        color: var(--drawer-muted);
+        font-family: var(--font-code);
+        font-size: 0.5rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+    }
+
+    @media (max-width: 420px) {
+        .mobile-menu-drawer {
+            width: min(88vw, 350px);
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .mobile-menu-scrim,
+        .mobile-menu-drawer,
+        .mobile-submenu,
+        .mobile-menu-item,
+        .mobile-menu-item-arrow,
+        .mobile-menu-close {
+            transition: none;
+        }
     }
 </style>
 
@@ -337,6 +444,12 @@ const navTitle = siteConfig.navbar.title || siteConfig.title;
 
     function markActiveNav() {
         const path = location.pathname;
+		document.querySelectorAll("[data-mobile-nav-group]").forEach((group) => {
+			group.setAttribute("data-active", "false");
+		});
+		document.querySelectorAll("[data-mobile-dropdown]").forEach((dropdown) => {
+			setDropdownExpanded(dropdown, false);
+		});
         document.querySelectorAll(".mobile-menu-item[data-nav-href]").forEach((item) => {
             const href = item.getAttribute("data-nav-href");
             let active = false;
@@ -349,6 +462,7 @@ const navTitle = siteConfig.navbar.title || siteConfig.title;
             }
             item.setAttribute("data-active", active ? "true" : "false");
             if (active) {
+				item.closest("[data-mobile-nav-group]")?.setAttribute("data-active", "true");
                 const group = item.closest("[data-mobile-dropdown]");
                 if (group) setDropdownExpanded(group, true);
             }

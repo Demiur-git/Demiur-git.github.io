@@ -392,7 +392,13 @@ async function generatePoster() {
 
 		ctx.textAlign = "left";
 		ctx.fillStyle = headerTextColor;
-		ctx.font = `700 ${16 * scale}px 'Roboto', sans-serif`;
+		const navbarBrand = document.querySelector<HTMLElement>(
+			".library-navbar-brand",
+		);
+		const siteTitleFontFamily = navbarBrand
+			? getComputedStyle(navbarBrand).fontFamily
+			: '"Kaiti SC", STKaiti, KaiTi, cursive';
+		ctx.font = `400 ${18 * scale}px ${siteTitleFontFamily}`;
 
 		// 站点 Logo，效果对齐导航栏：Logo 在前，标题紧随其后
 		const logoGap = 8 * scale;

@@ -150,10 +150,10 @@ html.is-animating.is-leaving .transition-leaving {
 
 .page-turn-glyph {
     fill: var(--page-ink);
-    font-family: var(--font-library-serif);
+	font-family: var(--font-site-handwriting);
     font-size: 96px;
-    font-variation-settings: "wght" 620;
-    font-weight: 620;
+	font-variation-settings: normal;
+	font-weight: 400;
     paint-order: stroke fill;
 }
 
@@ -210,9 +210,10 @@ html.is-animating.is-leaving .transition-leaving {
     display: none;
     flex-wrap: wrap;
     justify-content: center;
-    font-family: var(--font-library-serif);
+	font-family: var(--font-site-handwriting);
     font-size: clamp(2.1rem, 7vw, 5.6rem);
-    font-variation-settings: "wght" 620;
+	font-variation-settings: normal;
+	font-weight: 400;
     line-height: 1.25;
     letter-spacing: 0.06em;
 }

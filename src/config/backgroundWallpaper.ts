@@ -36,9 +36,9 @@ export const backgroundWallpaper: BackgroundWallpaperConfig = {
 		opacity: 1,
 		homeOpacity: 1,
 		contentOpacity: 1,
-		blur: 2,
-		homeBlur: 2,
-		contentBlur: 2,
+		blur: 5,
+		homeBlur: 5,
+		contentBlur: 5,
 		cardOpacity: 0.9,
 	},
 };

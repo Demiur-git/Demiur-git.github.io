@@ -7,10 +7,11 @@ import { url } from "@/utils/url-utils";
 
 interface Props {
 	link: NavBarLink;
+	index?: number;
 	class?: string;
 }
 
-const { link, class: className } = Astro.props;
+const { link, index = 0, class: className } = Astro.props;
 
 // 检查 link 是否存在
 if (!link) {
@@ -20,33 +21,54 @@ if (!link) {
 const processedLink = link;
 
 const hasChildren = processedLink.children && processedLink.children.length > 0;
+const navHref =
+	!hasChildren && !processedLink.external ? url(processedLink.url) : undefined;
+const childPaths = hasChildren
+	? processedLink.children
+			?.filter((child) => !child.external)
+			.map((child) => url(child.url))
+			.join("|")
+	: undefined;
+const catalogNumber = String(index + 1).padStart(2, "0");
 ---
 
-<div class:list={["dropdown-container", className]} data-dropdown>
+<div
+	class:list={["dropdown-container", "library-nav-tab", className]}
+	data-dropdown
+	data-nav-href={navHref}
+	data-nav-paths={childPaths}
+>
 	{hasChildren ? (
 		<button 
-			class="btn-plain scale-animation rounded-lg h-10 font-bold px-4 pr-8 active:scale-95 dropdown-trigger relative"
+			class="btn-plain h-11 font-bold px-4 pr-8 dropdown-trigger library-nav-trigger relative"
 			aria-expanded="false"
 			aria-haspopup="true"
 			data-dropdown-trigger
 		>
-			<div class="flex items-center gap-1.5">
+			<div class="flex items-center gap-1.5 library-nav-label">
 				{processedLink.icon && <Icon name={processedLink.icon} class="text-[1.1rem] mr-1.5 navbar-icon" />}
-				{processedLink.name}
+				<span>{processedLink.name}</span>
 			</div>
 			<Icon name="material-symbols:keyboard-arrow-down-rounded" class="text-[1.2rem] transition-transform duration-200 dropdown-arrow absolute right-2.5 top-1/2 -translate-y-1/2" />
 		</button>
 		<div class="dropdown-menu" data-dropdown-menu>
 			<DropdownPanel class="dropdown-content">
+				<div class="catalog-card-heading" aria-hidden="true">
+					<span>LIBRARY INDEX</span>
+					<span>{catalogNumber}</span>
+				</div>
 				{processedLink.children?.map((child, index) => (
 					<DropdownItem
 						href={child.external ? child.url : url(child.url)}
 						target={child.external ? "_blank" : undefined}
 						isLast={index === (processedLink.children?.length || 0) - 1}
 						class="dropdown-item focus-ring-inset h-10"
+						data-nav-href={child.external ? undefined : url(child.url)}
 					>
+						<span class="catalog-item-number" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
 						{child.icon && <Icon name={child.icon} class="text-[1.25rem] mr-3 navbar-icon" />}
-						<span>{child.name}</span>
+						<span class="catalog-item-title">{child.name}</span>
+						<span class="catalog-item-mark" aria-hidden="true">COL.</span>
 						{child.external && (
 							<Icon name="fa7-solid:arrow-up-right-from-square" class="text-[0.75rem] text-black/25 dark:text-white/25 ml-auto" />
 						)}
@@ -59,11 +81,11 @@ const hasChildren = processedLink.children && processedLink.children.length > 0;
 			aria-label={processedLink.name} 
 			href={processedLink.external ? processedLink.url : url(processedLink.url)} 
 			target={processedLink.external ? "_blank" : null}
-			class="btn-plain scale-animation rounded-lg h-10 font-bold px-4 active:scale-95"
+			class="btn-plain h-11 font-bold px-4 library-nav-trigger"
 		>
-			<div class="flex items-center gap-1.5">
+			<div class="flex items-center gap-1.5 library-nav-label">
 				{processedLink.icon && <Icon name={processedLink.icon} class="text-[1.1rem] mr-1.5 navbar-icon" />}
-				{processedLink.name}
+				<span>{processedLink.name}</span>
 				{processedLink.external && <Icon name="fa7-solid:arrow-up-right-from-square" class="text-[0.875rem] transition -translate-y-px ml-1 text-black/20 dark:text-white/20" />}
 			</div>
 		</a>
@@ -78,7 +100,8 @@ const hasChildren = processedLink.children && processedLink.children.length > 0;
 	}
 
 	.dropdown-menu {
-		@apply absolute top-full left-0 pt-2 pointer-events-none z-50;
+		@apply absolute top-full left-1/2 pt-2 pointer-events-none z-50;
+		transform: translateX(-50%);
 	}
 
 	.dropdown-container:hover .dropdown-menu,
@@ -100,6 +123,45 @@ const hasChildren = processedLink.children && processedLink.children.length > 0;
 </style>
 
 <script>
+	function normalizePath(value: string) {
+		try {
+			const path = new URL(value, location.href).pathname;
+			return path.length > 1 ? path.replace(/\/+$/, "") : path;
+		} catch {
+			return value;
+		}
+	}
+
+	function syncDesktopNavState() {
+		const currentPath = normalizePath(location.pathname);
+		document.querySelectorAll<HTMLElement>("#navbar .library-nav-tab").forEach((tab) => {
+			const directHref = tab.dataset.navHref;
+			const childPaths = (tab.dataset.navPaths || "").split("|").filter(Boolean);
+			const directMatch = directHref ? normalizePath(directHref) === currentPath : false;
+			const childMatch = childPaths.some((path) => normalizePath(path) === currentPath);
+			const active = directMatch || childMatch;
+
+			tab.dataset.active = active ? "true" : "false";
+			const link = tab.querySelector<HTMLAnchorElement>(":scope > a");
+			const trigger = tab.querySelector<HTMLButtonElement>("[data-dropdown-trigger]");
+			if (link) {
+				if (directMatch) link.setAttribute("aria-current", "page");
+				else link.removeAttribute("aria-current");
+			}
+			if (trigger) {
+				if (childMatch) trigger.setAttribute("aria-current", "page");
+				else trigger.removeAttribute("aria-current");
+			}
+
+			tab.querySelectorAll<HTMLElement>(".dropdown-item[data-nav-href]").forEach((item) => {
+				const itemActive = normalizePath(item.dataset.navHref || "") === currentPath;
+				item.dataset.active = itemActive ? "true" : "false";
+				if (itemActive) item.setAttribute("aria-current", "page");
+				else item.removeAttribute("aria-current");
+			});
+		});
+	}
+
 	// 键盘导航支持
 	document.addEventListener('DOMContentLoaded', function() {
 		const dropdowns = document.querySelectorAll('[data-dropdown]');
@@ -158,7 +220,10 @@ const hasChildren = processedLink.children && processedLink.children.length > 0;
 				}
 			});
 		});
+		syncDesktopNavState();
 	});
+	document.addEventListener("astro:page-load", syncDesktopNavState);
+	document.addEventListener("swup:contentReplaced", syncDesktopNavState);
 	
 	function toggleDropdown(_dropdown: Element, trigger: Element, menu: Element) {
 		const isOpen = trigger.getAttribute('aria-expanded') === 'true';

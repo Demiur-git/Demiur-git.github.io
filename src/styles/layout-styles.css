@@ -302,7 +302,7 @@ html[data-wallpaper-mode="overlay"] body:not(.is-home) #wallpaper-wrapper {
     object-position: center !important;
     filter: blur(var(--overlay-blur, 0px));
     /* 放大图片，让模糊后的暗角被容器 overflow:hidden 裁掉 */
-    transform: scale(1.01);
+    transform: scale(1.02);
 }
 
 /* 首帧即让图片全屏覆盖并居中（镜像 .wallpaper-overlay img 规则）：
@@ -313,7 +313,7 @@ html[data-wallpaper-mode="overlay"] #wallpaper-wrapper img {
     object-fit: cover !important;
     object-position: center !important;
     filter: blur(var(--overlay-blur, 0px));
-    transform: scale(1.01);
+    transform: scale(1.02);
 }
 
 html[data-wallpaper-mode="overlay"] body.is-home #wallpaper-wrapper img {
