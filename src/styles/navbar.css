@@ -310,11 +310,17 @@ body.wallpaper-transparent #navbar-wrapper #navbar[data-full-width="true"] > div
 }
 
 /* ============================================
- * 小于1280px时隐藏导航栏菜单图标
+ * 小于1280px时只隐藏一级导航图标，为文字留出空间。
+ * 下拉馆藏卡的图标必须保留，否则 1024–1279px 下会看似随机消失。
  * ============================================ */
 @media (max-width: 1279px) {
-    .navbar-icon {
+    .navbar-menu-icon {
         display: none !important;
+    }
+
+    #navbar .dropdown-item-icon {
+        display: inline-flex !important;
+        flex: 0 0 auto;
     }
 }
 

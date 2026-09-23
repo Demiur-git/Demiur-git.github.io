@@ -35,6 +35,15 @@ let activeSecondary: SecondaryMode = "translation";
 let lyricsScroller: HTMLDivElement;
 let userScrolling = false;
 let scrollTimer: ReturnType<typeof setTimeout> | undefined;
+let catalogDialog: HTMLDialogElement;
+let catalogTrigger: HTMLButtonElement;
+let catalogIndex = 0;
+let narrowCatalog = false;
+let catalogWheelDelta = 0;
+let lastCatalogStep = 0;
+let touchStartY: number | null = null;
+let suppressCatalogClickUntil = 0;
+let previousRootOverflow = "";
 
 const playModeLabels = ["列表循环", "单曲循环", "随机播放"];
 const playModeIcons: MusicIconName[] = ["repeat", "repeat-one", "shuffle"];
@@ -61,6 +70,21 @@ $: displayedActiveIndex =
 	lyrics.length > 0
 		? currentLrcIndex
 		: findCurrentLine(baseLyrics, currentTime);
+$: catalogRadius = narrowCatalog ? 1 : 2;
+$: visibleCatalogTracks = playlist
+	.map((track, index) => ({ track, index, offset: index - catalogIndex }))
+	.filter(({ offset }) => Math.abs(offset) <= catalogRadius);
+
+function catalogTrackStyle(offset: number): string {
+	const angle = (offset * (narrowCatalog ? 25 : 21) * Math.PI) / 180;
+	const orbitX = 33 + 30 * Math.cos(angle);
+	const orbitY = 50 + (narrowCatalog ? 40 : 50) * Math.sin(angle);
+	const mobileX = offset === 0 ? 56 : 50;
+	const mobileY = offset < 0 ? 31 : offset > 0 ? 57 : 44;
+	const distance = Math.abs(offset);
+	const opacity = distance === 0 ? 1 : distance === 1 ? 0.8 : 0.58;
+	return `--orbit-x: ${orbitX}%; --orbit-y: ${orbitY}%; --orbit-tilt: ${offset * 9}deg; --mobile-x: ${mobileX}%; --mobile-y: ${mobileY}%; --mobile-tilt: ${offset * 10}deg; --card-opacity: ${opacity}; --stagger: ${(offset + 2) * 60}ms`;
+}
 
 function eventDetail<T>(event: Event): T {
 	return (event as CustomEvent<T>).detail;
@@ -68,6 +92,7 @@ function eventDetail<T>(event: Event): T {
 
 function syncState(state: MusicState) {
 	playlist = state.playlist;
+	catalogIndex = Math.max(0, Math.min(catalogIndex, playlist.length - 1));
 	currentTrack = state.track;
 	currentIndex = state.currentIndex;
 	isPlaying = state.isPlaying;
@@ -149,9 +174,104 @@ function suspendLyricFollow() {
 	}, 3000);
 }
 
-function selectTrack(index: number) {
+function selectCatalogTrack(index: number, event: MouseEvent) {
+	if (event.detail > 0 && performance.now() < suppressCatalogClickUntil) return;
 	errorMessage = "";
-	manager?.playTrackByIndex(index);
+	if (index !== currentIndex || !isPlaying) manager?.playTrackByIndex(index);
+	closeCatalog();
+}
+
+function focusCatalogTrack() {
+	const track = catalogDialog?.querySelector<HTMLButtonElement>(
+		`.catalog-track[data-index="${catalogIndex}"]`,
+	);
+	(track ?? catalogDialog?.querySelector<HTMLButtonElement>(".catalog-close"))?.focus();
+}
+
+function moveCatalog(direction: number) {
+	if (playlist.length === 0) return;
+	const next = Math.max(0, Math.min(playlist.length - 1, catalogIndex + direction));
+	if (next === catalogIndex) return;
+	catalogIndex = next;
+	tick().then(focusCatalogTrack);
+}
+
+function openCatalog() {
+	if (!catalogDialog || catalogDialog.open) return;
+	catalogIndex = Math.max(0, Math.min(currentIndex, playlist.length - 1));
+	catalogWheelDelta = 0;
+	lastCatalogStep = 0;
+	previousRootOverflow = document.documentElement.style.overflow;
+	document.documentElement.style.overflow = "hidden";
+	catalogDialog.showModal();
+	window.addEventListener("wheel", handleCatalogWheel, { capture: true, passive: false });
+	tick().then(focusCatalogTrack);
+}
+
+function closeCatalog() {
+	if (catalogDialog?.open) catalogDialog.close();
+}
+
+function handleCatalogClose() {
+	document.documentElement.style.overflow = previousRootOverflow;
+	window.removeEventListener("wheel", handleCatalogWheel, true);
+	catalogWheelDelta = 0;
+	touchStartY = null;
+	if (catalogTrigger?.isConnected) catalogTrigger.focus();
+}
+
+function handleCatalogWheel(event: WheelEvent) {
+	if (!catalogDialog?.open) return;
+	event.preventDefault();
+	const multiplier = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? window.innerHeight : 1;
+	const delta = event.deltaY * multiplier;
+	if (Math.sign(delta) !== Math.sign(catalogWheelDelta)) catalogWheelDelta = 0;
+	catalogWheelDelta += delta;
+	if (Math.abs(catalogWheelDelta) < 60) return;
+	catalogWheelDelta = 0;
+	const now = performance.now();
+	if (now - lastCatalogStep < 120) return;
+	lastCatalogStep = now;
+	moveCatalog(delta > 0 ? 1 : -1);
+}
+
+function handleCatalogKeydown(event: KeyboardEvent) {
+	if (event.key === "ArrowDown" || event.key === "ArrowRight") {
+		event.preventDefault();
+		moveCatalog(1);
+	} else if (event.key === "ArrowUp" || event.key === "ArrowLeft") {
+		event.preventDefault();
+		moveCatalog(-1);
+	} else if (event.key === "Home" || event.key === "End") {
+		event.preventDefault();
+		catalogIndex = event.key === "Home" ? 0 : Math.max(0, playlist.length - 1);
+		tick().then(focusCatalogTrack);
+	} else if (event.key === "Escape") {
+		closeCatalog();
+	}
+}
+
+function handleCatalogTouchStart(event: TouchEvent) {
+	touchStartY = event.touches[0]?.clientY ?? null;
+}
+
+function handleCatalogTouchMove(event: TouchEvent) {
+	if (touchStartY !== null && Math.abs((event.touches[0]?.clientY ?? touchStartY) - touchStartY) > 8) {
+		event.preventDefault();
+	}
+}
+
+function handleCatalogTouchEnd(event: TouchEvent) {
+	if (touchStartY === null) return;
+	const distance = (event.changedTouches[0]?.clientY ?? touchStartY) - touchStartY;
+	touchStartY = null;
+	if (Math.abs(distance) < 35) return;
+	suppressCatalogClickUntil = performance.now() + 350;
+	moveCatalog(distance < 0 ? 1 : -1);
+}
+
+function handleCatalogBackdropClick(event: MouseEvent) {
+	if (event.target === catalogDialog) closeCatalog();
 }
 
 function seekFromInput(event: Event) {
@@ -176,11 +296,22 @@ function retrySource() {
 }
 
 onMount(() => {
+	const narrowQuery = window.matchMedia("(max-width: 900px), (max-height: 600px)");
+	const syncCatalogWidth = () => (narrowCatalog = narrowQuery.matches);
+	syncCatalogWidth();
+	narrowQuery.addEventListener("change", syncCatalogWidth);
 	manager = window.__fireflyMusic;
 	if (!manager) {
 		sourceStatus = "error";
 		errorMessage = "播放器未能初始化";
-		return;
+		return () => {
+			narrowQuery.removeEventListener("change", syncCatalogWidth);
+			window.removeEventListener("wheel", handleCatalogWheel, true);
+			if (catalogDialog?.open) {
+				catalogDialog.close();
+				document.documentElement.style.overflow = previousRootOverflow;
+			}
+		};
 	}
 
 	const listeners: Array<[string, EventListener]> = [];
@@ -259,6 +390,12 @@ onMount(() => {
 	}
 
 	return () => {
+		narrowQuery.removeEventListener("change", syncCatalogWidth);
+		window.removeEventListener("wheel", handleCatalogWheel, true);
+		if (catalogDialog?.open) {
+			catalogDialog.close();
+			document.documentElement.style.overflow = previousRootOverflow;
+		}
 		for (const [name, listener] of listeners) {
 			window.removeEventListener(name, listener);
 		}
@@ -290,7 +427,14 @@ onMount(() => {
 			<div class:playing={isPlaying} class="turntable-stage">
 				<div class="turntable-deck">
 					<div class="record-shadow"></div>
-					<div class="vinyl">
+					<button
+						type="button"
+						class="vinyl"
+						bind:this={catalogTrigger}
+						on:click={openCatalog}
+						aria-label="翻阅馆藏曲目"
+						aria-haspopup="dialog"
+					>
 						<div class="vinyl-grooves"></div>
 						<div class="record-label">
 							{#if currentTrack?.pic}
@@ -300,7 +444,7 @@ onMount(() => {
 							{/if}
 						</div>
 						<div class="record-spindle"></div>
-					</div>
+					</button>
 					<div class="tonearm" aria-hidden="true">
 						<div class="tonearm-pivot"></div>
 						<div class="tonearm-bar"></div>
@@ -309,6 +453,7 @@ onMount(() => {
 					<div class="deck-switch" aria-hidden="true"></div>
 				</div>
 			</div>
+			<p class="catalog-hint">点击唱片翻阅馆藏 <span aria-hidden="true">↗</span></p>
 
 			<div class="track-meta" aria-live="polite">
 				<span class="track-catalog">NOW PLAYING · {String(currentIndex + 1).padStart(2, "0")}</span>
@@ -444,60 +589,78 @@ onMount(() => {
 		</section>
 	</div>
 
-	<section class="playlist-section" aria-labelledby="playlist-title">
-		<header>
-			<div>
-				<span>CATALOG · RECORD LIST</span>
-				<h3 id="playlist-title">馆藏曲目</h3>
-			</div>
-			<span>{playlist.length} TRACKS</span>
-		</header>
-
-		{#if sourceStatus === "unconfigured"}
-			<div class="source-state">
-				<MusicIcon name="settings" />
-				<div>
-					<h4>等待第一张唱片入馆</h4>
-					<p>把音频放入 <code>music-inbox</code>，运行 <code>pnpm.cmd music:import</code> 即可生成静态曲库。</p>
+	<dialog
+		bind:this={catalogDialog}
+		class="catalog-dialog"
+		aria-label="馆藏曲目"
+		on:close={handleCatalogClose}
+		on:click={handleCatalogBackdropClick}
+		on:keydown={handleCatalogKeydown}
+		on:touchstart={handleCatalogTouchStart}
+		on:touchmove|nonpassive={handleCatalogTouchMove}
+		on:touchend={handleCatalogTouchEnd}
+	>
+		<button type="button" class="catalog-close" on:click={closeCatalog} aria-label="关闭馆藏曲目">×</button>
+		<div class="catalog-surface">
+			<div class="catalog-stage">
+				<div class="catalog-sleeve-scene" aria-hidden="true">
+					<div class="sleeve-back"></div>
+					<div class="catalog-vinyl">
+						<div class="catalog-vinyl-grooves"></div>
+						<div class="catalog-record-label">
+							<MusicIcon name="music-note" />
+							{#if playlist[catalogIndex]?.pic}
+								<img src={playlist[catalogIndex].pic} alt="" on:load={(event) => (event.currentTarget.style.display = "block")} on:error={(event) => (event.currentTarget.style.display = "none")} />
+							{/if}
+						</div>
+					</div>
+					<div class="sleeve-front">
+						<span>PERSONAL LIBRARY</span>
+						<strong>SOUND<br />ARCHIVE</strong>
+						<small>CATALOG / {playlist.length > 0 ? String(catalogIndex + 1).padStart(2, "0") : "--"}</small>
+					</div>
 				</div>
-				<span class="state-stamp">IMPORT</span>
+
+				{#if sourceStatus === "unconfigured"}
+					<div class="catalog-state" role="status">
+						<h3>等待第一张唱片入馆</h3>
+						<p>把音频放入 <code>music-inbox</code>，运行 <code>pnpm.cmd music:import</code> 即可生成静态曲库。</p>
+					</div>
+				{:else if sourceStatus === "loading" || sourceStatus === "idle"}
+					<div class="catalog-state" role="status">
+						<h3>正在整理唱片架</h3><p>稍候，正在读取静态曲库与唱片封面。</p>
+					</div>
+				{:else if sourceStatus === "error" || sourceStatus === "empty" || playlist.length === 0}
+					<div class="catalog-state" role="alert">
+						<h3>唱片架暂时无法打开</h3><p>{errorMessage || "歌单为空或接口暂时不可用。"}</p>
+						<button type="button" on:click={retrySource}>重新尝试</button>
+					</div>
+				{:else}
+					<div class="catalog-tracks" role="group" aria-label="馆藏曲目，滚动浏览，点击播放">
+						{#each visibleCatalogTracks as { track, index, offset } (index)}
+							<button
+								type="button"
+								class="catalog-track"
+								class:focused={offset === 0}
+								class:playing-track={index === currentIndex && isPlaying}
+								data-index={index}
+								style={catalogTrackStyle(offset)}
+								on:click={(event) => selectCatalogTrack(index, event)}
+								aria-current={index === currentIndex ? "true" : undefined}
+								aria-label={`${String(index + 1).padStart(2, "0")}，${track.name}，${track.artist}${index === currentIndex && isPlaying ? "，正在播放" : ""}`}
+							>
+								<span class="track-cover">
+									<MusicIcon name="album" />
+									{#if track.pic}<img src={track.pic} alt="" loading="lazy" on:load={(event) => (event.currentTarget.style.display = "block")} on:error={(event) => (event.currentTarget.style.display = "none")} />{/if}
+								</span>
+								<span class="track-copy"><strong>{track.name}</strong><small>{track.artist}</small></span>
+							</button>
+						{/each}
+					</div>
+				{/if}
 			</div>
-		{:else if sourceStatus === "loading" || sourceStatus === "idle"}
-			<div class="source-state">
-				<MusicIcon name="spinner" />
-				<div><h4>正在整理唱片架</h4><p>稍候，正在读取静态曲库与唱片封面。</p></div>
-			</div>
-		{:else if sourceStatus === "error" || sourceStatus === "empty"}
-			<div class="source-state error" role="alert">
-				<MusicIcon name="album" />
-				<div><h4>唱片架暂时无法打开</h4><p>{errorMessage || "歌单为空或接口暂时不可用。"}</p></div>
-				<button type="button" on:click={retrySource}>重新尝试</button>
-			</div>
-		{:else}
-			<div class="track-grid">
-				{#each playlist as track, index}
-					<button
-						type="button"
-						class="track-card"
-						class:active={index === currentIndex}
-						on:click={() => selectTrack(index)}
-						aria-current={index === currentIndex ? "true" : undefined}
-					>
-						<span class="track-number">{String(index + 1).padStart(2, "0")}</span>
-						<span class="track-cover">
-							{#if track.pic}<img src={track.pic} alt="" loading="lazy" />{:else}<MusicIcon name="album" />{/if}
-						</span>
-						<span class="track-copy"><strong>{track.name}</strong><small>{track.artist}</small></span>
-						{#if index === currentIndex && isPlaying}
-							<span class="equalizer" aria-label="正在播放"><i></i><i></i><i></i></span>
-						{:else}
-							<MusicIcon className="track-action" name="play" />
-						{/if}
-					</button>
-				{/each}
-			</div>
-		{/if}
-	</section>
+		</div>
+	</dialog>
 </section>
 
 <style>
@@ -530,8 +693,7 @@ onMount(() => {
 
 	.music-page-header,
 	.turntable-panel,
-	.lyrics-panel,
-	.playlist-section {
+	.lyrics-panel {
 		border: 1px solid var(--music-rule);
 		background: var(--music-paper);
 		box-shadow: var(--library-soft-shadow);
@@ -553,7 +715,6 @@ onMount(() => {
 
 	.music-kicker,
 	.panel-label,
-	.playlist-section > header span,
 	.track-catalog,
 	.lyrics-header > div > span,
 	.collection-count span,
@@ -566,8 +727,7 @@ onMount(() => {
 
 	.music-kicker,
 	.track-catalog,
-	.lyrics-header > div > span,
-	.playlist-section > header span {
+	.lyrics-header > div > span {
 		color: var(--music-wine);
 	}
 
@@ -605,8 +765,7 @@ onMount(() => {
 	}
 
 	.turntable-panel,
-	.lyrics-panel,
-	.playlist-section {
+	.lyrics-panel {
 		border-radius: 1rem;
 		overflow: hidden;
 	}
@@ -674,10 +833,18 @@ onMount(() => {
 	.vinyl {
 		isolation: isolate;
 		overflow: hidden;
+		border: 0;
+		padding: 0;
 		background:
 			radial-gradient(circle at center, transparent 0 17%, rgb(7 8 8 / 85%) 17.5% 19%, transparent 19.5%),
 			repeating-radial-gradient(circle, #242323 0 2px, #0e0f0f 3px 5px);
 		box-shadow: inset 0 0 0 1px rgb(255 255 255 / 8%), 0 8px 18px rgb(0 0 0 / 34%);
+		cursor: pointer;
+	}
+
+	.vinyl:focus-visible {
+		outline: 3px solid var(--music-wine);
+		outline-offset: 5px;
 	}
 
 	.playing .vinyl {
@@ -791,6 +958,19 @@ onMount(() => {
 		box-shadow: 0 2px 5px rgb(0 0 0 / 18%);
 	}
 
+	.catalog-hint {
+		margin: -0.15rem 0 0.7rem;
+		color: var(--music-wine);
+		font-family: var(--font-code);
+		font-size: 0.64rem;
+		letter-spacing: 0.08em;
+		text-align: center;
+	}
+
+	.catalog-hint span {
+		font-size: 0.9rem;
+	}
+
 	.track-meta {
 		min-height: 4.8rem;
 		text-align: center;
@@ -838,8 +1018,7 @@ onMount(() => {
 	}
 
 	.player-controls button,
-	.lyric-mode-switch button,
-	.source-state button {
+	.lyric-mode-switch button {
 		display: grid;
 		place-items: center;
 		border: 1px solid var(--music-rule);
@@ -906,8 +1085,7 @@ onMount(() => {
 			var(--music-paper);
 	}
 
-	.lyrics-header,
-	.playlist-section > header {
+	.lyrics-header {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
@@ -916,8 +1094,7 @@ onMount(() => {
 		padding: 1rem 1.2rem;
 	}
 
-	.lyrics-header h3,
-	.playlist-section h3 {
+	.lyrics-header h3 {
 		margin: 0.12rem 0 0;
 		font-family: var(--font-library-serif);
 		font-size: 1.25rem;
@@ -1038,65 +1215,264 @@ onMount(() => {
 		letter-spacing: 0.13em;
 	}
 
-	.playlist-section {
-		padding-bottom: 1.1rem;
+	.catalog-dialog {
+		position: fixed;
+		inset: 0;
+		width: 100vw;
+		max-width: none;
+		height: 100dvh;
+		max-height: none;
+		margin: 0;
+		border: 0;
+		padding: 0;
+		background: transparent;
+		color: #fff9ef;
+		overflow: hidden;
+		overscroll-behavior: contain;
+		touch-action: none;
 	}
 
-	.playlist-section > header > span {
-		color: var(--music-muted);
-	}
-
-	.track-grid {
+	.catalog-dialog[open] {
 		display: grid;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: 0.75rem;
-		padding: 1rem 1.2rem 0;
+		place-items: center;
 	}
 
-	.track-card {
+	.catalog-dialog::backdrop {
+		background: rgb(5 11 9 / 78%);
+	}
+
+	@supports (backdrop-filter: blur(1px)) {
+		.catalog-dialog::backdrop {
+			background: rgb(5 11 9 / 38%);
+			backdrop-filter: blur(16px) brightness(0.64);
+		}
+	}
+
+	.catalog-surface {
+		position: relative;
+		width: min(100%, 75rem);
+		height: min(46rem, calc(100dvh - 2rem));
+		background: transparent;
+		animation: catalog-arrive 320ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+	}
+
+	.catalog-close {
+		position: fixed;
+		top: clamp(1rem, 3vw, 2rem);
+		right: clamp(1rem, 3vw, 2rem);
+		z-index: 5;
 		display: grid;
-		grid-template-columns: auto 3rem minmax(0, 1fr) auto;
-		align-items: center;
-		gap: 0.75rem;
-		min-width: 0;
-		border: 1px solid var(--music-rule);
-		border-left: 3px solid transparent;
-		border-radius: 0.75rem;
-		padding: 0.65rem 0.75rem;
-		background: color-mix(in srgb, var(--music-paper-solid) 88%, transparent);
-		color: var(--music-ink);
-		text-align: left;
+		width: 2rem;
+		height: 2rem;
+		place-items: center;
+		border: 0;
+		padding: 0;
+		background: transparent;
+		color: white;
+		font-size: 1.4rem;
+		font-weight: 300;
+		line-height: 1;
+		text-shadow: 0 1px 6px rgb(0 0 0 / 65%);
 		cursor: pointer;
-		transition: transform 180ms ease, border-color 180ms ease, background-color 180ms ease;
 	}
 
-	.track-card:hover,
-	.track-card:focus-visible,
-	.track-card.active {
-		border-left-color: var(--music-wine);
-		background: color-mix(in srgb, var(--music-paper-solid) 88%, var(--music-wine) 12%);
-		transform: translateY(-2px);
+	.catalog-close:focus-visible {
+		outline: 1px solid white;
+		outline-offset: 2px;
 	}
 
-	.track-number {
-		color: var(--music-brass);
+	.catalog-close:hover {
+		opacity: 0.75;
+	}
+
+	.catalog-stage {
+		position: relative;
+		width: 100%;
+		height: 100%;
+	}
+
+	.catalog-sleeve-scene {
+		position: absolute;
+		top: 50%;
+		left: 12%;
+		width: min(38%, 25rem);
+		aspect-ratio: 1;
+		transform: translateY(-50%);
+		pointer-events: none;
+	}
+
+	.sleeve-back,
+	.sleeve-front {
+		position: absolute;
+		left: 0;
+		width: 80%;
+		height: 77%;
+		border: 1px solid color-mix(in srgb, var(--music-brass) 70%, var(--music-rule));
+	}
+
+	.sleeve-back {
+		top: 17%;
+		z-index: 1;
+		background: color-mix(in srgb, var(--music-paper-solid) 73%, var(--music-brass) 27%);
+		box-shadow: 0 1.1rem 2.2rem rgb(32 19 12 / 20%);
+		animation: sleeve-rise 430ms ease-out both;
+	}
+
+	.catalog-vinyl {
+		position: absolute;
+		top: -2%;
+		left: 24%;
+		z-index: 2;
+		width: 77%;
+		aspect-ratio: 1;
+		border-radius: 50%;
+		background:
+			radial-gradient(circle at center, transparent 0 17%, #080909 18% 20%, transparent 21%),
+			repeating-radial-gradient(circle, #292a2a 0 2px, #0c0e0e 3px 5px);
+		box-shadow: inset 0 0 0 2px rgb(255 255 255 / 9%), 0 0.8rem 1.7rem rgb(0 0 0 / 28%);
+		animation: catalog-record-rise 610ms cubic-bezier(0.2, 0.8, 0.2, 1) 120ms both;
+	}
+
+	.catalog-vinyl-grooves {
+		position: absolute;
+		inset: 7%;
+		border-radius: 50%;
+		background: conic-gradient(from 35deg, transparent, rgb(255 255 255 / 14%), transparent 16%, transparent 58%, rgb(255 255 255 / 8%), transparent 76%);
+	}
+
+	.catalog-record-label {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		display: grid;
+		width: 34%;
+		aspect-ratio: 1;
+		place-items: center;
+		overflow: hidden;
+		border: 3px solid var(--music-wine);
+		border-radius: 50%;
+		background: var(--music-deck);
+		color: var(--music-wine);
+		font-size: 2rem;
+		transform: translate(-50%, -50%);
+	}
+
+	.catalog-record-label img {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+
+	.sleeve-front {
+		top: 22%;
+		z-index: 3;
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		padding: 8% 7%;
+		background:
+			linear-gradient(130deg, color-mix(in srgb, var(--music-paper-solid) 86%, white 14%), var(--music-deck)),
+			var(--music-paper-solid);
+		box-shadow: inset 0 0 0 0.45rem color-mix(in srgb, var(--music-brass) 17%, transparent), 0 0.5rem 1.3rem rgb(0 0 0 / 16%);
+		mask-image: radial-gradient(circle at 78% 20%, transparent 0 16%, black 16.5%);
+		animation: sleeve-rise 430ms ease-out both;
+	}
+
+	.sleeve-front span,
+	.sleeve-front small {
+		color: var(--music-wine);
 		font-family: var(--font-code);
-		font-size: 0.58rem;
+		font-size: clamp(0.48rem, 1vw, 0.65rem);
+		font-weight: 700;
+		letter-spacing: 0.12em;
+	}
+
+	.sleeve-front strong {
+		margin-top: auto;
+		color: var(--music-ink);
+		font-family: var(--font-library-serif);
+		font-size: clamp(1.2rem, 3vw, 2.1rem);
+		line-height: 1.05;
+	}
+
+	.sleeve-front small {
+		margin-top: 0.7rem;
+	}
+
+	.catalog-tracks {
+		position: absolute;
+		inset: 0;
+		pointer-events: none;
+	}
+
+	.catalog-track {
+		display: grid;
+		position: absolute;
+		top: var(--orbit-y);
+		left: var(--orbit-x);
+		grid-template-columns: 2.8rem minmax(0, 1fr);
+		align-items: center;
+		gap: 0.7rem;
+		width: min(25%, 16rem);
+		min-height: 3.5rem;
+		border: 0;
+		padding: 0.2rem;
+		background: transparent;
+		color: #fff9ef;
+		text-align: left;
+		text-shadow: 0 2px 7px rgb(0 0 0 / 78%);
+		cursor: pointer;
+		opacity: var(--card-opacity);
+		pointer-events: auto;
+		transform: translateY(-50%) rotate(var(--orbit-tilt));
+		transform-origin: left center;
+		animation: catalog-card-arrive 420ms cubic-bezier(0.2, 0.8, 0.2, 1) var(--stagger) backwards;
+		transition: top 300ms ease, left 300ms ease, transform 300ms ease, opacity 200ms ease;
+	}
+
+	.catalog-track:hover,
+	.catalog-track:focus-visible,
+	.catalog-track.focused {
+		opacity: 1;
+	}
+
+	.catalog-track:focus-visible {
+		outline: none;
+	}
+
+	.catalog-track:focus-visible .track-copy strong,
+	.catalog-track:hover .track-copy strong {
+		text-decoration: underline;
+		text-underline-offset: 0.2em;
 	}
 
 	.track-cover {
+		position: relative;
 		display: grid;
-		width: 3rem;
+		width: 2.8rem;
 		aspect-ratio: 1;
 		place-items: center;
 		overflow: hidden;
 		border-radius: 50%;
 		background: #272524;
-		color: var(--music-brass);
-		font-size: 1.35rem;
+		color: #e9d4b5;
+		font-size: 1.2rem;
+		box-shadow: 0 3px 13px rgb(0 0 0 / 30%);
+		transition: transform 200ms ease, box-shadow 200ms ease;
+	}
+
+	.catalog-track.focused .track-cover,
+	.catalog-track:hover .track-cover,
+	.catalog-track:focus-visible .track-cover {
+		box-shadow: 0 0 0 2px #fff9ef, 0 4px 18px rgb(0 0 0 / 48%);
+		transform: scale(1.13);
 	}
 
 	.track-cover img {
+		position: absolute;
+		inset: 0;
 		width: 100%;
 		height: 100%;
 		object-fit: cover;
@@ -1117,100 +1493,88 @@ onMount(() => {
 
 	.track-copy strong {
 		font-family: var(--font-library-serif);
-		font-size: 0.9rem;
+		font-size: 0.88rem;
+		transition: font-size 200ms ease;
+	}
+
+	.catalog-track.focused .track-copy strong {
+		font-size: 1.02rem;
 	}
 
 	.track-copy small {
-		color: var(--music-muted);
-		font-size: 0.7rem;
+		color: rgb(255 249 239 / 78%);
+		font-size: 0.69rem;
 	}
 
-	:global(.track-action) {
-		color: var(--music-wine);
-		font-size: 1.25rem;
+	.catalog-state {
+		position: absolute;
+		top: 50%;
+		left: 58%;
+		width: min(35%, 25rem);
+		color: #fff9ef;
+		text-shadow: 0 2px 8px rgb(0 0 0 / 75%);
+		transform: translateY(-50%);
 	}
 
-	.equalizer {
-		display: flex;
-		height: 1.1rem;
-		align-items: flex-end;
-		gap: 2px;
-	}
-
-	.equalizer i {
-		width: 3px;
-		height: 35%;
-		border-radius: 999px;
-		background: var(--music-wine);
-		animation: equalizer-bounce 0.8s ease-in-out infinite alternate;
-	}
-
-	.equalizer i:nth-child(2) {
-		animation-delay: -0.35s;
-	}
-
-	.equalizer i:nth-child(3) {
-		animation-delay: -0.15s;
-	}
-
-	.source-state {
-		display: grid;
-		grid-template-columns: auto minmax(0, 1fr) auto;
-		align-items: center;
-		gap: 1rem;
-		margin: 1rem 1.2rem 0;
-		border: 1px dashed color-mix(in srgb, var(--music-wine) 38%, transparent);
-		border-radius: 0.8rem;
-		padding: 1.15rem;
-		background: color-mix(in srgb, var(--music-paper-solid) 88%, var(--music-wine) 12%);
-	}
-
-	.source-state > :global(svg) {
-		color: var(--music-wine);
-		font-size: 2rem;
-	}
-
-	.source-state h4,
-	.source-state p {
+	.catalog-state h3,
+	.catalog-state p {
 		margin: 0;
 	}
 
-	.source-state h4 {
+	.catalog-state h3 {
 		font-family: var(--font-library-serif);
+		font-size: 1.1rem;
 	}
 
-	.source-state p {
-		margin-top: 0.25rem;
-		color: var(--music-muted);
+	.catalog-state p {
+		margin-top: 0.4rem;
 		font-size: 0.8rem;
+		line-height: 1.6;
 	}
 
-	.source-state code {
-		color: var(--music-wine);
+	.catalog-state code {
+		color: #fff9ef;
+		font-weight: 700;
 	}
 
-	.state-stamp {
-		border: 1px solid currentColor;
-		border-radius: 0.2rem;
-		padding: 0.3rem 0.45rem;
-		color: var(--music-wine);
-		font-family: var(--font-code);
-		font-size: 0.55rem;
-		letter-spacing: 0.12em;
+	.catalog-state button {
+		margin-top: 0.8rem;
+		border: 0;
+		border-bottom: 1px solid currentColor;
+		padding: 0.1rem 0;
+		background: transparent;
+		color: #fff9ef;
+		font-size: 0.8rem;
+		cursor: pointer;
 	}
 
-	.source-state button {
-		border-radius: 999px;
-		padding: 0.55rem 0.8rem;
-		font-size: 0.75rem;
+	.catalog-state button:focus-visible {
+		outline: 1px solid white;
+		outline-offset: 3px;
 	}
 
 	@keyframes record-spin {
 		to { transform: translate(-50%, -50%) rotate(360deg); }
 	}
 
-	@keyframes equalizer-bounce {
-		to { height: 100%; }
+	@keyframes catalog-arrive {
+		from { opacity: 0; transform: translateY(1rem) scale(0.985); }
+		to { opacity: 1; transform: translateY(0) scale(1); }
+	}
+
+	@keyframes sleeve-rise {
+		from { opacity: 0; transform: translateY(1.7rem); }
+		to { opacity: 1; transform: translateY(0); }
+	}
+
+	@keyframes catalog-record-rise {
+		from { opacity: 0; transform: translate(-14%, 18%); }
+		to { opacity: 1; transform: translate(0, 0); }
+	}
+
+	@keyframes catalog-card-arrive {
+		from { opacity: 0; transform: translate(-0.8rem, -50%) rotate(var(--orbit-tilt)); }
+		to { opacity: var(--card-opacity); transform: translateY(-50%) rotate(var(--orbit-tilt)); }
 	}
 
 	@media (max-width: 1023px) {
@@ -1229,6 +1593,17 @@ onMount(() => {
 		.lyrics-scroll {
 			height: 27rem;
 			flex: none;
+		}
+	}
+
+	@media (max-width: 900px), (max-height: 600px) {
+		.catalog-sleeve-scene {
+			left: 3%;
+			width: min(43%, 20rem);
+		}
+
+		.catalog-track {
+			width: min(34%, 15rem);
 		}
 	}
 
@@ -1271,35 +1646,94 @@ onMount(() => {
 			padding-left: 0.7rem;
 		}
 
-		.track-grid {
-			grid-template-columns: 1fr;
-			padding-right: 0.85rem;
-			padding-left: 0.85rem;
+		.catalog-dialog {
+			padding: 0;
 		}
 
-		.source-state {
-			grid-template-columns: auto minmax(0, 1fr);
-			margin-right: 0.85rem;
-			margin-left: 0.85rem;
+		.catalog-surface {
+			height: 100dvh;
 		}
 
-		.source-state > :last-child {
-			grid-column: 2;
-			justify-self: start;
+		.catalog-sleeve-scene {
+			top: 35%;
+			left: 44%;
+			width: min(50vw, 13rem);
+			transform: translateX(-50%);
+		}
+
+		.catalog-track {
+			top: var(--mobile-y);
+			left: var(--mobile-x);
+			grid-template-columns: 2.15rem minmax(0, 1fr);
+			gap: 0.35rem;
+			width: 43%;
+			min-height: 3.5rem;
+			padding: 0.2rem;
+			transform: translateY(-50%) rotate(var(--mobile-tilt));
+			transform-origin: left center;
+			animation-name: catalog-card-arrive-mobile;
+		}
+
+		.catalog-track .track-cover {
+			width: 2.15rem;
+			font-size: 1rem;
+		}
+
+		.catalog-track .track-copy strong {
+			font-size: 0.74rem;
+		}
+
+		.catalog-track.focused .track-copy strong {
+			font-size: 0.84rem;
+		}
+
+		.catalog-track .track-copy small {
+			font-size: 0.6rem;
+		}
+
+		.catalog-state {
+			top: auto;
+			bottom: 9%;
+			left: 50%;
+			width: 84%;
+			text-align: center;
+			transform: translateX(-50%);
 		}
 	}
 
+	@media (max-width: 640px) and (max-height: 650px) {
+		.catalog-sleeve-scene {
+			width: min(35vw, 9rem);
+		}
+
+		.catalog-track {
+			min-height: 3.4rem;
+		}
+	}
+
+	@keyframes catalog-card-arrive-mobile {
+		from { opacity: 0; transform: translate(0.8rem, calc(-50% + 0.8rem)) rotate(var(--mobile-tilt)); }
+		to { opacity: var(--card-opacity); transform: translateY(-50%) rotate(var(--mobile-tilt)); }
+	}
+
 	@media (prefers-reduced-motion: reduce) {
-		.playing .vinyl,
-		.equalizer i {
+		.playing .vinyl {
 			animation: none;
 		}
 
 		.tonearm,
-		.track-card,
+		.catalog-track,
 		.lyric-line,
 		.player-controls button {
 			transition: none;
+		}
+
+		.catalog-surface,
+		.sleeve-back,
+		.sleeve-front,
+		.catalog-vinyl,
+		.catalog-track {
+			animation: none;
 		}
 	}
 </style>

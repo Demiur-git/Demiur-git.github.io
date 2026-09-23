@@ -397,11 +397,24 @@ const desktopImagePairs = pairThemeImages(
             }
 
             function schedulePreload() {
-                var idle = window.requestIdleCallback || function (callback) {
-                    return setTimeout(callback, 1500);
-                };
-                idle(preloadOppositeTheme);
+                if (window.requestIdleCallback) {
+                    window.requestIdleCallback(preloadOppositeTheme, { timeout: 800 });
+                } else {
+                    setTimeout(preloadOppositeTheme, 250);
+                }
             }
+
+			var observedTheme = currentTheme();
+			var themeObserver = new MutationObserver(function () {
+				var nextTheme = currentTheme();
+				if (nextTheme === observedTheme) return;
+				observedTheme = nextTheme;
+				syncTheme();
+			});
+			themeObserver.observe(document.documentElement, {
+				attributes: true,
+				attributeFilter: ['class']
+			});
 
             window.__wallpaperThemeManager = {
                 currentTheme: currentTheme,
@@ -419,8 +432,8 @@ const desktopImagePairs = pairThemeImages(
 			} else {
 				syncTheme();
 			}
-            if (document.readyState === 'complete') schedulePreload();
-            else window.addEventListener('load', schedulePreload, { once: true });
+			// 当前主题首图开始加载后尽快预取另一主题，避免首次手动切换仍需等待大图。
+			schedulePreload();
         })();
     </script>
 

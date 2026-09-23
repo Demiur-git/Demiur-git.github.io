@@ -171,6 +171,14 @@ export function setTheme(theme: LIGHT_DARK_MODE): void {
 	// 保存到localStorage
 	localStorage.setItem("theme", theme);
 
+	// 手动选择亮色、暗色或跟随系统时，都统一通知依赖主题的常驻组件。
+	// 背景管理器位于 Swup 容器之外，不能依赖页面重渲染来感知 class 变化。
+	window.dispatchEvent(
+		new CustomEvent("theme-change", {
+			detail: { theme, resolvedTheme: resolveTheme(theme) },
+		}),
+	);
+
 	// 如果切换到 system 模式，需要监听系统主题变化
 	if (theme === SYSTEM_MODE) {
 		setupSystemThemeListener();

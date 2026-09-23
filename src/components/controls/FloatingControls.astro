@@ -1,6 +1,8 @@
 ---
 import type { MarkdownHeading } from "astro";
+import MusicMiniPlayer from "@/components/features/MusicMiniPlayer.svelte";
 import { siteConfig } from "@/config";
+import { url } from "@/utils/url-utils";
 import BackToComment from "./BackToComment.astro";
 import BackToHome from "./BackToHome.astro";
 import BackToTop from "./BackToTop.astro";
@@ -19,6 +21,7 @@ const immersiveReadingEnabled =
 ---
 
 <div class="floating-controls-container">
+  <MusicMiniPlayer variant="orb" homeHref={url("/")} musicHref={url("/music/")} client:load />
   <FloatingTOC headings={headings ?? []} encrypted={encrypted} />
   {immersiveReadingEnabled && (
     <>

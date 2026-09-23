@@ -1,6 +1,7 @@
 ---
 import { Picture } from "astro:assets";
 import { Icon } from "astro-icon/components";
+import MusicMiniPlayer from "@/components/features/MusicMiniPlayer.svelte";
 import { homeIntroConfig } from "@/config";
 import { url } from "@/utils/url-utils";
 ---
@@ -80,41 +81,50 @@ import { url } from "@/utils/url-utils";
 		</figure>
 	</article>
 
-	<section class="catalog-section" aria-labelledby="catalog-title">
-		<header class="section-heading">
-			<div>
-				<p>{homeIntroConfig.catalogEyebrow}</p>
-				<h2 id="catalog-title">{homeIntroConfig.catalogTitle}</h2>
+	<div class="home-lower">
+		<section class="catalog-section" aria-labelledby="catalog-title">
+			<header class="section-heading">
+				<div>
+					<p>{homeIntroConfig.catalogEyebrow}</p>
+					<h2 id="catalog-title">{homeIntroConfig.catalogTitle}</h2>
+				</div>
+				<span>{homeIntroConfig.catalogDescription}</span>
+			</header>
+
+			<div class="catalog-grid">
+				{
+					homeIntroConfig.catalogEntries.map((entry) => (
+						<a class={`catalog-card tone-${entry.tone}`} href={url(entry.url)}>
+							<span class="catalog-code">{entry.code}</span>
+							<span class="catalog-icon" aria-hidden="true">
+								<Icon name={entry.icon} />
+							</span>
+							<span class="catalog-copy">
+								<strong>{entry.name}</strong>
+								<small>{entry.description}</small>
+							</span>
+							<Icon class="catalog-arrow" name="material-symbols:arrow-forward-rounded" aria-hidden="true" />
+						</a>
+					))
+				}
 			</div>
-			<span>{homeIntroConfig.catalogDescription}</span>
-		</header>
+		</section>
 
-		<div class="catalog-grid">
-			{
-				homeIntroConfig.catalogEntries.map((entry) => (
-					<a class={`catalog-card tone-${entry.tone}`} href={url(entry.url)}>
-						<span class="catalog-code">{entry.code}</span>
-						<span class="catalog-icon" aria-hidden="true">
-							<Icon name={entry.icon} />
-						</span>
-						<span class="catalog-copy">
-							<strong>{entry.name}</strong>
-							<small>{entry.description}</small>
-						</span>
-						<Icon class="catalog-arrow" name="material-symbols:arrow-forward-rounded" aria-hidden="true" />
-					</a>
-				))
-			}
-		</div>
-	</section>
+		<aside class="home-sidebar" aria-label="主页侧边栏">
+			<MusicMiniPlayer variant="sidebar" musicHref={url("/music/")} client:load />
+		</aside>
 
-	<header class="section-heading latest-heading">
-		<div>
-			<p>RECENT ARRIVALS</p>
-			<h2>最近更新</h2>
-		</div>
-		<span>新近入藏的文章与记录。</span>
-	</header>
+		<section class="latest-section" aria-labelledby="recent-arrivals-title">
+			<header class="section-heading latest-heading">
+				<div>
+					<p>RECENT ARRIVALS</p>
+					<h2 id="recent-arrivals-title">最近更新</h2>
+				</div>
+				<span>新近入藏的文章与记录。</span>
+			</header>
+			<slot name="recent" />
+		</section>
+	</div>
 </section>
 
 <style>
@@ -123,6 +133,26 @@ import { url } from "@/utils/url-utils";
 		flex-direction: column;
 		gap: 2rem;
 		margin-bottom: 1rem;
+	}
+
+	.home-lower {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) minmax(15rem, 17.5rem);
+		gap: 1.4rem;
+		align-items: start;
+	}
+
+	.home-sidebar {
+		grid-column: 2;
+		grid-row: 1 / span 2;
+		min-width: 0;
+	}
+
+	.latest-section {
+		display: flex;
+		min-width: 0;
+		flex-direction: column;
+		gap: 1rem;
 	}
 
 	.library-hero {
@@ -479,7 +509,18 @@ import { url } from "@/utils/url-utils";
 	}
 
 	.latest-heading {
-		margin-bottom: -1rem;
+		margin-bottom: 0;
+	}
+
+	@media (max-width: 1100px) {
+		.home-lower {
+			grid-template-columns: minmax(0, 1fr);
+		}
+
+		.home-sidebar {
+			grid-column: 1;
+			grid-row: 2;
+		}
 	}
 
 	:global(:root.dark) .artwork-wash {

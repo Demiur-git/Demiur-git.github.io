@@ -47,6 +47,9 @@ package/
 music-inbox/*
 !music-inbox/README.md
 
+# Generated local music assets are private unless explicitly published later.
+public/assets/music/
+
 # vibe coding
 .codex*
 .claude
