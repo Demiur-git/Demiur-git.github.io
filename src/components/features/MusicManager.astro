@@ -6,11 +6,53 @@ import { url } from "@/utils/url-utils";
 
 const config = musicPlayerConfig;
 
+const isFullUrl = (path: string) => /^https?:\/\//.test(path);
+const normalizeLyricSource = (source?: string) => {
+	if (!source) return undefined;
+	const trimmed = source.trim();
+	if (
+		isFullUrl(trimmed) ||
+		trimmed.startsWith("/") ||
+		trimmed.startsWith("[") ||
+		trimmed.includes("\n")
+	) {
+		return isFullUrl(trimmed) || trimmed.startsWith("/") ? trimmed : source;
+	}
+	return url(trimmed);
+};
+
+const lyricOverrides = Object.fromEntries(
+	Object.entries({
+		...Object.fromEntries(
+			(config.local?.playlist ?? []).flatMap((track) =>
+				track.id && (track.translationLrc || track.romajiLrc)
+					? [
+							[
+								track.id,
+								{
+									translationLrc: track.translationLrc,
+									romajiLrc: track.romajiLrc,
+								},
+							],
+						]
+					: [],
+			),
+		),
+		...(config.page?.lyricOverrides ?? {}),
+	}).map(([trackId, lyrics]) => [
+		trackId,
+		{
+			translationLrc: normalizeLyricSource(lyrics.translationLrc),
+			romajiLrc: normalizeLyricSource(lyrics.romajiLrc),
+		},
+	]),
+);
+
 const localPlaylist =
 	config.mode === "local" && config.local?.playlist
 		? config.local.playlist.map((song) => {
-				const isFullUrl = (path: string) => /^https?:\/\//.test(path);
 				return {
+					id: song.id,
 					name: song.name,
 					artist: song.artist,
 					url: isFullUrl(song.url) ? song.url : url(song.url),
@@ -32,6 +74,7 @@ const managerConfigStr = JSON.stringify({
 	mode: config.mode,
 	meting: config.meting,
 	localPlaylist: localPlaylist,
+	lyricOverrides: lyricOverrides,
 	volume: config.volume ?? 0.7,
 	playMode: config.playMode ?? "list",
 	showLyrics: config.showLyrics ?? true,
@@ -94,9 +137,44 @@ const managerConfigStr = JSON.stringify({
         return result.sort(function (a, b) { return a.time - b.time; });
     }
 
+    function extractTrackId(item) {
+        if (item && item.id !== undefined && item.id !== null && String(item.id)) {
+            return String(item.id);
+        }
+        var candidates = [item && item.url, item && item.lrc];
+        for (var i = 0; i < candidates.length; i++) {
+            if (!candidates[i]) continue;
+            try {
+                var parsed = new URL(candidates[i], location.href);
+                var id = parsed.searchParams.get('id');
+                if (id) return id;
+            } catch (_) {
+                var match = String(candidates[i]).match(/[?&]id=([^&#]+)/);
+                if (match) return decodeURIComponent(match[1]);
+            }
+        }
+        return '';
+    }
+
+    function isLyricUrl(source) {
+        return /^(https?:)?\/\//.test(source)
+            || source.startsWith('/')
+            || /\.(lrc|txt)(\?|#|$)/i.test(source);
+    }
+
+    async function readLyricSource(source) {
+        if (!source) return Promise.resolve([]);
+        if (!isLyricUrl(source)) return Promise.resolve(parseLRC(source));
+        return fetch(source)
+            .then(function (response) {
+                if (!response.ok) throw new Error('HTTP ' + response.status);
+                return response.text();
+            })
+            .then(parseLRC);
+    }
+
     // ── Audio element (persistent, attached to body) ────────
     var audio = document.createElement('audio');
-    audio.crossOrigin = 'anonymous';
     audio.style.display = 'none';
     audio.preload = 'none'; // 阻止浏览器预加载和自动恢复播放
     document.body.appendChild(audio);
@@ -114,11 +192,16 @@ const managerConfigStr = JSON.stringify({
             : (config.volume || 0.7),
         isMuted: false,
         lyrics: [],
+        lyricVariants: { translation: [], romaji: [] },
         currentLrcIndex: -1,
         initialized: false,
         initializing: false,
+        sourceStatus: 'idle',
         error: null
     };
+
+    var lyricLoadVersion = 0;
+    var failedTrackIndexes = new Set();
 
     // Map config playMode string to number
     if (config.playMode === 'random') state.playMode = 2;
@@ -128,6 +211,12 @@ const managerConfigStr = JSON.stringify({
     // ── Event helpers ────────────────────────────────────────
     function emit(name, detail) {
         window.dispatchEvent(new CustomEvent(name, { detail: detail || {} }));
+    }
+
+    function setSourceStatus(status, message) {
+        state.sourceStatus = status;
+        if (message !== undefined) state.error = message;
+        emit('fm:source-status', { status: status, message: message || '' });
     }
 
     // ── Meting fetch ─────────────────────────────────────────
@@ -144,8 +233,11 @@ const managerConfigStr = JSON.stringify({
                     .replace(':server', m.server)
                     .replace(':type', m.type)
                     .replace(':id', m.id)
+					.replace(':auth', m.auth || '')
                     .replace(':r', Math.random());
-                if (m.auth) fetchUrl += '&auth=' + m.auth;
+				if (m.auth && fetchUrl.indexOf('auth=') === -1) {
+					fetchUrl += (fetchUrl.indexOf('?') === -1 ? '?' : '&') + 'auth=' + encodeURIComponent(m.auth);
+				}
 
                 var res = await fetch(fetchUrl);
                 if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -153,13 +245,16 @@ const managerConfigStr = JSON.stringify({
 
                 if (Array.isArray(data) && data.length > 0) {
                     state.playlist = data.map(function (item) {
-                        return {
+						var track = {
+							id: extractTrackId(item),
                             name: item.title || item.name || 'Unknown',
                             artist: item.author || item.artist || 'Unknown',
                             url: item.url,
                             pic: item.pic || item.cover || '',
                             lrc: item.lrc
                         };
+						if (!track.id) track.id = extractTrackId(track);
+						return track;
                     });
                     return;
                 }
@@ -172,34 +267,54 @@ const managerConfigStr = JSON.stringify({
 
     // ── Lyrics ───────────────────────────────────────────────
     function loadLyrics(track) {
+        var version = ++lyricLoadVersion;
+        var overrides = (config.lyricOverrides && track.id)
+            ? config.lyricOverrides[track.id] || {}
+            : {};
+
         state.lyrics = [];
+        state.lyricVariants = { translation: [], romaji: [] };
         state.currentLrcIndex = -1;
 
-        if (!track.lrc) {
-            emit('fm:lyrics', { lyrics: [], status: 'none' });
+        var hasAnySource = !!(track.lrc || overrides.translationLrc || overrides.romajiLrc);
+        if (!hasAnySource) {
+            emit('fm:lyrics', {
+                lyrics: [],
+                variants: state.lyricVariants,
+                status: 'none'
+            });
             return;
         }
 
-        var isLrcUrl = /^(https?:)?\/\//.test(track.lrc)
-            || track.lrc.startsWith('/')
-            || /\.(lrc|txt)(\?|#|$)/i.test(track.lrc);
+        emit('fm:lyrics', {
+            lyrics: [],
+            variants: state.lyricVariants,
+            status: 'loading'
+        });
 
-        if (isLrcUrl) {
-            emit('fm:lyrics', { lyrics: [], status: 'loading' });
-            fetch(track.lrc)
-                .then(function (r) { return r.text(); })
-                .then(function (text) {
-                    state.lyrics = parseLRC(text);
-                    emit('fm:lyrics', { lyrics: state.lyrics, status: 'loaded' });
-                })
-                .catch(function () {
-                    state.lyrics = [];
-                    emit('fm:lyrics', { lyrics: [], status: 'failed' });
-                });
-        } else {
-            state.lyrics = parseLRC(track.lrc);
-            emit('fm:lyrics', { lyrics: state.lyrics, status: state.lyrics.length > 0 ? 'loaded' : 'none' });
-        }
+        Promise.allSettled([
+            readLyricSource(track.lrc),
+            readLyricSource(overrides.translationLrc),
+            readLyricSource(overrides.romajiLrc)
+        ]).then(function (results) {
+            if (version !== lyricLoadVersion) return;
+
+            state.lyrics = results[0].status === 'fulfilled' ? results[0].value : [];
+            state.lyricVariants = {
+                translation: results[1].status === 'fulfilled' ? results[1].value : [],
+                romaji: results[2].status === 'fulfilled' ? results[2].value : []
+            };
+
+            var hasLyrics = state.lyrics.length > 0
+                || state.lyricVariants.translation.length > 0
+                || state.lyricVariants.romaji.length > 0;
+            var mainFailed = !!track.lrc && results[0].status === 'rejected';
+            emit('fm:lyrics', {
+                lyrics: state.lyrics,
+                variants: state.lyricVariants,
+                status: hasLyrics ? 'loaded' : (mainFailed ? 'failed' : 'none')
+            });
+        });
     }
 
     var currentTrackUrls = [];
@@ -216,6 +331,7 @@ const managerConfigStr = JSON.stringify({
                 if (ver !== loadVersion) return; // stale, discard
                 state.isPlaying = true;
                 state.error = null;
+				failedTrackIndexes.clear();
                 emit('fm:play-state', { isPlaying: true });
             }).catch(function (e) {
                 if (ver !== loadVersion) return; // stale, discard
@@ -233,6 +349,7 @@ const managerConfigStr = JSON.stringify({
         if (index < 0 || index >= state.playlist.length) return;
         state.currentIndex = index;
         var track = state.playlist[index];
+		if (!track.id) track.id = extractTrackId(track);
         var ver = ++loadVersion;
 
         if (errorSkipTimeout) {
@@ -269,6 +386,7 @@ const managerConfigStr = JSON.stringify({
         if (audio.paused) {
             audio.play().then(function () {
                 state.isPlaying = true;
+				failedTrackIndexes.clear();
                 emit('fm:play-state', { isPlaying: true });
             }).catch(function (e) {
                 if (e.name === 'AbortError') return;
@@ -282,6 +400,7 @@ const managerConfigStr = JSON.stringify({
     }
 
     function playNext(auto) {
+		if (!auto) failedTrackIndexes.clear();
         if (state.playMode === 1 && auto) {
             audio.currentTime = 0;
             audio.play();
@@ -297,6 +416,7 @@ const managerConfigStr = JSON.stringify({
     }
 
     function playPrev() {
+		failedTrackIndexes.clear();
         var prevIndex;
         if (state.playMode === 2) {
             prevIndex = Math.floor(Math.random() * state.playlist.length);
@@ -342,7 +462,8 @@ const managerConfigStr = JSON.stringify({
     }
 
     function playTrackByIndex(index) {
-        if (index === state.currentIndex && !audio.paused) {
+		failedTrackIndexes.clear();
+        if (index === state.currentIndex) {
             togglePlay();
         } else {
             loadTrack(index, true);
@@ -383,21 +504,38 @@ const managerConfigStr = JSON.stringify({
     });
 
     audio.addEventListener('error', function () {
+		if (state.playlist.length === 0 || !audio.getAttribute('src')) return;
         var ver = loadVersion;
         if (currentTrackUrlIndex < currentTrackUrls.length - 1) {
             currentTrackUrlIndex++;
             console.warn('Playback failed, trying fallback URL: ' + currentTrackUrls[currentTrackUrlIndex]);
             tryPlayCurrentTrackUrl(true, ver);
         } else {
-            state.error = 'Audio playback error';
-            emit('fm:error', { message: '播放失败，即将自动跳过...' });
+			failedTrackIndexes.add(state.currentIndex);
+			state.error = 'Audio playback error';
 
-            if (errorSkipTimeout) clearTimeout(errorSkipTimeout);
-            errorSkipTimeout = setTimeout(function () {
-                if (ver === loadVersion) {
-                    playNext(true);
-                }
-            }, 2000);
+			if (failedTrackIndexes.size >= state.playlist.length) {
+				audio.pause();
+				state.isPlaying = false;
+				emit('fm:play-state', { isPlaying: false });
+				emit('fm:error', { message: '当前歌单没有可播放的曲目' });
+				return;
+			}
+
+			emit('fm:error', { message: '播放失败，即将尝试下一首...' });
+			if (errorSkipTimeout) clearTimeout(errorSkipTimeout);
+			errorSkipTimeout = setTimeout(function () {
+				if (ver !== loadVersion) return;
+				var nextIndex = state.currentIndex;
+				for (var offset = 1; offset <= state.playlist.length; offset++) {
+					var candidate = (state.currentIndex + offset) % state.playlist.length;
+					if (!failedTrackIndexes.has(candidate)) {
+						nextIndex = candidate;
+						break;
+					}
+				}
+				loadTrack(nextIndex, true);
+			}, 2000);
         }
     });
 
@@ -405,12 +543,41 @@ const managerConfigStr = JSON.stringify({
     async function init() {
         if (state.initialized || state.initializing) return;
         state.initializing = true;
+		setSourceStatus('loading', null);
 
         try {
             if (config.mode === 'meting' && config.meting) {
+				if (!config.meting.api || !config.meting.id) {
+					state.playlist = [];
+					state.initialized = true;
+					setSourceStatus('unconfigured', null);
+					emit('fm:init', {
+						playlist: [],
+						playMode: state.playMode,
+						volume: state.volume,
+						isMuted: state.isMuted,
+						sourceStatus: state.sourceStatus
+					});
+					return;
+				}
                 await fetchMetingData();
             } else if (config.mode === 'local') {
-                state.playlist = config.localPlaylist || [];
+				state.playlist = (config.localPlaylist || []).map(function (track) {
+					if (!track.id) track.id = extractTrackId(track);
+					return track;
+				});
+				if (state.playlist.length === 0) {
+					state.initialized = true;
+					setSourceStatus('unconfigured', null);
+					emit('fm:init', {
+						playlist: [],
+						playMode: state.playMode,
+						volume: state.volume,
+						isMuted: state.isMuted,
+						sourceStatus: state.sourceStatus
+					});
+					return;
+				}
             }
 
             if (state.playlist.length > 0) {
@@ -423,39 +590,70 @@ const managerConfigStr = JSON.stringify({
                 }
 
                 state.initialized = true;
+				setSourceStatus('ready', null);
 
                 emit('fm:init', {
                     playlist: state.playlist,
                     playMode: state.playMode,
                     volume: state.volume,
-                    isMuted: state.isMuted
+					isMuted: state.isMuted,
+					sourceStatus: state.sourceStatus
                 });
 
                 loadTrack(startIndex, false);
             } else {
                 state.initialized = true;
+				setSourceStatus('empty', config.i18n.noSongs);
                 emit('fm:init', {
                     playlist: [],
                     playMode: state.playMode,
                     volume: state.volume,
-                    isMuted: state.isMuted
+					isMuted: state.isMuted,
+					sourceStatus: state.sourceStatus
                 });
                 emit('fm:error', { message: config.i18n.noSongs });
             }
         } catch (e) {
             console.error('Music Manager init error:', e);
             state.initialized = true;
+			setSourceStatus('error', config.i18n.error);
             emit('fm:init', {
                 playlist: [],
                 playMode: state.playMode,
                 volume: state.volume,
-                isMuted: state.isMuted
+				isMuted: state.isMuted,
+				sourceStatus: state.sourceStatus
             });
             emit('fm:error', { message: config.i18n.error });
         } finally {
             state.initializing = false;
         }
     }
+
+	function retry() {
+		if (state.initializing) return;
+		if (errorSkipTimeout) {
+			clearTimeout(errorSkipTimeout);
+			errorSkipTimeout = null;
+		}
+		++loadVersion;
+		++lyricLoadVersion;
+		audio.pause();
+		audio.removeAttribute('src');
+		audio.load();
+		failedTrackIndexes.clear();
+		state.playlist = [];
+		state.currentIndex = 0;
+		state.isPlaying = false;
+		state.lyrics = [];
+		state.lyricVariants = { translation: [], romaji: [] };
+		state.currentLrcIndex = -1;
+		state.initialized = false;
+		state.error = null;
+		state.sourceStatus = 'idle';
+		emit('fm:play-state', { isPlaying: false });
+		init();
+	}
 
     // ── Public API ───────────────────────────────────────────
     window.__fireflyMusic = {
@@ -466,6 +664,7 @@ const managerConfigStr = JSON.stringify({
                 playlist: state.playlist,
                 currentIndex: state.currentIndex,
                 track: track,
+				trackId: track ? track.id || '' : '',
                 isPlaying: state.isPlaying,
                 playMode: state.playMode,
                 volume: state.volume,
@@ -476,8 +675,10 @@ const managerConfigStr = JSON.stringify({
                 currentTimeStr: formatTime(audio.currentTime),
                 durationStr: formatTime(audio.duration),
                 lyrics: state.lyrics,
+				lyricVariants: state.lyricVariants,
                 currentLrcIndex: state.currentLrcIndex,
                 initialized: state.initialized,
+				sourceStatus: state.sourceStatus,
                 error: state.error,
                 config: config
             };
@@ -491,7 +692,8 @@ const managerConfigStr = JSON.stringify({
         seek: seek,
         seekToTime: seekToTime,
         playTrackByIndex: playTrackByIndex,
-        loadTrack: loadTrack
+		loadTrack: loadTrack,
+		retry: retry
     };
 })();
 </script>

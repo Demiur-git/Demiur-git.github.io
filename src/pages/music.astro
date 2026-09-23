@@ -1,0 +1,14 @@
+---
+import MusicCollection from "@/components/pages/music/MusicCollection.svelte";
+import { musicPlayerConfig } from "@/config";
+import MainGridLayout from "@/layouts/MainGridLayout.astro";
+
+const title = musicPlayerConfig.page?.title ?? "音乐馆藏";
+const description =
+	musicPlayerConfig.page?.description ??
+	"在唱片与歌词之间，收藏想要反复聆听的声音。";
+---
+
+<MainGridLayout title={title} description={description}>
+	<MusicCollection client:load title={title} description={description} />
+</MainGridLayout>

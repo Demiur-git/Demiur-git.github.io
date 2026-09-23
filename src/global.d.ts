@@ -29,20 +29,23 @@ declare global {
 			init: () => Promise<void>;
 			getState: () => {
 				playlist: Array<{
+					id?: string;
 					name: string;
 					artist: string;
 					url: string;
-					pic: string;
+					pic?: string;
 					lrc?: string;
 				}>;
 				currentIndex: number;
 				track: {
+					id?: string;
 					name: string;
 					artist: string;
 					url: string;
-					pic: string;
+					pic?: string;
 					lrc?: string;
 				} | null;
+				trackId: string;
 				isPlaying: boolean;
 				playMode: number;
 				volume: number;
@@ -53,8 +56,19 @@ declare global {
 				currentTimeStr: string;
 				durationStr: string;
 				lyrics: Array<{ time: number; text: string }>;
+				lyricVariants: {
+					translation: Array<{ time: number; text: string }>;
+					romaji: Array<{ time: number; text: string }>;
+				};
 				currentLrcIndex: number;
 				initialized: boolean;
+				sourceStatus:
+					| "idle"
+					| "loading"
+					| "ready"
+					| "empty"
+					| "unconfigured"
+					| "error";
 				error: string | null;
 				config: Record<string, unknown>;
 			};
@@ -68,6 +82,7 @@ declare global {
 			seekToTime: (time: number) => void;
 			playTrackByIndex: (index: number) => void;
 			loadTrack: (index: number, autoPlay: boolean) => void;
+			retry: () => void;
 		};
 		/** 樱花特效管理器,Worker 模式与主线程回退模式均实现该接口 */
 		sakuraManager?: SakuraManagerLike;

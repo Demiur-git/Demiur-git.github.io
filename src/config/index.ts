@@ -45,6 +45,8 @@ export type {
 	ImportantDateCategory,
 	LicenseConfig,
 	MermaidConfig,
+	MusicLyricOverride,
+	MusicPageConfig,
 	MusicPlayerConfig,
 	NavBarConfig,
 	PageTransitionConfig,

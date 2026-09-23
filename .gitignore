@@ -43,6 +43,10 @@ cache/
 package/
 .obsidian/
 
+# Local music import inbox (keep the instructions, ignore personal audio files)
+music-inbox/*
+!music-inbox/README.md
+
 # vibe coding
 .codex*
 .claude

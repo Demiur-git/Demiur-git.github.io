@@ -41,7 +41,11 @@ export type {
 } from "./homeIntroConfig";
 export type { LicenseConfig } from "./licenseConfig";
 export type { MermaidConfig } from "./mermaidConfig";
-export type { MusicPlayerConfig } from "./musicConfig";
+export type {
+	MusicLyricOverride,
+	MusicPageConfig,
+	MusicPlayerConfig,
+} from "./musicConfig";
 export type {
 	NavBarConfig,
 	NavBarLink,

@@ -44,6 +44,11 @@ export const navBarConfig: NavBarConfig = {
 					pageKey: "gallery",
 				},
 				{
+					name: "音乐",
+					url: "/music/",
+					icon: "material-symbols:library-music-outline-rounded",
+				},
+				{
 					name: "项目",
 					url: "/projects/",
 					icon: "material-symbols:rocket-launch-outline",

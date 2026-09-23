@@ -201,7 +201,7 @@ body {
 	background: transparent;
 	box-shadow: none;
 	color: var(--nav-book-ink);
-	transform: translateY(2px);
+	transform: translateY(-5px);
 	transition: color 180ms ease;
 }
 
