@@ -152,6 +152,7 @@ html.is-animating.is-leaving .transition-leaving {
     fill: var(--page-ink);
 	font-family: var(--font-site-handwriting);
     font-size: 96px;
+	font-variant-ligatures: common-ligatures contextual;
 	font-variation-settings: normal;
 	font-weight: 400;
     paint-order: stroke fill;
@@ -162,8 +163,16 @@ html.is-animating.is-leaving .transition-leaving {
     stroke-dashoffset: 1;
 }
 
+.page-writing-progress-rect {
+    width: 0;
+}
+
 .page-turn-glyphs-dry {
     opacity: 0.96;
+}
+
+.page-turn-glyphs-finished {
+    opacity: 0;
 }
 
 .page-turn-glyphs-wet {
@@ -215,12 +224,15 @@ html.is-animating.is-leaving .transition-leaving {
 	font-variation-settings: normal;
 	font-weight: 400;
     line-height: 1.25;
-    letter-spacing: 0.06em;
+    letter-spacing: 0;
 }
 
-.page-turn-character {
-    display: inline-block;
+.page-turn-word {
+    display: block;
+    max-width: 100%;
     opacity: 0;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
     clip-path: inset(0 100% 0 0);
     filter: blur(3px);
     text-shadow: 0 0 0 transparent;
@@ -268,16 +280,24 @@ html.page-turn-cover .page-turn-writing {
     animation: page-writing-stage var(--page-write) ease-out var(--page-cover) both;
 }
 
-html.page-turn-cover #page-turn-overlay[data-writing-fallback="true"] .page-turn-character {
-    animation: page-ink-character var(--char-duration) cubic-bezier(0.2, 0.72, 0.2, 1) var(--char-delay) both;
+html.page-turn-cover #page-turn-overlay[data-writing-fallback="true"] .page-turn-word {
+    animation: page-ink-word var(--page-write) cubic-bezier(0.2, 0.72, 0.2, 1) var(--page-cover) both;
 }
 
 html.page-turn-cover .page-turn-mask-stroke {
     animation: page-ink-stroke var(--stroke-duration) cubic-bezier(0.3, 0.05, 0.25, 1) var(--stroke-delay) both;
 }
 
+html.page-turn-cover .page-writing-progress-rect {
+    animation: page-writing-progress var(--page-write) linear var(--page-cover) both;
+}
+
 html.page-turn-cover .page-turn-glyphs-wet {
     animation: page-wet-ink var(--page-write) ease-out var(--page-cover) both;
+}
+
+html.page-turn-cover .page-turn-glyphs-finished {
+    animation: page-ink-settle 120ms ease-out calc(var(--page-cover) + var(--page-write) - 120ms) both;
 }
 
 html.page-turn-reveal .page-turn-sheet {
@@ -289,7 +309,7 @@ html.page-turn-reveal .page-turn-writing {
     animation: page-writing-away var(--page-reveal-fade) ease-in both;
 }
 
-html.page-turn-reveal .page-turn-character {
+html.page-turn-reveal .page-turn-word {
     opacity: 1;
     clip-path: inset(0);
     filter: none;
@@ -299,8 +319,16 @@ html.page-turn-reveal .page-turn-mask-stroke {
     stroke-dashoffset: 0;
 }
 
+html.page-turn-reveal .page-writing-progress-rect {
+    width: var(--page-script-width);
+}
+
 html.page-turn-reveal .page-turn-glyphs-wet {
     opacity: 0.12;
+}
+
+html.page-turn-reveal .page-turn-glyphs-finished {
+    opacity: 1;
 }
 
 html.page-turn-reveal .page-turn-auto-pen {
@@ -322,7 +350,7 @@ html.page-turn-reveal .page-turn-auto-pen {
     8%, 100% { opacity: 1; }
 }
 
-@keyframes page-ink-character {
+@keyframes page-ink-word {
     0% {
         opacity: 0;
         clip-path: inset(0 100% 0 0);
@@ -347,11 +375,21 @@ html.page-turn-reveal .page-turn-auto-pen {
     to { stroke-dashoffset: 0; }
 }
 
+@keyframes page-writing-progress {
+    from { width: 0; }
+    to { width: var(--page-script-width); }
+}
+
 @keyframes page-wet-ink {
     0% { opacity: 0; }
     8% { opacity: 0.66; }
     72% { opacity: 0.42; }
     100% { opacity: 0.14; }
+}
+
+@keyframes page-ink-settle {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 @keyframes page-writing-away {

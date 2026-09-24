@@ -2,10 +2,19 @@ export type PageWritingStroke = {
 	d: string;
 	startRatio: number;
 	endRatio: number;
+	maskWidth: number;
 };
 
 export type PageWritingGlyph = {
 	character: string;
+	x: number;
+	baseline: number;
+	width: number;
+	strokes: PageWritingStroke[];
+};
+
+export type PageWritingLine = {
+	text: string;
 	x: number;
 	baseline: number;
 	width: number;
@@ -17,6 +26,7 @@ export type PageWritingLayout = {
 	viewWidth: number;
 	viewHeight: number;
 	glyphs: PageWritingGlyph[];
+	lines: PageWritingLine[];
 };
 
 type GlyphDraft = Omit<PageWritingGlyph, "strokes"> & {
@@ -145,7 +155,6 @@ export function createPageWritingLayout(
 				x: x + width / 2,
 				baseline: top + 101,
 				width,
-				maskId: `page-writing-mask-${lineIndex}-${characterIndex}`,
 				strokePaths,
 			});
 			x += width;
@@ -172,9 +181,28 @@ export function createPageWritingLayout(
 			if (penLift && (index < strokePaths.length - 1 || cursor < totalWeight)) {
 				cursor += liftWeight;
 			}
-			return { d, startRatio, endRatio };
+			return {
+				d,
+				startRatio,
+				endRatio,
+				maskWidth: glyph.width >= 90 ? 34 : 28,
+			};
 		}),
 	}));
 
-	return { viewWidth, viewHeight, glyphs };
+	const writingLines = lines.map((line, lineIndex) => {
+		const baseline = lineIndex * LINE_HEIGHT + 105;
+		return {
+			text: line.map(({ character }) => character).join(""),
+			x: viewWidth / 2,
+			baseline,
+			width: lineWidths[lineIndex],
+			maskId: `page-writing-line-mask-${lineIndex}`,
+			strokes: glyphs
+				.filter((glyph) => glyph.baseline === baseline)
+				.flatMap((glyph) => glyph.strokes),
+		};
+	});
+
+	return { viewWidth, viewHeight, glyphs, lines: writingLines };
 }

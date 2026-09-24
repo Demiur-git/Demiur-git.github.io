@@ -215,9 +215,11 @@ body {
 
 #navbar .library-navbar-brand {
 	font-family: var(--font-site-handwriting) !important;
-	font-size: 1.16rem;
+	font-size: 1.4rem;
 	font-weight: 400;
-	letter-spacing: 0.035em;
+	font-variant-ligatures: common-ligatures contextual;
+	letter-spacing: 0;
+	line-height: 1.15;
 	text-shadow: 0 1px 0 color-mix(in srgb, var(--library-brass) 18%, transparent);
 }
 

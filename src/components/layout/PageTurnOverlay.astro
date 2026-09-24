@@ -3,10 +3,8 @@ import { pageTransitionConfig, siteConfig } from "@/config";
 import { createPageWritingLayout } from "@/utils/page-writing-paths";
 
 const title = pageTransitionConfig.text?.trim() || siteConfig.title;
-const characters = Array.from(title);
 const { cover, write, hold, reveal } = pageTransitionConfig.timing;
 const { inkBleed, penLift } = pageTransitionConfig.writing;
-const characterStep = write / Math.max(characters.length, 1);
 const writingLayout = createPageWritingLayout(title, penLift);
 const wetInkBlur = Math.max(0.18, Math.min(1.4, inkBleed * 1.8));
 const wetInkSpread = Math.max(0.4, Math.min(2.4, inkBleed * 2.5));
@@ -16,7 +14,7 @@ const wetInkSpread = Math.max(0.4, Math.min(2.4, inkBleed * 2.5));
 	id="page-turn-overlay"
 	aria-hidden="true"
 	data-pen-lift={penLift.toString()}
-	style={`--page-cover:${cover}ms;--page-write:${write}ms;--page-hold:${hold}ms;--page-reveal:${reveal}ms;--page-reveal-fade:${reveal * 0.55}ms;`}
+	style={`--page-cover:${cover}ms;--page-write:${write}ms;--page-hold:${hold}ms;--page-reveal:${reveal}ms;--page-reveal-fade:${reveal * 0.55}ms;--page-script-width:${writingLayout.viewWidth}px;`}
 >
 	<div class="page-turn-sheet">
 		<div class="page-turn-writing">
@@ -29,6 +27,13 @@ const wetInkSpread = Math.max(0.4, Math.min(2.4, inkBleed * 2.5));
 					preserveAspectRatio="xMidYMid meet"
 				>
 					<defs>
+						<clipPath id="page-writing-progress-clip" clipPathUnits="userSpaceOnUse">
+							<rect
+								class="page-writing-progress-rect"
+								width="0"
+								height={writingLayout.viewHeight}
+							/>
+						</clipPath>
 						<filter
 							id="page-writing-wet-ink"
 							x="-12%"
@@ -54,9 +59,9 @@ const wetInkSpread = Math.max(0.4, Math.min(2.4, inkBleed * 2.5));
 							<feGaussianBlur in="roughInk" stdDeviation={wetInkBlur} />
 						</filter>
 						{
-							writingLayout.glyphs.map((glyph) => (
+							writingLayout.lines.map((line) => (
 								<mask
-									id={glyph.maskId}
+									id={line.maskId}
 									maskUnits="userSpaceOnUse"
 									x="0"
 									y="0"
@@ -68,14 +73,14 @@ const wetInkSpread = Math.max(0.4, Math.min(2.4, inkBleed * 2.5));
 										height={writingLayout.viewHeight}
 										fill="black"
 									/>
-									{glyph.strokes.map((stroke) => (
+									{line.strokes.map((stroke) => (
 										<path
 											class="page-turn-mask-stroke"
 											d={stroke.d}
 											pathLength="1"
 											fill="none"
 											stroke="white"
-											stroke-width={glyph.width >= 90 ? 34 : 28}
+											stroke-width={stroke.maskWidth}
 											stroke-linecap="round"
 											stroke-linejoin="round"
 											data-start={stroke.startRatio}
@@ -88,35 +93,56 @@ const wetInkSpread = Math.max(0.4, Math.min(2.4, inkBleed * 2.5));
 						}
 					</defs>
 
-					<g class="page-turn-glyphs page-turn-glyphs-dry">
+					<g class="page-turn-glyphs page-turn-glyphs-dry" clip-path="url(#page-writing-progress-clip)">
 						{
-							writingLayout.glyphs.map((glyph) => (
+							writingLayout.lines.map((line) => (
 								<text
 									class="page-turn-glyph"
-									x={glyph.x}
-									y={glyph.baseline}
+									x={line.x}
+									y={line.baseline}
 									text-anchor="middle"
-									mask={`url(#${glyph.maskId})`}
+									textLength={line.width}
+									lengthAdjust="spacingAndGlyphs"
+									mask={`url(#${line.maskId})`}
 								>
-									{glyph.character}
+									{line.text}
 								</text>
 							))
 						}
 					</g>
 					<g
 						class="page-turn-glyphs page-turn-glyphs-wet"
+						clip-path="url(#page-writing-progress-clip)"
 						filter="url(#page-writing-wet-ink)"
 					>
 						{
-							writingLayout.glyphs.map((glyph) => (
+							writingLayout.lines.map((line) => (
 								<text
 									class="page-turn-glyph"
-									x={glyph.x}
-									y={glyph.baseline}
+									x={line.x}
+									y={line.baseline}
 									text-anchor="middle"
-									mask={`url(#${glyph.maskId})`}
+									textLength={line.width}
+									lengthAdjust="spacingAndGlyphs"
+									mask={`url(#${line.maskId})`}
 								>
-									{glyph.character}
+									{line.text}
+								</text>
+							))
+						}
+					</g>
+					<g class="page-turn-glyphs page-turn-glyphs-finished">
+						{
+							writingLayout.lines.map((line) => (
+								<text
+									class="page-turn-glyph"
+									x={line.x}
+									y={line.baseline}
+									text-anchor="middle"
+									textLength={line.width}
+									lengthAdjust="spacingAndGlyphs"
+								>
+									{line.text}
 								</text>
 							))
 						}
@@ -130,14 +156,7 @@ const wetInkSpread = Math.max(0.4, Math.min(2.4, inkBleed * 2.5));
 				</svg>
 
 				<div class="page-turn-title-fallback" aria-label={title}>
-					{characters.map((character, index) => (
-						<span
-							class="page-turn-character"
-							style={`--char-delay:${cover + characterStep * index}ms;--char-duration:${Math.max(150, characterStep * 1.8)}ms;`}
-						>
-							{character === " " ? "\u00a0" : character}
-						</span>
-					))}
+					<span class="page-turn-word">{title}</span>
 				</div>
 			</div>
 		</div>

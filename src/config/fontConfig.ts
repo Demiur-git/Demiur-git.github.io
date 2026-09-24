@@ -63,6 +63,23 @@ export const fontsList: FontDefinition[] = [
 			"monospace",
 		],
 	},
+	{
+		name: "Playwrite US Trad",
+		cssVariable: "--font-playwrite-us-trad",
+		provider: "local",
+		weights: ["400"],
+		styles: ["normal"],
+		options: {
+			variants: [
+				{
+					src: ["./public/assets/fonts/PlaywriteUSTrad-wght.ttf"],
+					weight: "400",
+					style: "normal",
+				},
+			],
+		},
+		fallbacks: ["Kaiti SC", "STKaiti", "KaiTi", "cursive"],
+	},
 	// ─── 本地字体示例 ───
 	// 使用步骤：
 	// 1. 将 TTF/OTF/WOFF2 字体文件放在 public/assets/fonts/ 目录下
@@ -98,7 +115,7 @@ export const fontConfig: FontSelectionConfig = {
 	// 主页横幅副标题字体
 	bannerSubtitleFont: "--font-inter",
 	// 导航栏标题字体
-	navbarTitleFont: "--font-greatvibes",
+	navbarTitleFont: "--font-playwrite-us-trad",
 	// 代码块字体（用于代码高亮和等宽字体场景）
 	codeFont: "--font-jetbrains-mono",
 

@@ -64,7 +64,7 @@ const codeFontFamily = codeFontVar
 {Array.from(allCssVars).map((cssVar) => (
   <Font
     cssVariable={cssVar as any}
-    preload={selectedFontVars.includes(cssVar)}
+    preload={selectedFontVars.includes(cssVar) || navbarTitleFontVar === cssVar}
   />
 ))}
 
