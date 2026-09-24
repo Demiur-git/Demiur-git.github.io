@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { constants as fsConstants } from "node:fs";
 import {
 	access,
 	copyFile,
@@ -11,6 +12,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { type IAudioMetadata, type IPicture, parseFile } from "music-metadata";
 import sharp from "sharp";
+import { splitBilingualLrc } from "./music-lyrics.ts";
 
 type GeneratedTrack = {
 	id: string;
@@ -73,6 +75,7 @@ const args = new Set(process.argv.slice(2));
 const fetchLyrics = args.has("--fetch-lyrics");
 const fetchCover = args.has("--fetch-cover");
 const dryRun = args.has("--dry-run");
+const repairLibrary = args.has("--repair-library");
 
 function showHelp() {
 	console.log(`音乐馆藏导入工具
@@ -83,6 +86,7 @@ function showHelp() {
   --fetch-lyrics  缺少同名 LRC 时，从 LRCLIB 匹配同步歌词
   --fetch-cover   缺少封面且歌曲含 MusicBrainz 专辑 ID 时，从 Cover Art Archive 获取
   --dry-run       只检查和预览，不复制文件或改写清单
+  --repair-library 直接修复已导入曲库中的双语 LRC（可与 --dry-run 合用）
   --help          显示本说明
 `);
 }
@@ -308,6 +312,19 @@ async function importTrack(audioPath: string): Promise<ImportResult> {
 			);
 		}
 	}
+	const rawMainLrc = mainLrc
+		? await readFile(mainLrc, "utf8")
+		: embeddedLyrics ?? downloadedLyrics;
+	const lyricSplit = rawMainLrc ? splitBilingualLrc(rawMainLrc) : undefined;
+	if (lyricSplit?.status === "split") {
+		console.log(`  已识别双语歌词：${lyricSplit.pairs} 组同步原文和译文`);
+	} else if (lyricSplit?.status === "ambiguous") {
+		console.warn(`  双语歌词未自动拆分：${lyricSplit.reason}`);
+	}
+	const mainOutput =
+		lyricSplit?.status === "split" ? lyricSplit.original : rawMainLrc;
+	const autoTranslation =
+		lyricSplit?.status === "split" ? lyricSplit.translation : undefined;
 
 	const embeddedCover = metadata.common.picture?.[0];
 	const sidecarCover = embeddedCover
@@ -338,18 +355,10 @@ async function importTrack(audioPath: string): Promise<ImportResult> {
 			await writeCover(onlineCover, path.join(targetDir, "cover.webp"));
 		}
 
-		if (mainLrc)
-			await copyTextFile(mainLrc, path.join(targetDir, "lyrics.lrc"));
-		else if (embeddedLyrics) {
+		if (mainOutput) {
 			await writeFile(
 				path.join(targetDir, "lyrics.lrc"),
-				`${embeddedLyrics}\n`,
-				"utf8",
-			);
-		} else if (downloadedLyrics) {
-			await writeFile(
-				path.join(targetDir, "lyrics.lrc"),
-				`${downloadedLyrics}\n`,
+				`${mainOutput.replace(/\r\n?/g, "\n").trimEnd()}\n`,
 				"utf8",
 			);
 		}
@@ -357,6 +366,12 @@ async function importTrack(audioPath: string): Promise<ImportResult> {
 			await copyTextFile(
 				translationLrc,
 				path.join(targetDir, "lyrics.translation.lrc"),
+			);
+		} else if (autoTranslation) {
+			await writeFile(
+				path.join(targetDir, "lyrics.translation.lrc"),
+				autoTranslation,
+				"utf8",
 			);
 		}
 		if (romajiLrc) {
@@ -367,9 +382,9 @@ async function importTrack(audioPath: string): Promise<ImportResult> {
 	if (embeddedCover || sidecarCover || onlineCover) {
 		track.cover = publicPath(trackId, "cover.webp");
 	}
-	if (mainLrc || embeddedLyrics || downloadedLyrics)
+	if (mainOutput)
 		track.lrc = publicPath(trackId, "lyrics.lrc");
-	if (translationLrc) {
+	if (translationLrc || autoTranslation) {
 		track.translationLrc = publicPath(trackId, "lyrics.translation.lrc");
 	}
 	if (romajiLrc) {
@@ -392,7 +407,7 @@ async function importTrack(audioPath: string): Promise<ImportResult> {
 				: downloadedLyrics
 					? "online"
 					: "missing",
-		translation: Boolean(translationLrc),
+		translation: Boolean(translationLrc || autoTranslation),
 		romaji: Boolean(romajiLrc),
 	};
 }
@@ -405,9 +420,106 @@ async function readManifest(): Promise<MusicLibrary> {
 	}
 }
 
+async function repairImportedLibrary(): Promise<void> {
+	const manifest = JSON.parse(await readFile(manifestPath, "utf8")) as MusicLibrary;
+	if (!Array.isArray(manifest.tracks)) {
+		throw new Error("曲库清单格式无效，未修改任何歌词。");
+	}
+	let candidates = 0;
+	let repaired = 0;
+	let ambiguous = 0;
+	for (const track of manifest.tracks) {
+		if (!track.lrc) continue;
+		const mainPath = path.resolve(projectRoot, "public", track.lrc);
+		const relative = path.relative(publicLibraryDir, mainPath);
+		if (
+			relative === "" ||
+			relative === ".." ||
+			relative.startsWith(`..${path.sep}`) ||
+			path.isAbsolute(relative) ||
+			path.basename(mainPath) !== "lyrics.lrc"
+		) {
+			console.warn(`  跳过 ${track.name}：歌词路径不在本地馆藏目录内`);
+			continue;
+		}
+		if (!(await exists(mainPath))) {
+			console.warn(`  跳过 ${track.name}：找不到已导入的歌词文件`);
+			continue;
+		}
+		const source = await readFile(mainPath, "utf8");
+		const result = splitBilingualLrc(source);
+		if (result.status !== "split") {
+			if (result.status === "ambiguous") {
+				ambiguous += 1;
+				console.warn(`  跳过 ${track.name}：${result.reason}`);
+			}
+			continue;
+		}
+
+		const backupPath = path.join(path.dirname(mainPath), "lyrics.merged.original.lrc");
+		const translationPath = path.join(
+			path.dirname(mainPath),
+			"lyrics.translation.lrc",
+		);
+		const explicitTranslationPath = track.translationLrc
+			? path.resolve(projectRoot, "public", track.translationLrc)
+			: undefined;
+		if (explicitTranslationPath && !(await exists(explicitTranslationPath))) {
+			console.warn(`  跳过 ${track.name}：清单指定的译文文件不存在`);
+			continue;
+		}
+		if (await exists(backupPath)) {
+			const saved = await readFile(backupPath, "utf8");
+			if (saved !== source) {
+				console.warn(`  跳过 ${track.name}：原文备份已存在且与当前歌词不同`);
+				continue;
+			}
+		}
+		if (!explicitTranslationPath && (await exists(translationPath))) {
+			const existing = await readFile(translationPath, "utf8");
+			if (existing !== result.translation) {
+				console.warn(`  跳过 ${track.name}：已有不同内容的译文文件`);
+				continue;
+			}
+		}
+
+		candidates += 1;
+		console.log(
+			`  ${dryRun ? "可修复" : "修复"} ${track.name}：${result.pairs} 组同步双语歌词`,
+		);
+		if (dryRun) continue;
+		if (!(await exists(backupPath))) {
+			await copyFile(mainPath, backupPath, fsConstants.COPYFILE_EXCL);
+		}
+		if (!explicitTranslationPath && !(await exists(translationPath))) {
+			await writeFile(translationPath, result.translation, "utf8");
+		}
+		await writeFile(mainPath, result.original, "utf8");
+		if (!track.translationLrc) {
+			track.translationLrc = publicPath(track.id, "lyrics.translation.lrc");
+		}
+		repaired += 1;
+	}
+	if (repaired > 0) {
+		manifest.generatedAt = new Date().toISOString();
+		await writeFile(
+			manifestPath,
+			`${JSON.stringify(manifest, null, "\t")}\n`,
+			"utf8",
+		);
+	}
+	console.log(
+		`${dryRun ? "预览" : "修复"}完成：${candidates} 首符合条件${dryRun ? "" : `，已修复 ${repaired} 首`}；${ambiguous} 首因格式不明确而跳过。`,
+	);
+}
+
 async function main() {
 	if (args.has("--help")) {
 		showHelp();
+		return;
+	}
+	if (repairLibrary) {
+		await repairImportedLibrary();
 		return;
 	}
 

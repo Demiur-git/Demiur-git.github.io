@@ -35,6 +35,12 @@ let activeSecondary: SecondaryMode = "translation";
 let lyricsScroller: HTMLDivElement;
 let userScrolling = false;
 let scrollTimer: ReturnType<typeof setTimeout> | undefined;
+let lyricLayoutFrame = 0;
+let lyricTopPadding = 0;
+let lyricBottomPadding = 0;
+let lastFollowedIndex = -2;
+let spinOffset = 0;
+let spinSeeded = false;
 let catalogDialog: HTMLDialogElement;
 let catalogTrigger: HTMLButtonElement;
 let catalogIndex = 0;
@@ -70,6 +76,15 @@ $: displayedActiveIndex =
 	lyrics.length > 0
 		? currentLrcIndex
 		: findCurrentLine(baseLyrics, currentTime);
+$: focusedLyricIndex =
+	displayedActiveIndex >= 0
+		? displayedActiveIndex
+		: renderedLyrics.length > 0 ? 0 : -1;
+$: if (lyricsScroller && renderedLyrics) scheduleLyricLayout();
+$: if (lyricsScroller && focusedLyricIndex !== lastFollowedIndex) {
+	lastFollowedIndex = focusedLyricIndex;
+	followActiveLine();
+}
 $: catalogRadius = narrowCatalog ? 1 : 2;
 $: visibleCatalogTracks = playlist
 	.map((track, index) => ({ track, index, offset: index - catalogIndex }))
@@ -91,6 +106,10 @@ function eventDetail<T>(event: Event): T {
 }
 
 function syncState(state: MusicState) {
+	if (!spinSeeded) {
+		spinOffset = -(Number.isFinite(state.currentTime) ? state.currentTime % 8 : 0);
+		spinSeeded = true;
+	}
 	playlist = state.playlist;
 	catalogIndex = Math.max(0, Math.min(catalogIndex, playlist.length - 1));
 	currentTrack = state.track;
@@ -148,10 +167,11 @@ function findCurrentLine(linesToSearch: LyricLine[], time: number): number {
 }
 
 async function followActiveLine(behavior: ScrollBehavior = "smooth") {
-	if (userScrolling || !lyricsScroller || displayedActiveIndex < 0) return;
+	if (userScrolling || !lyricsScroller?.isConnected || focusedLyricIndex < 0) return;
 	await tick();
+	if (!lyricsScroller?.isConnected) return;
 	const line = lyricsScroller.querySelector<HTMLElement>(
-		`[data-lyric-index="${displayedActiveIndex}"]`,
+		`[data-lyric-index="${focusedLyricIndex}"]`,
 	);
 	if (!line) return;
 	const top =
@@ -165,6 +185,27 @@ async function followActiveLine(behavior: ScrollBehavior = "smooth") {
 	});
 }
 
+function scheduleLyricLayout() {
+	if (!lyricsScroller?.isConnected || typeof window === "undefined") return;
+	if (lyricLayoutFrame) cancelAnimationFrame(lyricLayoutFrame);
+	lyricLayoutFrame = requestAnimationFrame(async () => {
+		lyricLayoutFrame = 0;
+		await tick();
+		if (!lyricsScroller?.isConnected) return;
+		const first = lyricsScroller.querySelector<HTMLElement>(".lyric-line");
+		const last = lyricsScroller.querySelector<HTMLElement>(".lyric-line:last-of-type");
+		if (!first || !last) {
+			lyricTopPadding = 0;
+			lyricBottomPadding = 0;
+			return;
+		}
+		lyricTopPadding = Math.max(0, (lyricsScroller.clientHeight - first.offsetHeight) / 2);
+		lyricBottomPadding = Math.max(0, (lyricsScroller.clientHeight - last.offsetHeight) / 2);
+		await tick();
+		followActiveLine("auto");
+	});
+}
+
 function suspendLyricFollow() {
 	userScrolling = true;
 	if (scrollTimer) clearTimeout(scrollTimer);
@@ -172,6 +213,12 @@ function suspendLyricFollow() {
 		userScrolling = false;
 		followActiveLine("auto");
 	}, 3000);
+}
+
+function handleLyricsKeydown(event: KeyboardEvent) {
+	if (["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", " "].includes(event.key)) {
+		suspendLyricFollow();
+	}
 }
 
 function selectCatalogTrack(index: number, event: MouseEvent) {
@@ -286,8 +333,9 @@ function volumeFromInput(event: Event) {
 
 function seekToLyric(time: number) {
 	manager?.seekToTime(time);
+	if (scrollTimer) clearTimeout(scrollTimer);
 	userScrolling = false;
-	followActiveLine("smooth");
+	tick().then(() => followActiveLine("smooth"));
 }
 
 function retrySource() {
@@ -300,12 +348,21 @@ onMount(() => {
 	const syncCatalogWidth = () => (narrowCatalog = narrowQuery.matches);
 	syncCatalogWidth();
 	narrowQuery.addEventListener("change", syncCatalogWidth);
+	const lyricsResizeObserver = typeof ResizeObserver !== "undefined"
+		? new ResizeObserver(scheduleLyricLayout)
+		: undefined;
+	if (lyricsScroller) lyricsResizeObserver?.observe(lyricsScroller);
+	window.addEventListener("resize", scheduleLyricLayout);
+	scheduleLyricLayout();
 	manager = window.__fireflyMusic;
 	if (!manager) {
 		sourceStatus = "error";
 		errorMessage = "播放器未能初始化";
 		return () => {
 			narrowQuery.removeEventListener("change", syncCatalogWidth);
+			lyricsResizeObserver?.disconnect();
+			window.removeEventListener("resize", scheduleLyricLayout);
+			if (lyricLayoutFrame) cancelAnimationFrame(lyricLayoutFrame);
 			window.removeEventListener("wheel", handleCatalogWheel, true);
 			if (catalogDialog?.open) {
 				catalogDialog.close();
@@ -369,7 +426,6 @@ onMount(() => {
 	});
 	listen<{ index: number }>("fm:lrc-index", (detail) => {
 		currentLrcIndex = detail.index;
-		followActiveLine();
 	});
 	listen<{ status: SourceStatus; message?: string }>(
 		"fm:source-status",
@@ -391,6 +447,9 @@ onMount(() => {
 
 	return () => {
 		narrowQuery.removeEventListener("change", syncCatalogWidth);
+		lyricsResizeObserver?.disconnect();
+		window.removeEventListener("resize", scheduleLyricLayout);
+		if (lyricLayoutFrame) cancelAnimationFrame(lyricLayoutFrame);
 		window.removeEventListener("wheel", handleCatalogWheel, true);
 		if (catalogDialog?.open) {
 			catalogDialog.close();
@@ -424,7 +483,7 @@ onMount(() => {
 				<span class:active={isPlaying}>{isPlaying ? "PLAYING" : "STANDBY"}</span>
 			</div>
 
-			<div class:playing={isPlaying} class="turntable-stage">
+			<div class:playing={isPlaying} class:has-track={Boolean(currentTrack)} class="turntable-stage">
 				<div class="turntable-deck">
 					<div class="record-shadow"></div>
 					<button
@@ -434,6 +493,7 @@ onMount(() => {
 						on:click={openCatalog}
 						aria-label="翻阅馆藏曲目"
 						aria-haspopup="dialog"
+						style={`--record-spin-offset: ${spinOffset}s`}
 					>
 						<div class="vinyl-grooves"></div>
 						<div class="record-label">
@@ -445,11 +505,15 @@ onMount(() => {
 						</div>
 						<div class="record-spindle"></div>
 					</button>
-					<div class="tonearm" aria-hidden="true">
-						<div class="tonearm-pivot"></div>
-						<div class="tonearm-bar"></div>
-						<div class="tonearm-head"></div>
-					</div>
+					<svg class="tonearm" viewBox="0 0 190 210" aria-hidden="true" focusable="false">
+						<circle class="tonearm-pivot-rim" cx="160" cy="30" r="21" />
+						<circle class="tonearm-pivot-core" cx="160" cy="30" r="14" />
+						<path class="tonearm-bar-shadow" d="M160 31 L154 63 Q153 68 149 72 L85 139" />
+						<path class="tonearm-bar" d="M160 31 L154 63 Q153 68 149 72 L85 139" />
+						<path class="tonearm-joint" d="M86 138 L69 153" />
+						<path class="tonearm-head" d="M62 145 L75 136 L88 144 L74 157 Z" />
+						<path class="tonearm-stylus" d="M67 155 L62 166" />
+					</svg>
 					<div class="deck-switch" aria-hidden="true"></div>
 				</div>
 			</div>
@@ -555,6 +619,7 @@ onMount(() => {
 				bind:this={lyricsScroller}
 				on:wheel={suspendLyricFollow}
 				on:touchstart={suspendLyricFollow}
+				on:keydown={handleLyricsKeydown}
 				tabindex="0"
 			>
 				{#if lyricStatus === "loading"}
@@ -563,7 +628,7 @@ onMount(() => {
 						<p>正在翻找歌词页……</p>
 					</div>
 				{:else if renderedLyrics.length > 0}
-					<div class="lyrics-padding" aria-hidden="true"></div>
+					<div class="lyrics-padding" style={`height: ${lyricTopPadding}px`} aria-hidden="true"></div>
 					{#each renderedLyrics as line, index}
 						<button
 							type="button"
@@ -577,7 +642,7 @@ onMount(() => {
 							{#if line.secondary}<small>{line.secondary}</small>{/if}
 						</button>
 					{/each}
-					<div class="lyrics-padding" aria-hidden="true"></div>
+					<div class="lyrics-padding" style={`height: ${lyricBottomPadding}px`} aria-hidden="true"></div>
 				{:else}
 					<div class="lyrics-empty">
 						<MusicIcon name="lyrics" />
@@ -761,6 +826,7 @@ onMount(() => {
 	.player-spread {
 		display: grid;
 		grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+		align-items: start;
 		gap: 1rem;
 	}
 
@@ -840,6 +906,9 @@ onMount(() => {
 			repeating-radial-gradient(circle, #242323 0 2px, #0e0f0f 3px 5px);
 		box-shadow: inset 0 0 0 1px rgb(255 255 255 / 8%), 0 8px 18px rgb(0 0 0 / 34%);
 		cursor: pointer;
+		animation: record-spin 8s linear infinite;
+		animation-delay: var(--record-spin-offset, 0s);
+		animation-play-state: paused;
 	}
 
 	.vinyl:focus-visible {
@@ -848,7 +917,7 @@ onMount(() => {
 	}
 
 	.playing .vinyl {
-		animation: record-spin 8s linear infinite;
+		animation-play-state: running;
 	}
 
 	.vinyl-grooves {
@@ -897,53 +966,75 @@ onMount(() => {
 
 	.tonearm {
 		position: absolute;
-		top: 15%;
-		right: 8%;
+		top: 4%;
+		right: 3%;
 		z-index: 4;
-		width: 28%;
+		width: 39%;
 		height: 70%;
-		transform: rotate(-18deg);
-		transform-origin: 78% 18%;
-		transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+		overflow: visible;
+		pointer-events: none;
+		filter: drop-shadow(0 3px 2px rgb(0 0 0 / 24%));
+		transform: rotate(-20deg);
+		transform-origin: 84.2% 14.3%;
+		transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+	}
+
+	.has-track .tonearm {
+		transform: rotate(-4deg);
 	}
 
 	.playing .tonearm {
-		transform: rotate(5deg);
+		transform: rotate(4deg);
 	}
 
-	.tonearm-pivot {
-		position: absolute;
-		top: 2%;
-		right: 2%;
-		width: 2.4rem;
-		aspect-ratio: 1;
-		border: 5px solid color-mix(in srgb, var(--music-paper-solid) 45%, transparent);
-		border-radius: 50%;
-		background: var(--music-brass);
-		box-shadow: 0 3px 8px rgb(0 0 0 / 18%);
+	.tonearm-pivot-rim {
+		fill: color-mix(in srgb, var(--music-paper-solid) 68%, var(--music-brass));
+		stroke: var(--music-brass);
+		stroke-width: 3;
+	}
+
+	.tonearm-pivot-core {
+		fill: var(--music-brass);
+		stroke: color-mix(in srgb, var(--music-ink) 35%, transparent);
+		stroke-width: 1;
+	}
+
+	.tonearm-bar-shadow,
+	.tonearm-bar {
+		fill: none;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+	}
+
+	.tonearm-bar-shadow {
+		stroke: color-mix(in srgb, var(--music-ink) 58%, var(--music-brass));
+		stroke-width: 9;
 	}
 
 	.tonearm-bar {
-		position: absolute;
-		top: 18%;
-		right: 17%;
-		width: 0.38rem;
-		height: 66%;
-		border-radius: 999px;
-		background: linear-gradient(90deg, #8f713e, #e3c27e, #806032);
-		transform: rotate(17deg);
-		transform-origin: top;
+		stroke: #e6ca8d;
+		stroke-width: 5;
+	}
+
+	.tonearm-joint {
+		fill: none;
+		stroke: var(--music-brass);
+		stroke-linecap: round;
+		stroke-width: 7;
 	}
 
 	.tonearm-head {
-		position: absolute;
-		right: 34%;
-		bottom: 6%;
-		width: 1.7rem;
-		height: 0.8rem;
-		border-radius: 0.18rem 0.5rem 0.5rem 0.18rem;
-		background: var(--music-wine-deep);
-		transform: rotate(17deg);
+		fill: var(--music-wine-deep);
+		stroke: color-mix(in srgb, var(--music-paper-solid) 75%, var(--music-wine));
+		stroke-linejoin: round;
+		stroke-width: 2;
+	}
+
+	.tonearm-stylus {
+		fill: none;
+		stroke: var(--music-ink);
+		stroke-linecap: round;
+		stroke-width: 2.5;
 	}
 
 	.deck-switch {
@@ -1077,7 +1168,8 @@ onMount(() => {
 
 	.lyrics-panel {
 		display: flex;
-		min-height: 39rem;
+		height: clamp(32rem, calc(100svh - 12rem), 40rem);
+		min-height: 0;
 		flex-direction: column;
 		background:
 			linear-gradient(90deg, transparent 0 2.7rem, rgb(164 95 106 / 12%) 2.7rem 2.76rem, transparent 2.76rem),
@@ -1131,15 +1223,17 @@ onMount(() => {
 
 	.lyrics-scroll {
 		position: relative;
-		flex: 1;
+		flex: 1 1 auto;
+		min-height: 0;
 		overflow-y: auto;
+		overscroll-behavior: contain;
 		scrollbar-color: color-mix(in srgb, var(--music-wine) 35%, transparent) transparent;
 		scrollbar-width: thin;
 		mask-image: linear-gradient(to bottom, transparent, black 14%, black 86%, transparent);
 	}
 
 	.lyrics-padding {
-		height: 12rem;
+		flex: none;
 	}
 
 	.lyric-line {
@@ -1160,7 +1254,7 @@ onMount(() => {
 		line-height: 1.55;
 		text-align: left;
 		cursor: pointer;
-		opacity: 0.55;
+		opacity: 0.72;
 		transition: color 220ms ease, opacity 220ms ease, transform 220ms ease, border-color 220ms ease, background-color 220ms ease;
 	}
 
@@ -1189,7 +1283,7 @@ onMount(() => {
 	.lyrics-empty {
 		display: flex;
 		height: 100%;
-		min-height: 26rem;
+		min-height: 0;
 		align-items: center;
 		justify-content: center;
 		flex-direction: column;
@@ -1587,12 +1681,7 @@ onMount(() => {
 		}
 
 		.lyrics-panel {
-			min-height: 32rem;
-		}
-
-		.lyrics-scroll {
-			height: 27rem;
-			flex: none;
+			height: clamp(22rem, 48svh, 32rem);
 		}
 	}
 
@@ -1632,11 +1721,7 @@ onMount(() => {
 		}
 
 		.lyrics-panel {
-			min-height: 28rem;
-		}
-
-		.lyrics-scroll {
-			height: 23rem;
+			height: clamp(22rem, 48svh, 28rem);
 		}
 
 		.lyric-line {
@@ -1717,7 +1802,7 @@ onMount(() => {
 	}
 
 	@media (prefers-reduced-motion: reduce) {
-		.playing .vinyl {
+		.vinyl {
 			animation: none;
 		}
 

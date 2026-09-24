@@ -25,10 +25,16 @@ let duration = 0;
 let sourceStatus: SourceStatus = "idle";
 let errorMessage = "";
 let coverFailed = false;
+let spinOffset = 0;
+let spinSeeded = false;
 
 $: hasTrack = Boolean(track && sourceStatus === "ready");
 
 function syncState(state: MusicState) {
+	if (!spinSeeded) {
+		spinOffset = -(Number.isFinite(state.currentTime) ? state.currentTime % 8 : 0);
+		spinSeeded = true;
+	}
 	if (track?.url !== state.track?.url) coverFailed = false;
 	track = state.track;
 	isPlaying = state.isPlaying;
@@ -50,7 +56,12 @@ function isCurrentPath(href: string): boolean {
 
 function syncVisibility() {
 	if (variant !== "orb") return;
-	visible = !isCurrentPath(homeHref) && !isCurrentPath(musicHref);
+	const nextVisible = !isCurrentPath(homeHref) && !isCurrentPath(musicHref);
+	if (nextVisible && !visible && manager) {
+		const time = manager.getState().currentTime;
+		spinOffset = -(Number.isFinite(time) ? time % 8 : 0);
+	}
+	visible = nextVisible;
 	if (!visible) expanded = false;
 }
 
@@ -144,7 +155,7 @@ onMount(() => {
 </script>
 
 {#if variant === "sidebar"}
-	<section class="music-card" aria-label="首页音乐栏" bind:this={root}>
+	<section class="music-card" aria-label="首页音乐栏" bind:this={root} style={`--record-spin-offset: ${spinOffset}s`}>
 		<header class="card-heading">
 			<span>MUSIC · 07</span>
 			<strong>音乐馆藏</strong>
@@ -184,7 +195,7 @@ onMount(() => {
 		<a class="collection-link" href={musicHref}>进入音乐馆藏 <span aria-hidden="true">↗</span></a>
 	</section>
 {:else if visible}
-	<div class="music-orb-wrap" bind:this={root}>
+	<div class="music-orb-wrap" bind:this={root} style={`--record-spin-offset: ${spinOffset}s`}>
 			<section id="music-orb-panel" class="music-orb-panel" aria-label="音乐快捷控制" hidden={!expanded}>
 				<div class="panel-top">
 					<span>MUSIC · NOW PLAYING</span>
@@ -305,9 +316,12 @@ onMount(() => {
 		border-radius: 50%;
 		background: repeating-radial-gradient(circle, #242523 0 2px, #363833 3px 4px, #1c1d1c 5px 7px);
 		box-shadow: inset 0 0 0 2px #3d403b, 0 6px 14px rgb(0 0 0 / 19%);
+		animation: record-spin 8s linear infinite;
+		animation-delay: var(--record-spin-offset, 0s);
+		animation-play-state: paused;
 	}
 	.record.playing {
-		animation: record-spin 8s linear infinite;
+		animation-play-state: running;
 	}
 	.record-large { width: min(11rem, 78%); }
 	.record-small { width: 3.7rem; }
@@ -469,6 +483,6 @@ onMount(() => {
 		}
 	}
 	@media (prefers-reduced-motion: reduce) {
-		.record.playing { animation: none; }
+		.record { animation: none; }
 	}
 </style>
