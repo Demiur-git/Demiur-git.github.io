@@ -17,6 +17,7 @@ import {
 } from "@/utils/grid-layout-utils";
 import { initIconLoader } from "@/utils/icon-loader";
 import { initImageLoadFadeIn } from "@/utils/lqip-utils";
+import { initHomeEntrance } from "@/utils/home-entrance";
 import { initScroll } from "@/utils/scroll-utils";
 import { initThemeListener, initWallpaperMode } from "@/utils/setting-utils";
 import { setupSwupTransitions } from "@/utils/swup-transitions";
@@ -51,6 +52,7 @@ export function initLayout(): void {
 		"scheme-switch",
 	]);
 
+	initHomeEntrance();
 	setupSwupTransitions();
 	initFullscreenWallpaper();
 	registerContentOverflowListeners();

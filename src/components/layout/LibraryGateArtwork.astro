@@ -1,0 +1,47 @@
+---
+import { buildGateArchitecture } from "@/utils/library-gate-artwork";
+import { buildGateDoor, gateHitStyle } from "@/utils/library-gate-geometry";
+
+const architecture = buildGateArchitecture();
+const leaves = (["left", "right"] as const).map((side) => ({ side, geometry: buildGateDoor(side, 0) }));
+---
+
+<div class="library-gate-scene">
+	<svg class="library-gate-svg" viewBox="0 0 1200 900" aria-hidden="true" focusable="false">
+		<defs>
+			<clipPath id="gate-aperture"><path data-gate-aperture d={architecture.aperture} /></clipPath>
+			{leaves.map(({ side, geometry }) => geometry.faces.map((face) =>
+				<clipPath id={"gate-clip-" + side + "-" + face.id}><path data-gate-clip={side + "-" + face.id} d={face.d} /></clipPath>
+			))}
+		</defs>
+		<g class="gate-surround gate-draw-lines">
+			{architecture.surround.map((ink) => <path data-gate-architecture={ink.id} class={"gate-ink gate-ink-" + ink.kind + " gate-tone-" + ink.tone} d={ink.d} pathLength="1" />)}
+		</g>
+		<g class="gate-recess gate-draw-lines">
+			{[...architecture.recess, ...architecture.fanlight].map((ink) => <path data-gate-architecture={ink.id} class={"gate-ink gate-ink-" + ink.kind + " gate-tone-" + ink.tone} d={ink.d} pathLength="1" />)}
+		</g>
+		<g clip-path="url(#gate-aperture)">
+			{leaves.map(({ side, geometry }) =>
+				<g class="gate-door" data-gate-door={side}>
+					{geometry.faces.map((face) =>
+						<g data-gate-face={face.id} display={face.visible ? undefined : "none"}>
+							<path data-face-outline class={"gate-ink gate-ink-outline gate-tone-" + face.tone} d={face.d} pathLength="1" />
+							<g clip-path={"url(#gate-clip-" + side + "-" + face.id + ")"}>
+								{face.details.map((ink) => <path data-gate-ink={ink.id} class={"gate-ink gate-ink-" + ink.kind + " gate-tone-" + ink.tone} d={ink.d} pathLength="1" />)}
+							</g>
+						</g>
+					)}
+				</g>
+			)}
+		</g>
+		<g class="gate-trim gate-draw-lines">
+			{architecture.trim.map((ink) => <path data-gate-architecture={ink.id} class={"gate-ink gate-ink-" + ink.kind + " gate-tone-" + ink.tone} d={ink.d} fill-rule="evenodd" pathLength="1" />)}
+		</g>
+		<g class="gate-steps gate-draw-lines">
+			{architecture.steps.map((ink) => <path data-gate-architecture={ink.id} class={"gate-ink gate-ink-" + ink.kind + " gate-tone-" + ink.tone} d={ink.d} pathLength="1" />)}
+		</g>
+	</svg>
+	{leaves.map(({ side, geometry }) =>
+		<button class="gate-door-hit" style={gateHitStyle(geometry)} data-door-side={side} type="button" aria-label={side === "left" ? "推开图书馆左门扇" : "推开图书馆右门扇"}></button>
+	)}
+</div>

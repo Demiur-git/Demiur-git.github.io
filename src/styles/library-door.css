@@ -1,0 +1,196 @@
+/* A frontal one-point drawing: facade, steps and hinged doors share one camera. */
+#library-door-entrance {
+	position: fixed;
+	inset: 0;
+	z-index: 2147483646;
+	visibility: hidden;
+	pointer-events: none;
+	overflow: hidden;
+	background: #07090d;
+	color: #eef1ef;
+	isolation: isolate;
+	outline: none;
+}
+
+html[data-home-intro] #library-door-entrance { visibility: visible; pointer-events: auto; }
+html[data-home-intro="pending"] .library-gate-scene { opacity: 0; }
+html.is-home-entering { overflow: hidden; }
+
+.library-gate-scene {
+	position: absolute;
+	top: 48%;
+	left: 50%;
+	width: 120dvh;
+	aspect-ratio: 4 / 3;
+	transform: translate(-50%, -50%);
+}
+
+.library-gate-svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.gate-ink {
+	fill: none;
+	stroke: #b9c5c2;
+	stroke-width: 1;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+	vector-effect: non-scaling-stroke;
+}
+.gate-ink-outline { stroke: #d0d9d4; stroke-width: 1.5; }
+.gate-ink-structure { stroke: #a9b6b3; stroke-width: 1; }
+.gate-ink-detail { stroke: #647573; stroke-width: .65; }
+.gate-ink-metal { stroke: #e0e6df; stroke-width: 1.1; }
+.gate-tone-wood { fill: #0b1013; }
+.gate-tone-stone { fill: #0c1013; }
+.gate-tone-edge { fill: #12191b; }
+.gate-tone-glass { fill: #070b0e; }
+.gate-tone-void { fill: #040608; stroke: none; }
+.gate-tone-none { fill: none; }
+.gate-surround { opacity: .42; }
+.gate-steps { opacity: .78; }
+.gate-recess .gate-tone-edge { stroke: #728480; }
+
+html[data-home-intro="approaching"] .gate-ink {
+	stroke-dasharray: 1;
+	stroke-dashoffset: 1;
+	animation: library-gate-draw 850ms ease-out 200ms both, library-gate-fill 850ms ease-out 200ms both;
+}
+html[data-home-intro="approaching"] .gate-door .gate-ink { animation-delay: 350ms; }
+html[data-home-intro="approaching"] .gate-ink-detail,
+html[data-home-intro="approaching"] .gate-ink-metal { animation-delay: 550ms; }
+
+.gate-door-hit {
+	position: absolute;
+	z-index: 2;
+	padding: 0;
+	border: 0;
+	border-radius: 0;
+	background: transparent;
+	cursor: grab;
+	touch-action: none;
+}
+.gate-door-hit:active { cursor: grabbing; }
+.gate-door-hit:focus-visible { outline: none; }
+.library-gate-scene:has([data-door-side="left"]:focus-visible) [data-gate-door="left"] [data-face-outline],
+.library-gate-scene:has([data-door-side="right"]:focus-visible) [data-gate-door="right"] [data-face-outline] {
+	stroke: #fff;
+	stroke-width: 2.2;
+}
+.library-door-skip:focus-visible,
+.library-dialogue-box button:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+html:not([data-home-intro="active"]) .gate-door-hit { pointer-events: none; }
+html:not([data-home-intro="active"]):not([data-home-intro="approaching"]) .library-door-instruction { visibility: hidden; }
+
+.library-door-instruction {
+	position: absolute;
+	z-index: 2;
+	bottom: max(1.4rem, env(safe-area-inset-bottom));
+	left: 50%;
+	width: max-content;
+	max-width: calc(100vw - 2rem);
+	margin: 0;
+	padding: .55rem 1rem;
+	transform: translateX(-50%);
+	border: 1px solid #8b999c;
+	background: rgb(5 8 12 / 89%);
+	font: 500 .86rem/1.5 var(--font-library-sans);
+	letter-spacing: .03em;
+	text-align: center;
+}
+
+.library-door-skip {
+	position: absolute;
+	z-index: 6;
+	top: max(1.2rem, env(safe-area-inset-top));
+	right: max(1.2rem, env(safe-area-inset-right));
+	padding: .58rem .85rem;
+	border: 1px solid #aab7ba;
+	background: #10171d;
+	color: #f3f5f3;
+	font: 500 .85rem var(--font-library-sans);
+	cursor: pointer;
+}
+.library-door-skip:hover { background: #25323a; }
+
+.library-gate-black {
+	position: absolute;
+	z-index: 3;
+	inset: 0;
+	background: #050608;
+	opacity: 0;
+	pointer-events: none;
+}
+html[data-home-intro="walking"] .library-gate-black { opacity: var(--gate-blackout, 0); }
+html[data-home-intro="black"] .library-gate-black,
+html[data-home-intro="dialogue"] .library-gate-black { opacity: 1; }
+html[data-home-intro="black"] .library-gate-scene,
+html[data-home-intro="dialogue"] .library-gate-scene { visibility: hidden; }
+html[data-home-intro="black"] .library-door-instruction,
+html[data-home-intro="dialogue"] .library-door-instruction { visibility: hidden; }
+
+.library-gate-dialogue {
+	position: absolute;
+	z-index: 4;
+	inset: 0;
+	visibility: hidden;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 240ms ease;
+}
+html[data-home-intro="dialogue"] .library-gate-dialogue { visibility: visible; opacity: 1; pointer-events: auto; }
+.library-dialogue-box {
+	position: absolute;
+	right: max(2rem, calc((100vw - 980px) / 2));
+	bottom: max(5vh, env(safe-area-inset-bottom));
+	left: max(2rem, calc((100vw - 980px) / 2));
+	min-height: 238px;
+	padding: 1.35rem 1.6rem 1.1rem;
+	border: 1px solid #b5c1c4;
+	background: rgb(15 20 26 / 95%);
+	box-shadow: 9px 9px 0 rgb(184 194 196 / 11%);
+	font-family: var(--font-library-sans);
+}
+.library-dialogue-top { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.library-dialogue-index { font: 500 .68rem ui-monospace, monospace; letter-spacing: .18em; color: #b6c2c5; }
+.library-dialogue-auto, .library-dialogue-actions button {
+	padding: .35rem .7rem;
+	border: 1px solid #7f9196;
+	background: transparent;
+	color: #edf1ef;
+	cursor: pointer;
+}
+.library-dialogue-auto[aria-pressed="true"] { background: #d9e2e2; color: #111820; }
+.library-dialogue-speaker { margin-top: .75rem; color: #dce5e4; font: 600 .85rem var(--font-library-serif); }
+.library-dialogue-text { min-height: 3.5rem; margin: .5rem 0 1rem; font: 500 clamp(1rem, 2vw, 1.25rem)/1.8 var(--font-library-serif); }
+.library-dialogue-actions { display: flex; justify-content: flex-end; gap: .6rem; }
+.library-dialogue-actions button:hover { background: #26333b; }
+.library-dialogue-actions button[hidden] { display: none; }
+
+.library-eye-reveal { display: none; position: absolute; inset: 0; z-index: 5; }
+.library-eye-focus {
+	position: absolute;
+	inset: 0;
+	-webkit-backdrop-filter: blur(var(--eye-blur, 14px));
+	backdrop-filter: blur(var(--eye-blur, 14px));
+	background: rgb(0 0 0 / var(--eye-shade, .28));
+}
+.library-eye-lids { display: block; position: absolute; inset: 0; width: 100%; height: 100%; fill: #050608; }
+html[data-home-intro="waking"] #library-door-entrance { background: transparent; }
+html[data-home-intro="waking"] .library-eye-reveal { display: block; }
+html[data-home-intro="waking"] :is(.library-gate-scene, .library-gate-black, .library-gate-dialogue) { visibility: hidden; transition: none; }
+
+@keyframes library-gate-draw { to { stroke-dashoffset: 0; } }
+@keyframes library-gate-fill { from { fill-opacity: 0; } to { fill-opacity: 1; } }
+
+@media (max-width: 600px) {
+	.library-gate-scene { width: min(210vw, 120dvh); }
+	.library-door-instruction { white-space: normal; }
+	.library-dialogue-box { right: 1rem; bottom: max(1rem, env(safe-area-inset-bottom)); left: 1rem; min-height: 240px; padding: 1rem; }
+	.library-dialogue-text { min-height: 5rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	#library-door-entrance { display: none !important; }
+	html.is-home-entering { overflow: auto; }
+	.gate-draw-lines path, .gate-door path { animation: none !important; }
+}
+
+html[data-home-intro] astro-dev-toolbar { visibility: hidden; }

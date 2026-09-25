@@ -1,0 +1,46 @@
+---
+import { homeEntranceConfig } from "@/config";
+import { isHomePage } from "@/utils/layout-utils";
+import LibraryGateArtwork from "./LibraryGateArtwork.astro";
+
+const initialHome = isHomePage(Astro.url.pathname);
+---
+
+<div
+	id="library-door-entrance"
+	role="dialog"
+	aria-modal="true"
+	aria-label="图书馆序章"
+	tabindex="-1"
+	aria-hidden={initialHome ? "false" : "true"}
+	data-dialogue={JSON.stringify(homeEntranceConfig.dialogue)}
+>
+	<LibraryGateArtwork />
+	<p class="library-door-instruction" id="library-door-instruction" data-door-message>线稿正在出现，请稍候…</p>
+	<div class="library-gate-black" aria-hidden="true"></div>
+	<div class="library-eye-reveal" aria-hidden="true">
+		<div class="library-eye-focus"></div>
+		<svg class="library-eye-lids" viewBox="0 0 1000 1000" preserveAspectRatio="none" focusable="false">
+			<path data-eye-top d="M0 0H1000V500Q500 500 0 500Z" />
+			<path data-eye-bottom d="M0 1000H1000V500Q500 500 0 500Z" />
+		</svg>
+	</div>
+	<section class="library-gate-dialogue" data-dialogue-panel aria-hidden="true" aria-label="图书馆序章旁白">
+		<div class="library-dialogue-box">
+			<div class="library-dialogue-top">
+				<span class="library-dialogue-index" data-dialogue-index>01 / 03</span>
+				<button class="library-dialogue-auto" data-dialogue-auto type="button" aria-pressed="false">自动推进：关</button>
+			</div>
+			<div class="library-dialogue-speaker" data-dialogue-speaker>旁白</div>
+			<p class="library-dialogue-text" data-dialogue-text aria-hidden="true"></p>
+			<span class="sr-only" data-dialogue-accessible aria-live="polite"></span>
+			<div class="library-dialogue-actions">
+				<button data-dialogue-next type="button">继续 <span aria-hidden="true">↵</span></button>
+				<button data-dialogue-enter type="button" hidden>进入主页 <span aria-hidden="true">→</span></button>
+			</div>
+		</div>
+	</section>
+	<button class="library-door-skip" data-door-skip type="button">跳过<span aria-hidden="true"> ↗</span></button>
+</div>
+
+<noscript><style is:inline>#library-door-entrance{display:none!important}</style></noscript>

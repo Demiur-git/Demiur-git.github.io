@@ -90,6 +90,7 @@ export { fontConfig, fontsList } from "./fontConfig"; // 字体配置
 export { friendsPageConfig, getEnabledFriends } from "./friendsConfig"; // 友链配置
 export { galleryConfig } from "./galleryConfig"; // 相册配置
 export { homeIntroConfig } from "./homeIntroConfig"; // 首页介绍区配置
+export { homeEntranceConfig } from "./homeEntranceConfig"; // 首页线稿序章占位台词
 export { licenseConfig } from "./licenseConfig"; // 许可证配置
 // 组件配置
 export { mermaidConfig } from "./mermaidConfig"; // Mermaid 图表配置

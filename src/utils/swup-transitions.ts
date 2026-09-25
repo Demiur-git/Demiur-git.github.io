@@ -21,13 +21,16 @@ import {
 	syncBannerHomeTextVisibility,
 	updateNavbarTransparency,
 } from "@/utils/setting-utils";
+import { isHomePage as isHomePath } from "@/utils/layout-utils";
 import { pathsEqual, url } from "@/utils/url-utils";
+import { preserveLiveDevStyles } from "@/utils/swup-dev-styles";
 
 let pageTurnActive = false;
 let pageTurnReadyAt = 0;
 let pageTurnRevealReadyAt = 0;
 let pageTurnGeneration = 0;
 let activePageTurnVisit: object | null = null;
+let activeHomeEntranceVisit: object | null = null;
 const pendingPageTurnWaits = new Set<() => void>();
 
 function destinationLabel(destination: string): string {
@@ -55,6 +58,7 @@ function shouldTurnPage(destination: string, source: string): boolean {
 		const current = new URL(source, window.location.origin);
 		return (
 			next.origin === window.location.origin &&
+			!isHomePath(next.pathname) &&
 			(next.pathname !== current.pathname || next.search !== current.search)
 		);
 	} catch {
@@ -178,6 +182,13 @@ function finishProgressBar(): void {
  * 注册 link:click / content:replace / visit:start / page:view / visit:end 钩子。
  */
 function registerSwupHooks(): void {
+	if (import.meta.env.DEV) {
+		// Run before SwupHeadPlugin (priority 0). Cached SSR styles can predate
+		// HMR and otherwise replace the live global CSS on the second visit.
+		window.swup.hooks.before("content:replace", (visit: { to: { document: Document } }) => {
+			preserveLiveDevStyles(document.head, visit.to.document.head);
+		}, { priority: -100 });
+	}
 	// 非首页全屏模式与 overlay 一致（内容在最上面），首页 hero 结构回顶即可，
 	// 均无需自定义 swup 回顶行为，保留默认滚动到顶部
 	// TODO: temp solution to change the height of the banner
@@ -223,6 +234,8 @@ function registerSwupHooks(): void {
 	});
 	window.swup.hooks.on("content:replace", (visit: object) => {
 		if (visit === activePageTurnVisit) revealPageTurn();
+		if (visit === activeHomeEntranceVisit)
+			document.dispatchEvent(new Event("firefly:home-entrance-ready"));
 		initializeFloatingPanels();
 
 		// 侧边栏组件可见性由 page:view 统一更新（含 refreshSidebarStickyState 的
@@ -260,6 +273,12 @@ function registerSwupHooks(): void {
 	});
 	window.swup.hooks.on("visit:start", (visit: { from: { url: string }; to: { url: string } }) => {
 		// visit:start 同时覆盖普通链接和浏览器前进/后退。
+		const destinationPath = new URL(visit.to.url, window.location.href).pathname;
+		const sourcePath = new URL(visit.from.url, window.location.href).pathname;
+		const enteringHome = isHomePath(destinationPath) && !isHomePath(sourcePath);
+		if (enteringHome) document.dispatchEvent(new Event("firefly:home-entrance-start"));
+		else document.dispatchEvent(new Event("firefly:home-entrance-cancel"));
+		activeHomeEntranceVisit = enteringHome ? visit : null;
 		startPageTurn(visit.to.url, visit.from.url);
 		activePageTurnVisit = pageTurnActive ? visit : null;
 		// Start progress bar（WAAPI 合成线程动画，不强制回流）
@@ -431,9 +450,17 @@ function registerSwupHooks(): void {
 	});
 	window.swup.hooks.on("visit:abort", (visit: object) => {
 		if (visit === activePageTurnVisit) clearPageTurnState();
+		if (visit === activeHomeEntranceVisit) {
+			document.dispatchEvent(new Event("firefly:home-entrance-cancel"));
+			activeHomeEntranceVisit = null;
+		}
 	});
 	window.swup.hooks.on("fetch:error", (visit: object) => {
 		if (visit === activePageTurnVisit) clearPageTurnState();
+		if (visit === activeHomeEntranceVisit) {
+			document.dispatchEvent(new Event("firefly:home-entrance-cancel"));
+			activeHomeEntranceVisit = null;
+		}
 	});
 }
 

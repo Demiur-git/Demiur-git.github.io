@@ -7,6 +7,7 @@ import Footer from "@components/layout/Footer.astro";
 import HeaderTopRow from "@components/layout/HeaderTopRow.astro";
 import NavMenuPanel from "@components/layout/NavMenuPanel.astro";
 import BookTurnOverlay from "@components/layout/BookTurnOverlay.astro";
+import LibraryDoorEntrance from "@components/layout/LibraryDoorEntrance.astro";
 import SideBar from "@components/layout/SideBar.astro";
 import type { MarkdownHeading } from "astro";
 import FloatingControls from "@/components/controls/FloatingControls.astro";
@@ -107,6 +108,7 @@ const {
 
 <WallpaperSection state={banner} backgroundImages={backgroundImages} darkBackgroundImages={darkBackgroundImages} title={title} bannerPostMeta={bannerPostMeta} />
 <BookTurnOverlay />
+<LibraryDoorEntrance />
 
 <!-- Main content -->
 <div id="content-panel" class="content-panel absolute w-full z-30 pointer-events-none">
