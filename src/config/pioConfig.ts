@@ -6,18 +6,17 @@ import type {
 
 export const ocPetConfig: OcPetConfig = {
 	enable: true,
-	name: "馆员书签",
+	name: "绫",
 	position: "bottom-left",
 	size: {
 		desktop: 168,
 		mobile: 112,
 	},
-	// 正式 OC 素材可放在 public/images/oc-pet/，然后填写以下路径：
-	// assets: {
-	// 	idle: "/images/oc-pet/idle.webp",
-	// 	blink: "/images/oc-pet/blink.webp",
-	// 	interact: "/images/oc-pet/interact.webp",
-	// },
+	assets: {
+		idle: "/images/oc-pet/idle.webp",
+		blink: "/images/oc-pet/blink.webp",
+		interact: "/images/oc-pet/interact.webp",
+	},
 	messages: [
 		"嘘——这里的故事正在慢慢醒来。",
 		"今天想从哪一排书架开始？",

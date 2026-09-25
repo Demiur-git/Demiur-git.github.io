@@ -76,6 +76,11 @@ export const navBarConfig: NavBarConfig = {
 					url: "/about/site/",
 					icon: "material-symbols:language-rounded",
 				},
+				{
+					name: "绫",
+					url: "/about/ling/",
+					icon: "material-symbols:menu-book-outline-rounded",
+				},
 			],
 		},
 	],

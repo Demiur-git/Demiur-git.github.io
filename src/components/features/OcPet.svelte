@@ -95,11 +95,13 @@ function speak() {
 
 	const interactAsset = config.assets?.interact;
 	if (interactAsset) {
+		clearTimeout(blinkTimer);
+		clearTimeout(assetTimer);
 		activeAsset = interactAsset;
 		imageFailed = false;
-		clearTimeout(assetTimer);
 		assetTimer = setTimeout(() => {
 			activeAsset = config.assets?.idle ?? "";
+			scheduleBlink();
 		}, 520);
 	}
 }
@@ -117,6 +119,7 @@ function scheduleBlink() {
 		() => {
 			activeAsset = config.assets?.blink ?? config.assets?.idle ?? "";
 			imageFailed = false;
+			clearTimeout(assetTimer);
 			assetTimer = setTimeout(() => {
 				activeAsset = config.assets?.idle ?? "";
 				scheduleBlink();
@@ -124,6 +127,15 @@ function scheduleBlink() {
 		},
 		min + Math.random() * (max - min),
 	);
+}
+
+function handleImageError() {
+	const idleAsset = config.assets?.idle ?? "";
+	if (activeAsset && activeAsset !== idleAsset) {
+		activeAsset = idleAsset;
+		return;
+	}
+	imageFailed = true;
 }
 
 function beginDrag(event: PointerEvent) {
@@ -265,17 +277,17 @@ onMount(() => {
 		>
 			<div class="pet-figure">
 				{#if activeAsset && !imageFailed}
-					<img src={activeAsset} alt={config.name} draggable="false" onerror={() => (imageFailed = true)} />
+					<img src={activeAsset} alt={config.name} draggable="false" onerror={handleImageError} />
 				{:else}
 					<div class="bookmark-placeholder" aria-hidden="true">
-						<span class="catalog-code">OC · 待入藏</span>
+						<span class="catalog-code">OC · 图像暂缺</span>
 						<svg viewBox="0 0 72 72" role="presentation">
 							<path d="M13 19c9-4 17-3 23 2v35c-6-5-14-6-23-2V19Z" />
 							<path d="M59 19c-9-4-17-3-23 2v35c6-5 14-6 23-2V19Z" />
 							<path d="M36 21v35" />
 						</svg>
-						<strong>馆员席</strong>
-						<small>等待 OC 立绘</small>
+						<strong>绫</strong>
+						<small>图片暂不可用</small>
 					</div>
 				{/if}
 			</div>
@@ -338,6 +350,10 @@ onMount(() => {
 		height: 100%;
 		object-fit: contain;
 		pointer-events: none;
+	}
+
+	:global(:root.dark) .pet-figure img {
+		filter: drop-shadow(0 0 1.5px rgb(226 209 173 / 65%)) drop-shadow(0 8px 13px rgb(0 0 0 / 35%));
 	}
 
 	.bookmark-placeholder {

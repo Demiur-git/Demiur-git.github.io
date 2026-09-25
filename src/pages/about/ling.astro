@@ -1,0 +1,77 @@
+---
+import MainGridLayout from "@/layouts/MainGridLayout.astro";
+
+const description = "认识绫：Demiur 的虚构图书馆引导者。";
+---
+
+<MainGridLayout title="绫" description={description}>
+	<section class="ling-page collection-page" aria-labelledby="ling-title">
+		<header class="ling-heading card-base">
+			<p class="collection-kicker">LIBRARY GUIDE · CHARACTER FILE 01</p>
+			<h2 id="ling-title">绫 <span>Ling</span></h2>
+			<p>在网站里为访客引路的虚构角色。</p>
+		</header>
+
+		<div class="ling-profile card-base">
+			<figure class="ling-portrait-stage">
+				<img
+					src="/images/oc-pet/ling-portrait-anime-v4.webp"
+					alt="绫的全身立绘：黑色齐肩直发、白色衬衫、黑色长裙与皮鞋，双手在胸前指尖相触，微笑着说话"
+					width="1024"
+					height="1536"
+					decoding="async"
+				/>
+				<figcaption>CHARACTER PORTRAIT · LING</figcaption>
+			</figure>
+
+			<div class="ling-details">
+				<p class="ling-overline">馆藏人物 / 01</p>
+				<h3>欢迎来到这座私人图书馆。</h3>
+				<p>绫是网站的虚构引导者。她并非网站作者；有关作者本人的介绍，请到<a href="/about/me/">「本人」</a>页面阅读。</p>
+				<dl>
+					<div><dt>姓名</dt><dd>绫 / Ling</dd></div>
+					<div><dt>外形</dt><dd>黑色齐肩直发，黑棕色眼睛。</dd></div>
+					<div><dt>服装</dt><dd>白色衬衫、黑色长裙与黑色皮鞋。</dd></div>
+					<div><dt>身份</dt><dd>网站的虚构引导者。</dd></div>
+				</dl>
+				<div class="ling-pet-note">
+					<img src="/images/oc-pet/idle.webp" alt="绫的 Q 版桌宠形象" width="1254" height="1254" loading="lazy" decoding="async" />
+					<p>左下角的 Q 版绫会陪你逛网站。点击可以和她互动，也可以拖动或收起她。</p>
+				</div>
+			</div>
+		</div>
+	</section>
+</MainGridLayout>
+
+<style>
+	.ling-page { --collection-accent: var(--library-burgundy); display: grid; gap: 1rem; }
+	.ling-heading { padding: 1.45rem clamp(1.3rem, 4vw, 2.5rem); border-left: 4px solid var(--collection-accent); background: var(--library-surface); }
+	.ling-heading h2 { margin: 0; color: var(--library-ink); font-family: var(--font-library-serif); font-size: clamp(2rem, 4vw, 3rem); line-height: 1.2; }
+	.ling-heading h2 span { margin-left: 0.4rem; color: var(--collection-accent); font-family: var(--font-code, ui-monospace, monospace); font-size: 0.38em; letter-spacing: 0.14em; vertical-align: middle; }
+	.ling-heading > p:last-child { margin: 0.5rem 0 0; color: var(--content-meta); line-height: 1.7; }
+	.ling-profile { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1fr); overflow: hidden; border: 1px solid var(--library-rule); background: var(--library-surface); }
+	.ling-portrait-stage { display: grid; min-width: 0; min-height: 35rem; margin: 0; padding: 1.2rem 1.2rem 0; grid-template-rows: minmax(0, 1fr) auto; background: radial-gradient(ellipse 60% 48% at 50% 42%, rgb(255 255 255 / 85%), transparent), linear-gradient(145deg, #ede5d6, #d9ddcf); }
+	.ling-portrait-stage img { display: block; width: 100%; height: 100%; max-height: 38rem; min-height: 0; object-fit: contain; object-position: center bottom; filter: drop-shadow(0 11px 11px rgb(25 30 30 / 20%)); }
+	.ling-portrait-stage figcaption { padding: 0.55rem 0; color: var(--library-moss); font-family: var(--font-code, ui-monospace, monospace); font-size: 0.62rem; letter-spacing: 0.13em; text-align: center; }
+	.ling-details { display: flex; flex-direction: column; justify-content: center; gap: 1rem; min-width: 0; padding: clamp(1.4rem, 4vw, 3rem); color: var(--library-ink); }
+	.ling-overline { margin: 0; color: var(--collection-accent); font-family: var(--font-code, ui-monospace, monospace); font-size: 0.7rem; letter-spacing: 0.14em; }
+	.ling-details h3 { margin: 0; font-family: var(--font-library-serif); font-size: clamp(1.5rem, 2.5vw, 2rem); line-height: 1.4; }
+	.ling-details > p:not(.ling-overline) { margin: 0; color: var(--content-meta); line-height: 1.85; }
+	.ling-details a { color: var(--collection-accent); text-decoration: underline; text-underline-offset: 0.2em; }
+	.ling-details a:focus-visible { outline: 2px solid var(--collection-accent); outline-offset: 3px; }
+	.ling-details dl { margin: 0; border-top: 1px solid var(--library-rule); }
+	.ling-details dl > div { display: grid; grid-template-columns: 4.5rem minmax(0, 1fr); gap: 0.7rem; padding: 0.8rem 0; border-bottom: 1px solid var(--library-rule); line-height: 1.6; }
+	.ling-details dt { color: var(--collection-accent); font-weight: 700; }
+	.ling-details dd { margin: 0; }
+	.ling-pet-note { display: flex; align-items: center; gap: 0.8rem; margin-top: 0.4rem; padding: 0.7rem 0.9rem; border: 1px solid var(--library-rule); border-radius: 0.45rem; background: color-mix(in srgb, var(--library-moss) 5%, var(--library-surface)); }
+	.ling-pet-note img { width: 3.8rem; height: 3.8rem; flex: 0 0 3.8rem; object-fit: contain; filter: drop-shadow(0 3px 3px rgb(0 0 0 / 15%)); }
+	.ling-pet-note p { margin: 0; color: var(--content-meta); font-size: 0.84rem; line-height: 1.7; }
+	:global(:root.dark) .ling-portrait-stage { background: radial-gradient(ellipse 58% 48% at 50% 39%, rgb(136 132 116 / 29%), transparent), linear-gradient(145deg, #2a3430, #19251f); }
+	:global(:root.dark) .ling-portrait-stage figcaption { color: var(--library-brass); }
+	@media (max-width: 760px) {
+		.ling-profile { grid-template-columns: minmax(0, 1fr); }
+		.ling-portrait-stage { min-height: 27rem; }
+		.ling-portrait-stage img { max-height: 30rem; }
+	}
+	@media (max-width: 390px) { .ling-portrait-stage { min-height: 24rem; } .ling-details { padding: 1.25rem; } }
+</style>

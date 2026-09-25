@@ -29,6 +29,7 @@ export const pageTransitionConfig: PageTransitionConfig = {
 		"/about/": "About",
 		"/about/me/": "About Me",
 		"/about/site/": "About This Site",
+		"/about/ling/": "Ling",
 		"/me/": "About Me",
 		"/search/": "Search",
 		"/tags/": "Tags",
