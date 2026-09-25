@@ -26,17 +26,36 @@ import { pathsEqual, url } from "@/utils/url-utils";
 let pageTurnActive = false;
 let pageTurnReadyAt = 0;
 let pageTurnRevealReadyAt = 0;
+let pageTurnGeneration = 0;
+let activePageTurnVisit: object | null = null;
+const pendingPageTurnWaits = new Set<() => void>();
 
-function shouldTurnPage(destination: string): boolean {
+function destinationLabel(destination: string): string {
+	const pathname = new URL(destination, window.location.href).pathname;
+	const base = new URL(url("/"), window.location.href).pathname;
+	const relativePath = pathname.startsWith(base)
+		? `/${pathname.slice(base.length)}`
+		: pathname;
+	const normalized = `/${relativePath.replace(/^\/+|\/+$/g, "")}/`.replace("//", "/");
+	const labels = pageTransitionConfig.destinationLabels;
+	if (labels[normalized]) return labels[normalized];
+	if (normalized.startsWith("/posts/")) return "Articles";
+	if (normalized.startsWith("/dynamic/")) return "Notes";
+	if (normalized.startsWith("/gallery/")) return "Gallery";
+	if (normalized.startsWith("/projects/")) return "Projects";
+	return "New Page";
+}
+
+function shouldTurnPage(destination: string, source: string): boolean {
 	if (!pageTransitionConfig.enable) return false;
 	if (window.matchMedia("(prefers-reduced-motion: reduce)").matches)
 		return false;
 	try {
 		const next = new URL(destination, window.location.href);
+		const current = new URL(source, window.location.origin);
 		return (
 			next.origin === window.location.origin &&
-			(next.pathname !== window.location.pathname ||
-				next.search !== window.location.search)
+			(next.pathname !== current.pathname || next.search !== current.search)
 		);
 	} catch {
 		return false;
@@ -44,52 +63,68 @@ function shouldTurnPage(destination: string): boolean {
 }
 
 function clearPageTurnState(): void {
-	document.dispatchEvent(new Event("firefly:page-turn-writing-reset"));
+	pageTurnGeneration++;
+	for (const cancel of pendingPageTurnWaits) cancel();
+	pendingPageTurnWaits.clear();
+	document.dispatchEvent(new Event("firefly:book-transition-reset"));
 	document.documentElement.classList.remove(
 		"is-page-turning",
-		"page-turn-cover",
-		"page-turn-reveal",
+		"book-turn-enter",
+		"book-turn-reveal",
 	);
 	pageTurnActive = false;
+	activePageTurnVisit = null;
 	pageTurnReadyAt = 0;
 	pageTurnRevealReadyAt = 0;
 }
 
 async function waitUntil(deadline: number): Promise<void> {
 	if (!pageTurnActive || deadline <= 0) return;
+	const generation = pageTurnGeneration;
 	const remaining = Math.max(0, deadline - performance.now());
 	if (remaining > 0) {
-		await new Promise<void>((resolve) => window.setTimeout(resolve, remaining));
+		await new Promise<void>((resolve) => {
+			let timer = 0;
+			const finish = () => {
+				window.clearTimeout(timer);
+				pendingPageTurnWaits.delete(finish);
+				resolve();
+			};
+			pendingPageTurnWaits.add(finish);
+			timer = window.setTimeout(finish, remaining);
+		});
 	}
+	if (generation !== pageTurnGeneration) return;
 }
 
-function startPageTurn(destination: string): void {
+function startPageTurn(destination: string, source: string): void {
 	clearPageTurnState();
-	pageTurnActive = shouldTurnPage(destination);
+	pageTurnActive = shouldTurnPage(destination, source);
 	if (!pageTurnActive) return;
-	const { cover, write, hold } = pageTransitionConfig.timing;
+	const { enter, open, writeMin, writeMax, writePerCharacter, hold } =
+		pageTransitionConfig.timing;
+	const title = destinationLabel(destination);
+	const characterCount = Array.from(title.replace(/\s/gu, "")).length;
+	const write = Math.max(writeMin, Math.min(writeMax, characterCount * writePerCharacter));
 	const startedAt = performance.now();
-	pageTurnReadyAt = startedAt + cover + write + hold;
+	pageTurnReadyAt = startedAt + enter + open + write + hold;
 	// 连续导航时强制提交清理状态，确保同名 CSS 动画能够从头开始。
 	const overlay = document.getElementById("page-turn-overlay");
-	if (overlay) void overlay.offsetWidth;
-	const root = document.documentElement;
-	root.classList.add("is-page-turning", "page-turn-cover");
 	document.dispatchEvent(
-		new CustomEvent("firefly:page-turn-writing-start", {
-			detail: {
-				startAt: startedAt + cover,
-				duration: write,
-			},
+		new CustomEvent("firefly:book-transition-start", {
+			detail: { title, startAt: startedAt + enter + open, duration: write },
 		}),
 	);
+	if (overlay) void overlay.offsetWidth;
+	const root = document.documentElement;
+	root.classList.add("is-page-turning", "book-turn-enter");
 }
 
 function revealPageTurn(): void {
 	if (!pageTurnActive) return;
 	const root = document.documentElement;
-	root.classList.remove("page-turn-cover");
-	root.classList.add("page-turn-reveal");
+	root.classList.remove("book-turn-enter");
+	root.classList.add("book-turn-reveal");
 	pageTurnRevealReadyAt =
 		performance.now() + pageTransitionConfig.timing.reveal;
 }
@@ -182,12 +217,12 @@ function registerSwupHooks(): void {
 			}
 		},
 	);
-	window.swup.hooks.before("content:replace", async () => {
-		// 页面加载较快时等待站名写完；加载较慢时只等待剩余时间。
-		await waitUntil(pageTurnReadyAt);
+	window.swup.hooks.before("content:replace", async (visit: object) => {
+		// 内容就绪后等待右页写完；加载较慢时保持展开的书本。
+		if (visit === activePageTurnVisit) await waitUntil(pageTurnReadyAt);
 	});
-	window.swup.hooks.on("content:replace", () => {
-		revealPageTurn();
+	window.swup.hooks.on("content:replace", (visit: object) => {
+		if (visit === activePageTurnVisit) revealPageTurn();
 		initializeFloatingPanels();
 
 		// 侧边栏组件可见性由 page:view 统一更新（含 refreshSidebarStickyState 的
@@ -219,13 +254,14 @@ function registerSwupHooks(): void {
 			}
 		}
 	});
-	window.swup.hooks.on("animation:in:await", async () => {
+	window.swup.hooks.on("animation:in:await", async (visit: object) => {
 		// 保证揭页完整离场后再结束本次访问，避免遮罩被提前清理。
-		await waitUntil(pageTurnRevealReadyAt);
+		if (visit === activePageTurnVisit) await waitUntil(pageTurnRevealReadyAt);
 	});
-	window.swup.hooks.on("visit:start", (visit: { to: { url: string } }) => {
+	window.swup.hooks.on("visit:start", (visit: { from: { url: string }; to: { url: string } }) => {
 		// visit:start 同时覆盖普通链接和浏览器前进/后退。
-		startPageTurn(visit.to.url);
+		startPageTurn(visit.to.url, visit.from.url);
+		activePageTurnVisit = pageTurnActive ? visit : null;
 		// Start progress bar（WAAPI 合成线程动画，不强制回流）
 		startProgressBar();
 
@@ -381,10 +417,10 @@ function registerSwupHooks(): void {
 			}
 		}, 300);
 	});
-	window.swup.hooks.on("visit:end", (_visit: { to: { url: string } }) => {
+	window.swup.hooks.on("visit:end", (visit: { to: { url: string } }) => {
 		// Finish progress bar（WAAPI：快速填满后淡出）
 		finishProgressBar();
-		finishPageTurn();
+		if (visit === activePageTurnVisit) finishPageTurn();
 
 		setTimeout(() => {
 			// Just make the transition looks better
@@ -393,11 +429,11 @@ function registerSwupHooks(): void {
 			scrollFunction();
 		}, 200);
 	});
-	window.swup.hooks.on("visit:abort", () => {
-		clearPageTurnState();
+	window.swup.hooks.on("visit:abort", (visit: object) => {
+		if (visit === activePageTurnVisit) clearPageTurnState();
 	});
-	window.swup.hooks.on("fetch:error", () => {
-		clearPageTurnState();
+	window.swup.hooks.on("fetch:error", (visit: object) => {
+		if (visit === activePageTurnVisit) clearPageTurnState();
 	});
 }
 

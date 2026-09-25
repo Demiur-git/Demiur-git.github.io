@@ -6,7 +6,7 @@ import SpineModel from "@components/features/SpineModel.astro";
 import Footer from "@components/layout/Footer.astro";
 import HeaderTopRow from "@components/layout/HeaderTopRow.astro";
 import NavMenuPanel from "@components/layout/NavMenuPanel.astro";
-import PageTurnOverlay from "@components/layout/PageTurnOverlay.astro";
+import BookTurnOverlay from "@components/layout/BookTurnOverlay.astro";
 import SideBar from "@components/layout/SideBar.astro";
 import type { MarkdownHeading } from "astro";
 import FloatingControls from "@/components/controls/FloatingControls.astro";
@@ -106,7 +106,7 @@ const {
 <HeaderTopRow navbarMode={navbarMode} navbarWidthFull={navbarWidthFull} />
 
 <WallpaperSection state={banner} backgroundImages={backgroundImages} darkBackgroundImages={darkBackgroundImages} title={title} bannerPostMeta={bannerPostMeta} />
-<PageTurnOverlay />
+<BookTurnOverlay />
 
 <!-- Main content -->
 <div id="content-panel" class="content-panel absolute w-full z-30 pointer-events-none">

@@ -101,30 +101,42 @@ function createLatinGlyphPath(
 }
 
 /**
- * 为任意站名生成稳定的“拟手写”引导路径。路径只负责控制墨迹显现，
- * 最终字形仍由站点字体绘制，因此更换标题不需要重新制作 SVG 素材。
+ * 为目的地英文标题生成稳定的“拟手写”引导路径。路径只负责控制墨迹显现，
+ * 最终字形仍由站点字体绘制，因此更换栏目名称不需要重新制作 SVG 素材。
  */
 export function createPageWritingLayout(
 	title: string,
 	penLift: boolean,
+	maxLineUnits: number = MAX_LINE_UNITS,
 ): PageWritingLayout {
-	const characters = Array.from(title || " ");
+	const normalizedTitle = title.trim().replace(/\s+/gu, " ") || " ";
+	const words = normalizedTitle.split(" ");
+	const lineTexts: string[] = [];
+	let currentLine = "";
+	for (const word of words) {
+		const candidate = currentLine ? `${currentLine} ${word}` : word;
+		const candidateUnits = Array.from(candidate).reduce(
+			(total, character) => total + getGlyphWidth(character) / 100,
+			0,
+		);
+		if (currentLine && candidateUnits > maxLineUnits && lineTexts.length === 0) {
+			lineTexts.push(currentLine);
+			currentLine = word;
+		} else {
+			currentLine = candidate;
+		}
+	}
+	lineTexts.push(currentLine);
+	const characters = Array.from(lineTexts.join("\n"));
 	const lines: Array<Array<{ character: string; width: number }>> = [[]];
-	let currentUnits = 0;
 
 	for (const character of characters) {
-		const width = getGlyphWidth(character);
-		const units = width / 100;
-		if (
-			lines.length === 1 &&
-			currentUnits + units > MAX_LINE_UNITS &&
-			lines[0].length > 0
-		) {
+		if (character === "\n") {
 			lines.push([]);
-			currentUnits = 0;
+			continue;
 		}
+		const width = getGlyphWidth(character);
 		lines.at(-1)?.push({ character, width });
-		currentUnits += units;
 	}
 
 	const lineWidths = lines.map((line) =>

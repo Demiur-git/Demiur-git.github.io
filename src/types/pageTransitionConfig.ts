@@ -1,6 +1,9 @@
 export type PageTransitionTiming = {
-	cover: number;
-	write: number;
+	enter: number;
+	open: number;
+	writeMin: number;
+	writeMax: number;
+	writePerCharacter: number;
 	hold: number;
 	reveal: number;
 };
@@ -16,7 +19,7 @@ export type PageTransitionWritingConfig = {
 
 export type PageTransitionConfig = {
 	enable: boolean;
-	text?: string;
 	timing: PageTransitionTiming;
 	writing: PageTransitionWritingConfig;
+	destinationLabels: Record<string, string>;
 };

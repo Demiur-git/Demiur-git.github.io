@@ -1,0 +1,166 @@
+---
+import { pageTransitionConfig, siteConfig } from "@/config";
+const { enter, open, writeMin, reveal } = pageTransitionConfig.timing;
+const inkBleed = pageTransitionConfig.writing.inkBleed;
+const wetBlur = Math.max(0.18, Math.min(1.4, inkBleed * 1.8));
+const wetSpread = Math.max(0.4, Math.min(2.4, inkBleed * 2.5));
+---
+<div id="page-turn-overlay" aria-hidden="true"
+	style={"--book-enter:" + enter + "ms;--book-open:" + open + "ms;--book-write:" + writeMin + "ms;--book-reveal:" + reveal + "ms;"}>
+	<div class="book-turn-scrim"></div>
+	<div class="book-turn-stage">
+		<div class="book-turn-spread">
+			<div class="book-turn-right-page">
+				<span class="book-turn-page-index">DESTINATION · 02</span>
+				<div class="book-turn-writing">
+					<svg id="book-turn-writing-svg" class="book-turn-writing-svg" viewBox="0 0 420 124" preserveAspectRatio="xMidYMid meet" role="presentation">
+						<defs>
+							<filter id="book-turn-wet-filter" x="-12%" y="-12%" width="124%" height="124%">
+								<feTurbulence type="fractalNoise" baseFrequency="0.018 0.075" numOctaves="1" seed="17" result="paperNoise" />
+								<feDisplacementMap in="SourceGraphic" in2="paperNoise" scale={wetSpread} xChannelSelector="R" yChannelSelector="G" result="roughInk" />
+								<feGaussianBlur in="roughInk" stdDeviation={wetBlur} />
+							</filter>
+							<g id="book-turn-masks"></g>
+						</defs>
+						<g id="book-turn-ink-wet" filter="url(#book-turn-wet-filter)"></g>
+						<g id="book-turn-ink"></g>
+						<g id="book-turn-ink-finished"></g>
+						<g id="book-turn-pen">
+							<circle class="book-turn-pen-drop" r="2.4" cx="0" cy="0"></circle>
+							<path class="book-turn-pen-body" d="M 0 0 L 11 -22 L 18 -28 L 22 -24 L 16 -17 Z"></path>
+							<path class="book-turn-pen-detail" d="M 0 0 L 16 -26 M 11 -22 L 16 -17"></path>
+						</g>
+					</svg>
+					<span id="book-turn-writing-fallback"></span>
+				</div>
+				<span class="book-turn-page-number">02</span>
+			</div>
+			<div class="book-turn-cover">
+				<div class="book-turn-cover-front">
+					<span class="book-turn-cover-mark">PRIVATE LIBRARY</span>
+					<span class="book-turn-cover-ornament" aria-hidden="true">✦</span>
+				</div>
+				<div class="book-turn-left-page">
+					<span class="book-turn-page-index">PRIVATE LIBRARY · 01</span>
+					<span class="book-turn-site-title">{siteConfig.title}</span>
+					<span class="book-turn-page-number">01</span>
+				</div>
+			</div>
+			<div class="book-turn-spine"></div>
+		</div>
+	</div>
+</div>
+<script>
+	import { pageTransitionConfig } from "@/config";
+	import { createPageWritingLayout } from "@/utils/page-writing-paths";
+	const NS = "http://www.w3.org/2000/svg";
+	let frame = 0;
+	type Detail = { title: string; startAt: number; duration: number };
+	function reset(): void {
+		if (frame) cancelAnimationFrame(frame);
+		frame = 0;
+		document.getElementById("book-turn-pen")?.setAttribute("data-active", "false");
+		document.getElementById("page-turn-overlay")?.removeAttribute("data-writing-fallback");
+		for (const id of ["book-turn-masks", "book-turn-ink-wet", "book-turn-ink", "book-turn-ink-finished"])
+			document.getElementById(id)?.replaceChildren();
+	}
+	function start(event: Event): void {
+		reset();
+		const { title, startAt, duration } = (event as CustomEvent<Detail>).detail;
+		const overlay = document.getElementById("page-turn-overlay");
+		const svg = document.getElementById("book-turn-writing-svg");
+		const masks = document.getElementById("book-turn-masks");
+		const ink = document.getElementById("book-turn-ink");
+		const wet = document.getElementById("book-turn-ink-wet");
+		const finished = document.getElementById("book-turn-ink-finished");
+		const pen = document.getElementById("book-turn-pen");
+		const fallback = document.getElementById("book-turn-writing-fallback");
+		if (fallback) fallback.textContent = title;
+		if (!(svg instanceof SVGSVGElement) || !masks || !ink || !wet || !finished || !pen) {
+			overlay?.setAttribute("data-writing-fallback", "true");
+			return;
+		}
+		const layout = createPageWritingLayout(title, pageTransitionConfig.writing.penLift, 5.2);
+		svg.setAttribute("viewBox", "0 0 " + layout.viewWidth + " " + layout.viewHeight);
+		overlay?.style.setProperty("--book-write", duration + "ms");
+		const paths: SVGPathElement[] = [];
+		for (const line of layout.lines) {
+			const mask = document.createElementNS(NS, "mask");
+			mask.id = "book-" + line.maskId;
+			mask.setAttribute("maskUnits", "userSpaceOnUse");
+			mask.setAttribute("x", "0");
+			mask.setAttribute("y", "0");
+			mask.setAttribute("width", String(layout.viewWidth));
+			mask.setAttribute("height", String(layout.viewHeight));
+			const black = document.createElementNS(NS, "rect");
+			black.setAttribute("width", String(layout.viewWidth));
+			black.setAttribute("height", String(layout.viewHeight));
+			black.setAttribute("fill", "black");
+			mask.append(black);
+			for (const stroke of line.strokes) {
+				const path = document.createElementNS(NS, "path");
+				for (const [key, value] of Object.entries({ d: stroke.d, pathLength: "1", fill: "none", stroke: "white", "stroke-width": String(stroke.maskWidth), "stroke-linecap": "round", "stroke-linejoin": "round" }))
+					path.setAttribute(key, value);
+				path.classList.add("book-turn-mask-stroke");
+				path.dataset.start = String(stroke.startRatio);
+				path.dataset.end = String(stroke.endRatio);
+				path.style.setProperty("--stroke-delay", "calc(var(--book-enter) + var(--book-open) + " + stroke.startRatio * duration + "ms)");
+				path.style.setProperty("--stroke-duration", Math.max(42, (stroke.endRatio - stroke.startRatio) * duration) + "ms");
+				mask.append(path);
+				paths.push(path);
+			}
+			masks.append(mask);
+			const text = document.createElementNS(NS, "text");
+			text.classList.add("book-turn-glyph");
+			for (const [key, value] of Object.entries({ x: String(line.x), y: String(line.baseline), "text-anchor": "middle", textLength: String(line.width), lengthAdjust: "spacingAndGlyphs" }))
+				text.setAttribute(key, value);
+			text.setAttribute("mask", "url(#" + mask.id + ")");
+			text.textContent = line.text;
+			ink.append(text);
+			wet.append(text.cloneNode(true));
+			const completed = text.cloneNode(true) as SVGTextElement;
+			completed.removeAttribute("mask");
+			finished.append(completed);
+		}
+		if (!paths.length || typeof paths[0].getTotalLength !== "function") {
+			overlay?.setAttribute("data-writing-fallback", "true");
+			return;
+		}
+		const draw = (now: number) => {
+			const progress = Math.max(0, Math.min(1, (now - startAt) / duration));
+			const path = paths.find((item) => progress >= Number(item.dataset.start || 0) && progress <= Number(item.dataset.end || 1));
+			if (path && now >= startAt && progress < 1) {
+				const begin = Number(path.dataset.start || 0);
+				const end = Number(path.dataset.end || 1);
+				const local = Math.max(0, Math.min(1, (progress - begin) / (end - begin)));
+				const length = path.getTotalLength();
+				const point = path.getPointAtLength(length * local);
+				const next = path.getPointAtLength(Math.min(length, length * local + 0.8));
+				const angle = Math.atan2(next.y - point.y, next.x - point.x) * 180 / Math.PI;
+				const lift = pageTransitionConfig.writing.penLift ? (1 - Math.min(1, local / 0.1)) * 3.5 : 0;
+				pen.setAttribute("transform", "translate(" + point.x + " " + (point.y - lift) + ") rotate(" + angle + ")");
+				pen.setAttribute("data-active", "true");
+			} else pen.setAttribute("data-active", "false");
+			if (progress < 1) frame = requestAnimationFrame(draw);
+			else {
+				frame = 0;
+				pen.setAttribute("data-active", "false");
+			}
+		};
+		frame = requestAnimationFrame(draw);
+	}
+	document.addEventListener("firefly:book-transition-start", start);
+	document.addEventListener("firefly:book-transition-reset", reset);
+	const overlay = document.getElementById("page-turn-overlay");
+	const preventBackgroundScroll = (event: Event) => {
+		if (document.documentElement.classList.contains("is-page-turning")) event.preventDefault();
+	};
+	overlay?.addEventListener("wheel", preventBackgroundScroll, { passive: false });
+	overlay?.addEventListener("touchmove", preventBackgroundScroll, { passive: false });
+	document.addEventListener("keydown", (event) => {
+		if (!document.documentElement.classList.contains("is-page-turning")) return;
+		if (event.altKey || event.ctrlKey || event.metaKey) return;
+		if ([" ", "PageDown", "PageUp", "ArrowDown", "ArrowUp", "Home", "End"].includes(event.key))
+			event.preventDefault();
+	});
+</script>

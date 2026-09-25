@@ -64,21 +64,21 @@ export const fontsList: FontDefinition[] = [
 		],
 	},
 	{
-		name: "Playwrite US Trad",
-		cssVariable: "--font-playwrite-us-trad",
+		name: "Playpen Sans",
+		cssVariable: "--font-playpen-sans",
 		provider: "local",
-		weights: ["400"],
+		weights: ["500"],
 		styles: ["normal"],
 		options: {
 			variants: [
 				{
-					src: ["./public/assets/fonts/PlaywriteUSTrad-wght.ttf"],
-					weight: "400",
+					src: ["./public/assets/fonts/PlaypenSans-Latin.woff2"],
+					weight: "100 800",
 					style: "normal",
 				},
 			],
 		},
-		fallbacks: ["Kaiti SC", "STKaiti", "KaiTi", "cursive"],
+		fallbacks: ["Segoe Print", "Kaiti SC", "STKaiti", "KaiTi", "system-ui", "sans-serif"],
 	},
 	// ─── 本地字体示例 ───
 	// 使用步骤：
@@ -115,7 +115,7 @@ export const fontConfig: FontSelectionConfig = {
 	// 主页横幅副标题字体
 	bannerSubtitleFont: "--font-inter",
 	// 导航栏标题字体
-	navbarTitleFont: "--font-playwrite-us-trad",
+	navbarTitleFont: "--font-playpen-sans",
 	// 代码块字体（用于代码高亮和等宽字体场景）
 	codeFont: "--font-jetbrains-mono",
 

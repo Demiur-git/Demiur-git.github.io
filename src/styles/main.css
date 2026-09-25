@@ -12,6 +12,7 @@
 @import './categories.css';
 @import './layout-base.css';
 @import './library-theme.css';
+@import './book-turn.css';
 @import './pages/collection-pages.css';
 
 @plugin '@tailwindcss/typography';
