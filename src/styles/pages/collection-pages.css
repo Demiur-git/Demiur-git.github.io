@@ -1,0 +1,296 @@
+/* 馆藏页面共用语法：每个栏目保留自己的内容结构与交互。 */
+.collection-page {
+	--collection-accent: var(--library-moss);
+	--collection-tint: rgb(86 107 84 / 9%);
+	--collection-paper: var(--library-surface);
+	min-width: 0;
+	color: var(--library-ink);
+}
+
+.collection-notes { --collection-accent: var(--library-moss); }
+.collection-articles { --collection-accent: var(--library-burgundy); }
+.collection-calendar { --collection-accent: var(--library-brass); }
+.collection-gallery { --collection-accent: var(--library-burgundy); }
+.collection-music { --collection-accent: var(--library-burgundy); }
+.collection-projects { --collection-accent: var(--library-moss); }
+.collection-reading { --collection-accent: var(--library-brass); }
+
+.collection-masthead {
+	position: relative;
+	isolation: isolate;
+	overflow: hidden;
+	border: 1px solid var(--library-rule);
+	border-left: 4px solid var(--collection-accent);
+	border-radius: 0.45rem 0.9rem 0.9rem 0.45rem;
+	background:
+		linear-gradient(90deg, transparent 0 2.1rem, var(--library-rule) 2.1rem calc(2.1rem + 1px), transparent calc(2.1rem + 1px)),
+		repeating-linear-gradient(0deg, transparent 0 2.35rem, color-mix(in srgb, var(--library-rule) 50%, transparent) 2.35rem calc(2.35rem + 1px)),
+		var(--collection-paper);
+	box-shadow: var(--library-soft-shadow);
+}
+
+.collection-masthead::after {
+	position: absolute;
+	top: 0.7rem;
+	right: 0.85rem;
+	width: 1.5rem;
+	height: 1.5rem;
+	border-top: 1px solid color-mix(in srgb, var(--collection-accent) 32%, transparent);
+	border-right: 1px solid color-mix(in srgb, var(--collection-accent) 32%, transparent);
+	content: "";
+	pointer-events: none;
+}
+
+.collection-page .page-header {
+	margin-bottom: 1rem;
+	padding: 1.45rem 2rem 1.5rem 2.8rem;
+}
+
+.collection-kicker {
+	display: inline-block;
+	margin-bottom: 0.35rem;
+	color: var(--collection-accent, var(--library-moss));
+	font-family: var(--font-code, ui-monospace, monospace);
+	font-size: 0.66rem;
+	font-weight: 700;
+	letter-spacing: 0.16em;
+	line-height: 1.5;
+}
+
+.collection-page .page-icon {
+	width: 2.75rem;
+	height: 2.75rem;
+	flex-basis: 2.75rem;
+	border: 1px solid color-mix(in srgb, var(--collection-accent) 30%, transparent);
+	border-radius: 0.35rem;
+	background: color-mix(in srgb, var(--collection-accent) 9%, var(--collection-paper));
+	color: var(--collection-accent);
+	font-size: 1.55rem;
+}
+
+:root.dark .collection-page .page-icon { color: var(--collection-accent); }
+
+.collection-page .page-heading h2,
+.collection-simple-header h1 {
+	margin: 0;
+	color: var(--library-ink);
+	font-family: var(--font-library-serif);
+	font-size: clamp(1.55rem, 2.5vw, 2.2rem);
+	font-weight: 650;
+	line-height: 1.25;
+}
+
+.collection-page .page-heading p,
+.collection-simple-header p {
+	margin: 0.4rem 0 0;
+	color: var(--content-meta);
+	font-size: 0.88rem;
+	line-height: 1.65;
+}
+
+.collection-page .page-count {
+	align-self: center;
+	border: 1px solid color-mix(in srgb, var(--collection-accent) 28%, transparent);
+	border-radius: 0.35rem;
+	background: color-mix(in srgb, var(--collection-accent) 8%, var(--collection-paper));
+	color: var(--collection-accent);
+	padding: 0.35rem 0.65rem;
+}
+
+.collection-page .page-count svg { font-size: 1rem; }
+.collection-page .page-count strong { font-family: var(--font-code, ui-monospace, monospace); font-size: 1.1rem; }
+.collection-page .page-count span { color: var(--content-meta); }
+
+.collection-simple-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	margin-bottom: 1rem;
+	padding: 1.4rem 2rem 1.45rem 2.8rem;
+}
+
+.collection-index {
+	flex: none;
+	color: color-mix(in srgb, var(--collection-accent) 55%, transparent);
+	font-family: var(--font-code, ui-monospace, monospace);
+	font-size: clamp(2.2rem, 5vw, 3.6rem);
+	font-weight: 300;
+	line-height: 1;
+}
+
+.collection-filter {
+	display: block;
+	min-width: 0;
+	border-top: 1px solid var(--library-rule);
+	padding-top: 1rem;
+}
+
+.collection-gallery .collection-filter { grid-column: 1 / -1; }
+.collection-gallery .page-header > div:first-child { margin-bottom: 0; }
+
+.collection-page :is(.page-search input, .page-year-select select, .collection-filter [data-search]) {
+	border: 1px solid var(--library-rule);
+	border-radius: 0.35rem;
+	background: color-mix(in srgb, var(--collection-accent) 4%, var(--collection-paper));
+	color: var(--library-ink);
+	min-height: 2.75rem;
+}
+
+.collection-page :is(.page-search input, .page-year-select select, .collection-filter [data-search]):focus-visible {
+	border-color: var(--collection-accent);
+	outline: 2px solid var(--collection-accent);
+	outline-offset: 2px;
+}
+
+.collection-page .category-pill {
+	border: 1px solid var(--library-rule);
+	border-radius: 0.35rem;
+	background: var(--collection-paper);
+	color: var(--content-meta);
+}
+
+.collection-page .category-pill:is(:hover, [data-active]) {
+	border-color: color-mix(in srgb, var(--collection-accent) 55%, transparent);
+	background: color-mix(in srgb, var(--collection-accent) 12%, var(--collection-paper));
+	color: var(--library-ink);
+}
+
+.collection-page .category-pill:focus-visible,
+.collection-page :is(.archive-year-toggle, .archive-post, .page-permalink):focus-visible {
+	outline: 2px solid var(--collection-accent);
+	outline-offset: 2px;
+}
+
+.collection-empty {
+	border: 1px dashed color-mix(in srgb, var(--collection-accent) 40%, var(--library-rule));
+	border-radius: 0.7rem;
+	background: color-mix(in srgb, var(--collection-accent) 5%, var(--collection-paper));
+	color: var(--content-meta);
+	padding-inline: 1.5rem;
+}
+
+.collection-empty :is(h2, p) { color: var(--library-ink); }
+.collection-empty svg { color: var(--collection-accent); }
+
+.collection-notes :is(.page-empty, .page-no-results, .page-loading) {
+	border: 1px dashed color-mix(in srgb, var(--collection-accent) 42%, var(--library-rule));
+	border-left: 4px solid var(--collection-accent);
+	border-radius: 0.35rem 0.75rem 0.75rem 0.35rem;
+	background: var(--collection-paper);
+	color: var(--content-meta);
+}
+
+/* 笔记为可阅读的索引卡，文章归档为按年份装订的目录。 */
+.collection-notes .note-index-card {
+	position: relative;
+	border-left: 3px solid var(--collection-accent);
+	border-radius: 0.3rem 0.75rem 0.75rem 0.3rem;
+	background:
+		linear-gradient(90deg, transparent 0 2rem, var(--library-rule) 2rem calc(2rem + 1px), transparent calc(2rem + 1px)),
+		var(--collection-paper);
+	box-shadow: 0 8px 24px rgb(35 28 22 / 8%);
+}
+
+.collection-notes .note-index-card::before {
+	position: absolute;
+	top: 1.3rem;
+	left: 0.7rem;
+	width: 0.38rem;
+	height: 0.38rem;
+	border-radius: 50%;
+	background: color-mix(in srgb, var(--collection-accent) 40%, transparent);
+	content: "";
+}
+
+.collection-articles .archive-ledger {
+	border-left: 4px solid var(--collection-accent);
+	border-radius: 0.35rem 0.8rem 0.8rem 0.35rem;
+	background: var(--collection-paper);
+}
+
+.collection-articles .archive-year-block + .archive-year-block {
+	border-top: 1px solid var(--library-rule);
+	margin-top: 0.35rem;
+	padding-top: 0.35rem;
+}
+
+.collection-articles .archive-year-toggle { font-family: var(--font-library-serif); }
+.collection-articles .archive-post { border-bottom: 1px solid color-mix(in srgb, var(--library-rule) 65%, transparent); }
+
+/* 日历、唱片机保留专属版式，统一材质与栏目签。 */
+.collection-calendar :is(.side-panel, .calendar-panel) {
+	border-color: var(--library-rule);
+	border-radius: 0.65rem;
+	background: var(--collection-paper);
+}
+
+.collection-calendar .calendar-panel { border-top: 3px solid var(--collection-accent); }
+.collection-calendar .side-panel { border-top: 3px solid var(--library-moss); }
+.collection-calendar .schedule-panel { border-top-color: var(--library-burgundy); }
+.collection-calendar :is(.panel-kicker, .calendar-year) { font-family: var(--font-code, ui-monospace, monospace); }
+
+.collection-music .music-page-header { border-left: 4px solid var(--collection-accent); }
+.collection-music .music-kicker { letter-spacing: 0.16em; }
+
+/* 项目像档案夹，读书计划像借阅条；相册另有阅览桌样式。 */
+.collection-projects .project-file {
+	border-radius: 0.55rem;
+	background: var(--collection-paper);
+	transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.collection-projects .project-file { border-top: 4px solid color-mix(in srgb, var(--library-moss) 55%, var(--library-rule)); }
+
+.collection-projects .project-file:is(:hover, :focus-within) {
+	transform: translateY(-3px);
+	box-shadow: 0 20px 36px rgb(31 26 22 / 14%);
+}
+
+.collection-reading .reading-slip {
+	position: relative;
+	border-left: 4px solid var(--collection-accent);
+	border-radius: 0.25rem 0.7rem 0.7rem 0.25rem;
+	background:
+		repeating-linear-gradient(0deg, transparent 0 2rem, color-mix(in srgb, var(--library-rule) 50%, transparent) 2rem calc(2rem + 1px)),
+		var(--collection-paper);
+}
+
+.collection-reading .reading-slip h3 { color: var(--library-ink); font-family: var(--font-library-serif); }
+.collection-reading .reading-slip p { color: var(--content-meta); }
+
+/* 详情页与入口页延续同一馆藏材质，不干扰正文、图片与阅读功能。 */
+.collection-detail #post-container,
+#post-container.collection-detail,
+.collection-gallery-detail .collection-detail-title,
+.collection-gallery-pages {
+	border-top: 3px solid var(--library-burgundy);
+	background: var(--library-surface);
+	box-shadow: var(--library-soft-shadow);
+}
+
+#post-container.collection-project-detail { border-top-color: var(--library-moss); }
+.collection-post-detail { --collection-accent: var(--library-burgundy); }
+.collection-project-detail { --collection-accent: var(--library-moss); }
+.collection-gallery-detail { --collection-accent: var(--library-burgundy); }
+.collection-gallery-detail .collection-detail-title { border-top-color: var(--library-burgundy); }
+.collection-detail-kicker { margin-bottom: 0.7rem; }
+.collection-project-detail .collection-detail-kicker { color: var(--library-moss); }
+#post-container.collection-detail [data-pagefind-meta="title"] { font-family: var(--font-library-serif); }
+.collection-gallery-detail .collection-detail-title > div:nth-of-type(1) { font-family: var(--font-library-serif); }
+.collection-cover-kicker { color: #fff3e5; text-shadow: 0 1px 3px rgb(0 0 0 / 65%); }
+
+@media (max-width: 640px) {
+	.collection-page .page-header,
+	.collection-simple-header { padding: 1.1rem 1.1rem 1.2rem 1.65rem; }
+	.collection-page .page-heading { align-items: flex-start; }
+	.collection-page .page-icon { width: 2.2rem; height: 2.2rem; flex-basis: 2.2rem; font-size: 1.3rem; }
+	.collection-index { font-size: 2rem; }
+	.collection-page .page-count { justify-self: start; }
+	.collection-notes .note-index-card { background: var(--collection-paper); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.collection-projects .project-file { transition: none; }
+	.collection-projects .project-file:is(:hover, :focus-within) { transform: none; }
+}

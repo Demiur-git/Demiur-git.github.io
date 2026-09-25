@@ -10,5 +10,7 @@ const description =
 ---
 
 <MainGridLayout title={title} description={description}>
-	<MusicCollection client:load title={title} description={description} />
+	<div class="collection-page collection-music">
+		<MusicCollection client:load title={title} description={description} />
+	</div>
 </MainGridLayout>

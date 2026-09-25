@@ -30,14 +30,15 @@ const memos = dynamicConfig.memos;
 ---
 
 <MainGridLayout title={title} description={description}>
-	<section class="page-shell" aria-labelledby="dynamic-page-title">
+	<section class="page-shell collection-page collection-notes" aria-labelledby="dynamic-page-title">
 		<div>
-			<header class="page-header card-base">
+			<header class="page-header card-base collection-masthead">
 				<div class="page-heading">
 					<div class="page-icon" aria-hidden="true">
 						<Icon name="material-symbols:forum-rounded" />
 					</div>
 					<div>
+						<span class="collection-kicker">FIELD NOTES · 01</span>
 						<h2 id="dynamic-page-title">{title}</h2>
 						{description && <p>{description}</p>}
 					</div>

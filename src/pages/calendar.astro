@@ -5,9 +5,19 @@ import MainGridLayout from "@/layouts/MainGridLayout.astro";
 ---
 
 <MainGridLayout title="日历" description="重要日期、日程与计划">
-	<CalendarWorkspace
-		client:load
-		importantDates={calendarPageConfig.importantDates}
-		schedules={calendarPageConfig.schedules}
-	/>
+	<section class="collection-page collection-calendar" aria-labelledby="calendar-page-title">
+		<header class="card-base collection-masthead collection-simple-header">
+			<div>
+				<span class="collection-kicker">DAILY PLANNER · 03</span>
+				<h1 id="calendar-page-title">日历</h1>
+				<p>重要日期、今日安排与未来计划。</p>
+			</div>
+			<span class="collection-index" aria-hidden="true">03</span>
+		</header>
+		<CalendarWorkspace
+			client:load
+			importantDates={calendarPageConfig.importantDates}
+			schedules={calendarPageConfig.schedules}
+		/>
+	</section>
 </MainGridLayout>

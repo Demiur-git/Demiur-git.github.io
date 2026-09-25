@@ -12,13 +12,14 @@ const statusLabel = {
 ---
 
 <MainGridLayout title={readingPlanConfig.title} description={readingPlanConfig.description}>
-	<section class="page-shell">
-		<header class="card-base page-header">
+	<section class="page-shell collection-page collection-reading">
+		<header class="card-base page-header collection-masthead">
 			<div class="page-heading">
 				<div class="page-icon" aria-hidden="true">
 					<Icon name="material-symbols:menu-book-outline-rounded" />
 				</div>
 				<div>
+					<span class="collection-kicker">READING LEDGER · 07</span>
 					<h2>{readingPlanConfig.title}</h2>
 					<p>{readingPlanConfig.description}</p>
 				</div>
@@ -34,7 +35,7 @@ const statusLabel = {
 			readingPlanConfig.books.length > 0 ? (
 				<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 					{readingPlanConfig.books.map((book) => (
-						<article class="card-base p-6">
+						<article class="card-base reading-slip p-6">
 							<div class="flex items-start justify-between gap-4">
 								<div>
 									<h3 class="text-lg font-bold text-90">{book.title}</h3>
@@ -49,7 +50,7 @@ const statusLabel = {
 					))}
 				</div>
 			) : (
-				<div class="card-base flex flex-col items-center justify-center py-16 text-neutral-400 dark:text-neutral-500">
+				<div class="card-base collection-empty flex flex-col items-center justify-center py-16 text-neutral-400 dark:text-neutral-500">
 					<Icon name="material-symbols:menu-book-outline-rounded" class="mb-4 text-6xl opacity-50" />
 					<p class="text-lg">还没有添加读书计划</p>
 				</div>

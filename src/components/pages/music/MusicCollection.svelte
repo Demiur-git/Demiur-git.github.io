@@ -466,7 +466,7 @@ onMount(() => {
 <section class="music-workspace" aria-labelledby="music-page-title">
 	<header class="music-page-header">
 		<div>
-			<span class="music-kicker">PRIVATE LIBRARY · SOUND ARCHIVE</span>
+			<span class="music-kicker">SOUND ARCHIVE · 05</span>
 			<h2 id="music-page-title">{title}</h2>
 			<p>{description}</p>
 		</div>

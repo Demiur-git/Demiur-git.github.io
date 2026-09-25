@@ -41,7 +41,7 @@ const coverLqipProps = cover
 
 <MainGridLayout title={albumMeta.name} description={albumMeta.description || ""}>
   <!-- 相册封面横幅 -->
-  <div class="w-full rounded-(--radius-large) overflow-hidden relative">
+  <div class="collection-detail collection-gallery-detail w-full rounded-(--radius-large) overflow-hidden relative">
     {cover ? (
       <div class="relative w-full aspect-3/1 min-h-[200px] max-h-[360px] overflow-hidden">
         <div class="lqip-placeholder absolute inset-0 pointer-events-none" style={coverLqipProps.style} aria-hidden="true"></div>
@@ -61,6 +61,7 @@ const coverLqipProps = cover
         </a>
         <!-- 封面上的信息 -->
         <div class="absolute bottom-0 left-0 right-0 p-6">
+          <span class="collection-kicker collection-cover-kicker">IMAGE FOLIO · 04</span>
           <div class="text-2xl sm:text-3xl font-bold text-white mb-2 drop-shadow-lg">
             {albumMeta.name}
           </div>
@@ -99,7 +100,7 @@ const coverLqipProps = cover
         </div>
       </div>
     ) : (
-      <div class="card-base px-6 py-4">
+      <div class="card-base collection-detail-title px-6 py-4">
         <a
           href={url("/gallery/")}
           class="inline-flex items-center gap-1 text-sm text-(--primary) hover:underline mb-3"
@@ -107,6 +108,7 @@ const coverLqipProps = cover
           <Icon name="material-symbols:arrow-back" class="text-base" />
           {i18n(I18nKey.galleryBackToAlbums)}
         </a>
+        <span class="collection-kicker">IMAGE FOLIO · 04</span>
         <div class="text-2xl sm:text-3xl font-bold text-neutral-900 dark:text-neutral-100">
           {albumMeta.name}
         </div>
@@ -131,7 +133,7 @@ const coverLqipProps = cover
 
   <!-- 瀑布流照片网格 -->
   <div class="w-full rounded-(--radius-large) overflow-hidden relative mt-4">
-    <div class="card-base z-10 px-6 py-6 relative w-full">
+    <div class="card-base collection-gallery-pages z-10 px-6 py-6 relative w-full">
       {photos.length > 0 ? (
         albumMeta.password ? (
           <EncryptedContent password={albumMeta.password} slug={albumMeta.id} hint={albumMeta.passwordHint}>

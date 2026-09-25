@@ -68,7 +68,7 @@ const visibleTags = tags || [];
   postCoverImage={coverOg}
 >
   <div class="flex w-full rounded-(--radius-large) overflow-hidden relative mb-4">
-    <div id="post-container" class="card-base z-10 px-6 md:px-9 pt-6 pb-4 relative w-full">
+    <div id="post-container" class="card-base collection-detail collection-project-detail z-10 px-6 md:px-9 pt-6 pb-4 relative w-full">
       <!-- 返回列表 -->
       <a
         href={url("/projects/")}
@@ -77,6 +77,8 @@ const visibleTags = tags || [];
         <Icon name="material-symbols:arrow-back" class="text-base" />
         {i18n(I18nKey.projectBack)}
       </a>
+
+      <div class="collection-kicker collection-detail-kicker">PROJECT FILES · 06</div>
 
       <!-- 项目头部：封面在上，信息在下（单栏） -->
       <div class="mb-6">
