@@ -21,7 +21,7 @@ pnpm-debug.log*
 .env.production
 .env.local
 
-# Local Waline runtime: never publish users, comments, credentials or logs.
+# Retired local Waline runtime: preserve private data, never publish it.
 tools/waline-local/.env
 tools/waline-local/data/
 tools/waline-local/test-data/
