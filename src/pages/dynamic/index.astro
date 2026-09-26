@@ -21,7 +21,8 @@ const itemsPerPage = Math.max(1, dynamicConfig.itemsPerPage ?? 10);
 const showInlineComments = Boolean(
 	dynamicConfig.showComment !== false &&
 		commentConfig.type &&
-		commentConfig.type !== "none",
+		commentConfig.type !== "none" &&
+		(commentConfig.type !== "waline" || Boolean(commentConfig.waline?.serverURL)),
 );
 const dataUrl = dynamicConfig.apiUrl?.startsWith("http")
 	? dynamicConfig.apiUrl

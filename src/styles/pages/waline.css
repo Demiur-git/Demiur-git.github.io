@@ -1,0 +1,27 @@
+@import url("/vendor/waline-3.15.2/waline.css");
+.library-waline {
+	display: block;
+	--waline-theme-color: var(--primary);
+	--waline-active-color: var(--primary);
+	--waline-color: var(--library-ink);
+	--waline-bg-color: var(--card-bg);
+	--waline-bg-color-light: var(--btn-regular-bg);
+	--waline-border-color: var(--line-divider);
+	--waline-border: 1px solid var(--line-divider);
+	--waline-radius: 0.65rem;
+	--waline-info-color: var(--content-meta);
+}
+.library-waline [hidden] { display: none !important; }
+.waline-policy, .library-waline [data-waline-status] {
+	color: var(--content-meta); font-size: 0.85rem; line-height: 1.7; margin-bottom: 0.8rem;
+}
+.library-waline [data-waline-status]:empty { display: none; }
+.library-waline [data-waline-retry] { padding: 0.35rem 0.8rem; margin-bottom: 0.8rem; }
+.library-waline :is(button, input, textarea):focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+.library-waline .wl-tab-wrapper { scrollbar-gutter: stable; height: 145px; }
+.library-waline .wl-tabs .wl-tab:not(.active) { border: solid transparent; border-width: 0 1px 1px; }
+@media (max-width: 600px) {
+	.library-waline .wl-header { flex-direction: column; }
+	.library-waline .wl-header-item { width: 100%; min-width: 0; }
+	#post-comments { padding: 1.1rem; }
+}

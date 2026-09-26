@@ -19,7 +19,7 @@ export const pageTransitionConfig: PageTransitionConfig = {
 	},
 	destinationLabels: {
 		"/": "Home",
-		"/dynamic/": "Notes",
+		"/dynamic/": "Memos",
 		"/archive/": "Articles",
 		"/calendar/": "Calendar",
 		"/gallery/": "Gallery",
@@ -37,7 +37,7 @@ export const pageTransitionConfig: PageTransitionConfig = {
 		"/series/": "Series",
 		"/friends/": "Friends",
 		"/guestbook/": "Guestbook",
-		"/booknav/": "Book Navigation",
+		"/booknav/": "Tools",
 		"/bangumi/": "Anime",
 		"/myanimelist/": "Anime List",
 		"/bilibili/": "Bilibili",

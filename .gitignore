@@ -19,6 +19,14 @@ pnpm-debug.log*
 # environment variables
 .env
 .env.production
+.env.local
+
+# Local Waline runtime: never publish users, comments, credentials or logs.
+tools/waline-local/.env
+tools/waline-local/data/
+tools/waline-local/test-data/
+tools/waline-local/logs/
+tools/waline-local/runtime/
 
 # macOS-specific files
 .DS_Store

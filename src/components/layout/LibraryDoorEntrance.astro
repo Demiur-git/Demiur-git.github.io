@@ -14,10 +14,17 @@ const initialHome = isHomePage(Astro.url.pathname);
 	tabindex="-1"
 	aria-hidden={initialHome ? "false" : "true"}
 	data-dialogue={JSON.stringify(homeEntranceConfig.dialogue)}
+	data-character-dialogue={JSON.stringify(homeEntranceConfig.characterDialogue)}
 >
 	<LibraryGateArtwork />
 	<p class="library-door-instruction" id="library-door-instruction" data-door-message>线稿正在出现，请稍候…</p>
 	<div class="library-gate-black" aria-hidden="true"></div>
+	<div class="library-character-scene" aria-hidden="true">
+		<img class="library-character-background" data-character-background alt="" hidden />
+		<div class="library-character-portrait-stage">
+			<img class="library-character-portrait" data-character-portrait data-src="/images/oc-pet/ling-portrait-anime-v4.webp" width="1024" height="1536" alt="" hidden />
+		</div>
+	</div>
 	<div class="library-eye-reveal" aria-hidden="true">
 		<div class="library-eye-focus"></div>
 		<svg class="library-eye-lids" viewBox="0 0 1000 1000" preserveAspectRatio="none" focusable="false">
@@ -25,22 +32,25 @@ const initialHome = isHomePage(Astro.url.pathname);
 			<path data-eye-bottom d="M0 1000H1000V500Q500 500 0 500Z" />
 		</svg>
 	</div>
-	<section class="library-gate-dialogue" data-dialogue-panel aria-hidden="true" aria-label="图书馆序章旁白">
+	<section class="library-gate-dialogue" data-dialogue-panel aria-hidden="true" aria-label="图书馆序章旁白" aria-describedby="library-dialogue-help">
+		<span class="sr-only" id="library-dialogue-help">点击页面或按 Enter、空格推进；文字显示中先补全当前句。每段结束后请选择中央选项继续。</span>
 		<div class="library-dialogue-box">
 			<div class="library-dialogue-top">
 				<span class="library-dialogue-index" data-dialogue-index>01 / 03</span>
-				<button class="library-dialogue-auto" data-dialogue-auto type="button" aria-pressed="false">自动推进：关</button>
+				<button class="library-dialogue-auto" data-dialogue-auto type="button" aria-label="自动推进" aria-pressed="false" title="开启自动推进">
+					<svg viewBox="0 0 44 44" aria-hidden="true" focusable="false">
+						<path d="M9 5L39 22L9 39Z" />
+						<text x="19" y="22" dy=".35em" text-anchor="middle">A</text>
+					</svg>
+				</button>
 			</div>
 			<div class="library-dialogue-speaker" data-dialogue-speaker>旁白</div>
 			<p class="library-dialogue-text" data-dialogue-text aria-hidden="true"></p>
 			<span class="sr-only" data-dialogue-accessible aria-live="polite"></span>
-			<div class="library-dialogue-actions">
-				<button data-dialogue-next type="button">继续 <span aria-hidden="true">↵</span></button>
-				<button data-dialogue-enter type="button" hidden>进入主页 <span aria-hidden="true">→</span></button>
-			</div>
 		</div>
+		<button class="library-dialogue-choice" data-dialogue-enter type="button" hidden>睁开眼睛</button>
 	</section>
-	<button class="library-door-skip" data-door-skip type="button">跳过<span aria-hidden="true"> ↗</span></button>
+	<button class="library-door-skip" data-door-skip type="button">跳过</button>
 </div>
 
 <noscript><style is:inline>#library-door-entrance{display:none!important}</style></noscript>

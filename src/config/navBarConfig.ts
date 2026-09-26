@@ -17,10 +17,10 @@ export const navBarConfig: NavBarConfig = {
 			icon: "material-symbols:home-outline",
 		},
 		{
-			name: "笔记",
-			url: "/dynamic/",
-			icon: "material-symbols:edit-note-outline",
-			pageKey: "dynamic",
+			name: "工具导航",
+			url: "/booknav/",
+			icon: "material-symbols:handyman-outline-rounded",
+			pageKey: "booknav",
 		},
 		{
 			name: "文章",
@@ -32,6 +32,12 @@ export const navBarConfig: NavBarConfig = {
 			url: "#",
 			icon: "material-symbols:person-outline-rounded",
 			children: [
+				{
+					name: "便签",
+					url: "/dynamic/",
+					icon: "material-symbols:edit-note-outline",
+					pageKey: "dynamic",
+				},
 				{
 					name: "日历",
 					url: "/calendar/",
@@ -58,6 +64,31 @@ export const navBarConfig: NavBarConfig = {
 					name: "读书计划",
 					url: "/reading/",
 					icon: "material-symbols:menu-book-outline-rounded",
+				},
+			],
+		},
+		{
+			name: "交流",
+			url: "#",
+			icon: "material-symbols:forum-outline-rounded",
+			children: [
+				{
+					name: "友链",
+					url: "/friends/",
+					icon: "material-symbols:group-outline-rounded",
+					pageKey: "friends",
+				},
+				{
+					name: "留言",
+					url: "/guestbook/",
+					icon: "material-symbols:chat-bubble-outline-rounded",
+					pageKey: "guestbook",
+				},
+				{
+					name: "赞助",
+					url: "/sponsor/",
+					icon: "material-symbols:favorite-outline-rounded",
+					pageKey: "sponsor",
 				},
 			],
 		},

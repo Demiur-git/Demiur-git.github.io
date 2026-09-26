@@ -441,6 +441,15 @@ body {
 	box-shadow: inset 3px 0 0 color-mix(in srgb, var(--library-burgundy) 35%, transparent);
 }
 
+/* Six primary sections must fit without a focused search field pushing the menu. */
+#navbar #search-input-desktop { width: 10rem; }
+@media (min-width: 1024px) and (max-width: 1279px) {
+	#navbar .library-nav-trigger { padding-inline: .65rem; font-size: .9rem; }
+	#navbar .dropdown-trigger.library-nav-trigger { padding-right: 1.7rem; }
+	#navbar .navbar-book-spine { padding-inline: .7rem; }
+	#navbar #search-input-desktop { width: 8rem; }
+}
+
 #navbar :is(#search-panel, #theme-mode-panel, #display-setting, #music-nav-panel) {
 	border: 1px solid color-mix(in srgb, var(--library-wood) 30%, transparent) !important;
 	border-left: 3px solid var(--library-wood) !important;

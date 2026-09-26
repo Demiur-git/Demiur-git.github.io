@@ -1,52 +1,29 @@
 ---
 import { commentConfig } from "@/config";
-
-interface Props {
-	path: string;
-}
-
+import "@/styles/pages/waline.css";
+interface Props { path: string; }
 const config = {
 	...commentConfig.waline,
-	el: "#waline",
 	path: Astro.props.path,
 	dark: "html.dark",
-	wordLimit: ["2", "300"],
-	...(commentConfig.waline?.visitorCount ? { pageview: true } : {}),
+	wordLimit: [2, 300],
+	meta: ["nick", "mail"],
+	requiredMeta: ["nick"],
+	login: "disable",
+	imageUploader: false,
+	search: false,
+	texRenderer: false,
+	highlighter: false,
+	pageview: Boolean(commentConfig.waline?.visitorCount),
+	locale: { placeholder: "留下你的想法吧。留言审核后公开；昵称必填，邮箱选填且不会展示。" },
 };
 ---
-<!-- Waline -->
-<div class="relative w-full">
-  <div id="waline"></div>
-  <link rel="stylesheet" href="https://unpkg.com/@waline/client@v3/dist/waline.css" />
-  <script type="module" is:inline define:vars={{ config }}>
-    import { init } from 'https://unpkg.com/@waline/client@v3/dist/waline.js';
-    const requestedPath = new URLSearchParams(window.location.search).get("path");
-    const effectiveConfig = requestedPath
-      ? { ...config, path: requestedPath }
-      : config;
-    try {
-      init(effectiveConfig);
-    } catch (error) {
-      console.error("[Waline] Failed to initialize:", error);
-    }
-  </script>
-</div>
-
-<style is:global>
-  /* 各分类表情数量不同，切换时面板布局会跟着变，下面逐项消除 */
-
-  .wl-tab-wrapper {
-    /* 内容溢出时出现的滚动条会挤掉约 6px 宽度，网格随之重排 */
-    scrollbar-gutter: stable;
-    /* 内容不足时网格区按内容收缩，比顶满时矮 1px；固定高度使其恒定。
-       145px 取自 Waline 自身的 max-height，其大版本若调整需同步 */
-    height: 145px;
-  }
-
-  /* Waline 给选中态加了 0 1px 1px 边框，激活的 tab 比未激活宽 2px、高 1px，
-     切换时相邻 tab 会左右挪；给未选中的补等宽透明边框统一占位 */
-  .wl-tabs .wl-tab:not(.active) {
-    border: solid transparent;
-    border-width: 0 1px 1px;
-  }
-</style>
+<waline-comments class="library-waline" data-config={JSON.stringify(config)}>
+	<p class="waline-policy">留言审核后公开。昵称必填，邮箱选填且不会展示；本地试用暂不发送邮件通知。</p>
+	<p data-waline-status role="status" aria-live="polite">正在连接留言服务…</p>
+	<button type="button" data-waline-retry class="btn-regular" hidden>重新连接</button>
+	<div data-waline-mount></div>
+</waline-comments>
+<script>
+	import "@/utils/waline-comments";
+</script>

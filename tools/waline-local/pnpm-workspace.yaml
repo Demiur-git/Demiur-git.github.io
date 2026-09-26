@@ -1,0 +1,8 @@
+packages:
+  - '.'
+overrides:
+  'think-model-sqlite>better-sqlite3': 13.0.3
+allowBuilds:
+  # v13 ships Windows Node-API binaries; avoid pnpm's implicit node-gyp rebuild.
+  better-sqlite3: false
+  core-js-pure: false

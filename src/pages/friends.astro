@@ -46,9 +46,9 @@ const description =
 
 <MainGridLayout title={title} description={description}>
   <div
-    class="flex w-full rounded-(--radius-large) overflow-hidden relative min-h-32"
+    class="collection-page collection-directory collection-friends flex w-full rounded-(--radius-large) overflow-hidden relative min-h-32"
   >
-    <div class="card-base z-10 px-9 py-6 relative w-full">
+    <div class="card-base collection-masthead z-10 px-9 py-6 relative w-full">
       <!-- 页面标题和描述 -->
       <div class="mb-4">
         <div class="page-heading">
@@ -56,6 +56,7 @@ const description =
             <Icon name="material-symbols:group" />
           </div>
           <div>
+            <span class="collection-kicker">NEIGHBOURING LIBRARIES · 08</span>
             <h2>{title}</h2>
             {description && <p>{description}</p>}
           </div>
@@ -65,7 +66,7 @@ const description =
       <!-- 搜索框 -->
       {
         items.length > 0 && (
-          <friend-filter class="mb-6">
+          <friend-filter class="collection-filter mb-6">
             <div class="relative mb-3">
               <Icon
                 name="material-symbols:search"
@@ -74,6 +75,7 @@ const description =
               <input
                 type="text"
                 data-search
+                aria-label={i18n(I18nKey.searchFriends)}
                 placeholder={i18n(I18nKey.searchFriends) || "搜索友链..."}
                 class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-(--line-divider) bg-transparent text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 focus:border-(--primary) focus:ring-1 focus:ring-(--primary) outline-none transition-all duration-200 text-sm"
               />
@@ -102,9 +104,10 @@ const description =
       <div class="friends-grid my-4">
         {
           items.length === 0 && (
-            <div class="col-span-full flex flex-col items-center justify-center py-12 text-neutral-400 dark:text-neutral-500">
+            <div class="collection-empty col-span-full flex flex-col items-center justify-center py-12">
               <Icon name="material-symbols:group-off-outline" class="text-4xl mb-3" />
               <div class="text-sm">{i18n(I18nKey.friendsEmpty)}</div>
+              <p class="collection-empty-hint">友链尚未收录，感谢你的来访。</p>
             </div>
           )
         }
@@ -200,14 +203,16 @@ const description =
 
         connectedCallback() {
           this.addEventListener("click", this.handleClick);
-          const input = this.querySelector("[data-search]");
-          if (input) {
-            input.addEventListener("input", () => this.applyFilters());
-          }
+          this.addEventListener("input", this.handleInput);
         }
 
         disconnectedCallback() {
           this.removeEventListener("click", this.handleClick);
+          this.removeEventListener("input", this.handleInput);
+        }
+
+        handleInput(e) {
+          if (e.target.matches?.("[data-search]")) this.applyFilters();
         }
 
         handleClick(e) {

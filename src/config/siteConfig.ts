@@ -11,9 +11,9 @@ const pages = resolvePageToggles({
 	// ── 社交 (Social) ──────────────────────────────────
 
 	// 友链页面开关
-	friends: false,
+	friends: true,
 	// 留言板页面开关，需要配置评论系统
-	guestbook: false,
+	guestbook: true,
 
 	// ── 我的 (My) ──────────────────────────────────
 
@@ -24,7 +24,7 @@ const pages = resolvePageToggles({
 	// 相册页面开关
 	gallery: true,
 	// 书签导航页面开关
-	booknav: false,
+	booknav: true,
 	// 哔哩哔哩追番页面开关
 	bilibili: false,
 	// 番组计划页面开关
@@ -37,7 +37,7 @@ const pages = resolvePageToggles({
 	// ── 关于 (About) ──────────────────────────────────
 
 	// 打赏页面开关
-	sponsor: false,
+	sponsor: true,
 });
 
 export const siteConfig: SiteConfig = {
@@ -45,7 +45,7 @@ export const siteConfig: SiteConfig = {
 	title: "Demiur",
 
 	// 站点副标题
-	subtitle: "笔记与文章",
+	subtitle: "便签与文章",
 
 	// 站点 URL
 	site_url: "https://example.com",
@@ -54,7 +54,7 @@ export const siteConfig: SiteConfig = {
 	description: "记录思考、实践与那些值得反复阅读的事。",
 
 	// 站点关键词
-	keywords: ["个人网站", "笔记", "文章", "Astro"],
+	keywords: ["个人网站", "便签", "文章", "Astro"],
 
 	// 主题色
 	themeColor: {

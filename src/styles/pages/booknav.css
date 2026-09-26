@@ -11,6 +11,16 @@ booknav-list {
 	gap: 0.75rem;
 }
 
+/* 官方图标保持原色与比例，浅色衬底让黑色标志在夜间也清晰。 */
+.booknav-icon:has(img) {
+	background: #f8f7f3;
+	padding: 0.5rem;
+}
+
+.booknav-icon img {
+	object-fit: contain;
+}
+
 /* 避让固定导航栏，与主题其他锚点保持一致 */
 .booknav-group {
 	scroll-margin-top: 5.5rem;

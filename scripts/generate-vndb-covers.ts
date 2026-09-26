@@ -1,7 +1,8 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
-import { siteConfig } from "../src/config";
+// Only load Node-safe configuration, not the barrel that also imports Astro images.
+import { siteConfig } from "../src/config/siteConfig";
 import type { VndbUlistEntry } from "../src/types/vndb";
 import { fetchVndbUlist } from "../src/utils/vndb-utils";
 

@@ -1,1 +1,26 @@
-{}
+{
+  "src:assets/images/library-reading-desk.png": "9e7b5d6146337c5941",
+  "src:assets/images/library-reading-desk-night.png": "382d2e5a3f2b8c5f3e",
+  "src:assets/images/library-gate-night.webp": "362721332620402f29",
+  "src:assets/images/library-gate-doors.webp": "483424443223553925",
+  "src:assets/images/library-gate-day.webp": "84654871543a916f4c",
+  "src:assets/home-entrance/library-meeting-night.png": "3c302c3d322d4a362e",
+  "src:assets/home-entrance/library-meeting-day.png": "685a526b5e556e5a53",
+  "public:images/tool-icons/ollama.png": "c3c3c3c3c3c3d8d8d8",
+  "public:images/tool-icons/github.png": "23292d232a2e22282d",
+  "public:images/tool-icons/chatgpt.webp": "cfcfcfcecececfcfcf",
+  "public:images/oc-pet/ling-portrait.webp": "262222625a5a2d292d",
+  "public:images/oc-pet/ling-portrait.png": "827c7c7a7370333030",
+  "public:images/oc-pet/ling-portrait-anime-v4.webp": "2723232420201a1717",
+  "public:images/oc-pet/ling-portrait-anime-v4.png": "918a87887f7f4e4848",
+  "public:images/oc-pet/ling-portrait-anime-v3.webp": "272323666262443e3e",
+  "public:images/oc-pet/ling-portrait-anime-v3.png": "91878a887f7f4e4848",
+  "public:images/oc-pet/ling-portrait-anime-v2.webp": "292525635d5d423c3c",
+  "public:images/oc-pet/ling-portrait-anime-v2.png": "8d8484837878484242",
+  "public:images/oc-pet/interact.webp": "2321202a25241a1816",
+  "public:images/oc-pet/idle.webp": "2521202a25241a1816",
+  "public:images/oc-pet/blink.webp": "2824232c28251a1816",
+  "public:images/home-entrance/library-meeting-night.webp": "3e322c3e322d4a352d",
+  "public:images/home-entrance/library-meeting-day.webp": "685b516c5f576f5b53",
+  "public:images/friends/firefly.png": "72d3af9ee699aced93"
+}

@@ -23,7 +23,8 @@ if (!guestbookPost) {
 const { Content } = await render(guestbookPost);
 
 // 检查评论系统是否启用
-const isCommentEnabled = commentConfig?.type && commentConfig.type !== "none";
+const isCommentEnabled = commentConfig?.type && commentConfig.type !== "none" &&
+	(commentConfig.type !== "waline" || Boolean(commentConfig.waline?.serverURL));
 
 // 页面标题和描述
 const title = i18n(I18nKey.guestbook);
@@ -31,10 +32,11 @@ const description = i18n(I18nKey.guestbookDescription);
 ---
 
 <MainGridLayout title={title} description={description}>
+  <div class="collection-page collection-directory collection-guestbook">
   <div
     class="flex w-full rounded-(--radius-large) overflow-hidden relative min-h-32"
   >
-    <div class="card-base z-10 px-9 py-6 relative w-full">
+    <div class="card-base collection-masthead z-10 px-9 py-6 relative w-full">
       <!-- 页面标题和描述 -->
       <div class="mb-8">
         <div class="page-heading">
@@ -42,6 +44,7 @@ const description = i18n(I18nKey.guestbookDescription);
             <Icon name="material-symbols:chat" />
           </div>
           <div>
+            <span class="collection-kicker">VISITORS' BOOK · 09</span>
             <h2>{title}</h2>
             {description && <p>{description}</p>}
           </div>
@@ -59,7 +62,7 @@ const description = i18n(I18nKey.guestbookDescription);
     {isCommentEnabled ? (
       <Comment post={guestbookPost} customPath="/guestbook/" />
     ) : (
-      <div class="card-base p-8 mb-6 relative overflow-hidden">
+      <div class="card-base collection-empty p-8 mb-6 relative overflow-hidden">
         <div class="text-center py-8 text-(--content-meta)">
           <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-(--btn-regular-bg) flex items-center justify-center">
             <svg
@@ -76,12 +79,13 @@ const description = i18n(I18nKey.guestbookDescription);
               ></path>
             </svg>
           </div>
-          <p class="text-base mb-2">{i18n(I18nKey.commentNotConfigured)}</p>
+          <p class="text-base mb-2">留言暂未开放</p>
           <p class="text-sm text-(--content-meta) opacity-75">
-            {i18n(I18nKey.guestbookCommentHint)}
+            留言服务尚未配置，开放后即可在这里交流。
           </p>
         </div>
       </div>
     )}
+  </div>
   </div>
 </MainGridLayout>

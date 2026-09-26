@@ -6,7 +6,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { glob } from "glob";
-import { live2dWidgetConfig, spineModelConfig } from "../src/config";
+import { live2dWidgetConfig, spineModelConfig } from "../src/config/pioConfig";
 import { resolveSiteRoot } from "./site-root";
 
 // Cloudflare Pages 上产物在 dist/client，本地在 dist，统一对准真实根目录

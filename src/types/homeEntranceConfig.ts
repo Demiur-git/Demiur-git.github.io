@@ -5,4 +5,5 @@ export interface HomeEntranceDialogueLine {
 
 export interface HomeEntranceConfig {
 	dialogue: HomeEntranceDialogueLine[];
+	characterDialogue: HomeEntranceDialogueLine[];
 }

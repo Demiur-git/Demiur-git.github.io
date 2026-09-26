@@ -42,9 +42,9 @@ const description =
 
 <MainGridLayout title={title} description={description}>
   <div
-    class="flex w-full rounded-(--radius-large) overflow-hidden relative min-h-32"
+    class="collection-page collection-directory collection-tools flex w-full rounded-(--radius-large) overflow-hidden relative min-h-32"
   >
-    <div class="card-base z-10 px-9 py-6 relative w-full">
+    <div class="card-base collection-masthead z-10 px-9 py-6 relative w-full">
       <!-- 页面标题和描述 -->
       <div class="mb-4">
         <div class="page-heading">
@@ -52,15 +52,14 @@ const description =
             <Icon name="material-symbols:bookmarks" />
           </div>
           <div>
+            <span class="collection-kicker">REFERENCE DESK · 07</span>
             <h2>{title}</h2>
             {description && <p>{description}</p>}
           </div>
         </div>
       </div>
 
-      {
-        totalCount > 0 ? (
-          <booknav-list>
+      <booknav-list class="collection-filter">
             {/* 搜索框 */}
             <div class="relative mb-3">
               <Icon
@@ -70,6 +69,7 @@ const description =
               <input
                 type="text"
                 data-search
+                aria-label={i18n(I18nKey.searchBooknav)}
                 placeholder={i18n(I18nKey.searchBooknav)}
                 class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-(--line-divider) bg-transparent text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 focus:border-(--primary) focus:ring-1 focus:ring-(--primary) outline-none transition-all duration-200 text-sm"
               />
@@ -188,14 +188,14 @@ const description =
               <Icon name="material-symbols:search-off-rounded" class="text-4xl mb-3" />
               <div class="text-sm">{i18n(I18nKey.searchNoResults)}</div>
             </div>
-          </booknav-list>
-        ) : (
-          <div class="flex flex-col items-center justify-center py-16 text-neutral-400 dark:text-neutral-500">
+        {totalCount === 0 && (
+          <div class="collection-empty flex flex-col items-center justify-center py-16" data-library-empty>
             <Icon name="material-symbols:bookmarks" class="text-6xl mb-4 opacity-50" />
             <p class="text-lg">{i18n(I18nKey.booknavEmpty)}</p>
+            <p class="collection-empty-hint">工具清单正在整理，之后会在这里按分类收录。</p>
           </div>
-        )
-      }
+        )}
+      </booknav-list>
     </div>
   </div>
 
@@ -252,7 +252,7 @@ const description =
             `[data-group-id="${button.dataset.target}"]`,
           );
           if (section) {
-            section.scrollIntoView({ behavior: "smooth", block: "start" });
+            section.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
           }
         }
 
@@ -261,6 +261,7 @@ const description =
           const input = this.querySelector("[data-search]");
           const query = (input?.value || "").toLowerCase().trim();
           const sections = this.querySelectorAll("[data-group-id]");
+          if (!sections.length) return;
 
           let hasVisible = false;
 

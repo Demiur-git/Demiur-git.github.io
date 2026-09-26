@@ -1,9 +1,10 @@
 import { buildGateDoor, gateHitStyle, GATE_CAMERA, type GateCamera, type GateSide } from "@/utils/library-gate-geometry";
 import { buildGateArchitecture } from "@/utils/library-gate-artwork";
 import { ENTRANCE_TIMING, sampleEyeReveal, sampleGateWalk } from "@/utils/home-entrance-motion";
+import { prepareHomeCharacterScene, type HomeCharacterScene } from "@/utils/home-character-scene";
 
 interface DialogueLine { speaker: string; text: string }
-type EntrancePhase = "idle" | "approaching" | "active" | "opening" | "walking" | "black" | "dialogue" | "waking";
+type EntrancePhase = "idle" | "approaching" | "active" | "opening" | "walking" | "black" | "dialogue" | "waking" | "character" | "leaving";
 
 /** The home-only prologue lives outside Swup's replaceable content. */
 export function initHomeEntrance(): void {
@@ -20,7 +21,6 @@ export function initHomeEntrance(): void {
 	const accessibleText = overlay.querySelector<HTMLElement>("[data-dialogue-accessible]");
 	const indexLabel = overlay.querySelector<HTMLElement>("[data-dialogue-index]");
 	const autoButton = overlay.querySelector<HTMLButtonElement>("[data-dialogue-auto]");
-	const nextButton = overlay.querySelector<HTMLButtonElement>("[data-dialogue-next]");
 	const enterButton = overlay.querySelector<HTMLButtonElement>("[data-dialogue-enter]");
 	const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 	const scene = overlay.querySelector<HTMLElement>(".library-gate-scene");
@@ -29,12 +29,17 @@ export function initHomeEntrance(): void {
 	const eyeBottom = overlay.querySelector<SVGPathElement>("[data-eye-bottom]");
 	const architecturePaths = new Map(Array.from(overlay.querySelectorAll<SVGPathElement>("[data-gate-architecture]"), (path) => [path.dataset.gateArchitecture!, path]));
 	let camera: GateCamera = { ...GATE_CAMERA };
-	let dialogue: DialogueLine[] = [];
-	try {
-		const parsed: unknown = JSON.parse(overlay.dataset.dialogue || "[]");
-		if (Array.isArray(parsed)) dialogue = parsed.filter((line): line is DialogueLine =>
-			line && typeof line.speaker === "string" && typeof line.text === "string");
-	} catch { /* Invalid optional dialogue data should not block entry. */ }
+	function parseDialogue(json: string | undefined): DialogueLine[] {
+		try {
+			const parsed: unknown = JSON.parse(json || "[]");
+			if (Array.isArray(parsed)) return parsed.filter((line): line is DialogueLine =>
+				line && typeof line.speaker === "string" && typeof line.text === "string");
+		} catch { /* Invalid optional dialogue data should not block entry. */ }
+		return [];
+	}
+	const narratorDialogue = parseDialogue(overlay.dataset.dialogue);
+	const characterDialogue = parseDialogue(overlay.dataset.characterDialogue);
+	let dialogue = narratorDialogue;
 
 	type FaceElements = { group: SVGGElement; outline: SVGPathElement; clip: SVGPathElement; details: Map<string, SVGPathElement> };
 	const doorArtwork = new Map<GateSide, { group: SVGGElement; faces: Map<string, FaceElements>; button?: HTMLButtonElement; order: string }>();
@@ -74,6 +79,18 @@ export function initHomeEntrance(): void {
 	let inerted: Array<{ element: HTMLElement; wasInert: boolean }> = [];
 	let drag: { pointerId: number; side: GateSide; startX: number; base: number; moved: boolean } | null = null;
 	let suppressClickUntil = 0;
+	let sceneAbort: AbortController | null = null;
+	let characterScene: HomeCharacterScene | null = null;
+	let wakeRequested = false;
+	const isDialoguePhase = (): boolean => phase === "dialogue" || phase === "character";
+
+	function prepareCharacterScene(): Promise<void> {
+		if (!characterScene) {
+			sceneAbort = new AbortController();
+			characterScene = prepareHomeCharacterScene(entrance, sceneAbort.signal);
+		}
+		return characterScene.ready();
+	}
 
 	function schedule(callback: () => void, delay: number): number {
 		const current = generation;
@@ -95,11 +112,17 @@ export function initHomeEntrance(): void {
 	function cancelTyping(): void { cancelTimer(typeTimer); typeTimer = 0; }
 	function cancelAnimation(): void { if (animationFrame) cancelAnimationFrame(animationFrame); animationFrame = 0; }
 
+	function updateAutoButton(): void {
+		autoButton?.setAttribute("aria-pressed", String(autoEnabled));
+		autoButton?.setAttribute("title", autoEnabled ? "关闭自动推进" : "开启自动推进");
+	}
+
 	function setPhase(next: EntrancePhase): void {
 		phase = next;
 		if (next === "idle") root.removeAttribute("data-home-intro");
 		else root.setAttribute("data-home-intro", next);
-		panel?.setAttribute("aria-hidden", next === "dialogue" ? "false" : "true");
+		panel?.setAttribute("aria-hidden", isDialoguePhase() ? "false" : "true");
+		panel?.setAttribute("aria-label", next === "character" ? "绫的对话" : "图书馆序章旁白");
 		for (const door of doors) door.disabled = next !== "active";
 	}
 
@@ -196,12 +219,27 @@ export function initHomeEntrance(): void {
 
 	function clear(entered: boolean): void {
 		generation++;
+		sceneAbort?.abort();
+		sceneAbort = null;
+		characterScene = null;
+		wakeRequested = false;
+		dialogue = narratorDialogue;
+		characters = [];
+		visibleCount = 0;
+		dialogueIndex = 0;
+		for (const image of entrance.querySelectorAll<HTMLImageElement>("[data-character-background], [data-character-portrait]")) {
+			image.hidden = true;
+			image.removeAttribute("src");
+		}
 		for (const timer of timers) window.clearTimeout(timer);
 		timers.clear();
 		cancelAnimation();
 		autoTimer = 0;
 		typeTimer = 0;
 		autoEnabled = false;
+		if (autoButton) autoButton.disabled = false;
+		updateAutoButton();
+		if (enterButton) { enterButton.hidden = true; enterButton.disabled = false; enterButton.textContent = "睁开眼睛"; }
 		contentReady = false;
 		drawingDone = false;
 		pendingAction = null;
@@ -234,25 +272,44 @@ export function initHomeEntrance(): void {
 	}
 
 	function finishIntro(): void {
-		if (phase !== "dialogue" || !contentReady) return;
+		if (!isDialoguePhase() || !contentReady || wakeRequested) return;
+		if (dialogue.length > 0 && (dialogueIndex < dialogue.length - 1 || visibleCount < characters.length)) return;
 		cancelAuto();
 		cancelTyping();
-		setEye(0);
-		setPhase("waking");
-		entrance.focus({ preventScroll: true });
-		animateScene(ENTRANCE_TIMING.wake, setEye, () => clear(true));
+		if (phase === "character") {
+			setPhase("leaving");
+			entrance.focus({ preventScroll: true });
+			schedule(() => clear(true), 250);
+			return;
+		}
+		wakeRequested = true;
+		if (autoButton) autoButton.disabled = true;
+		if (enterButton) { enterButton.disabled = true; enterButton.textContent = "场景准备中…"; }
+		const current = generation;
+		const reveal = (): void => {
+			if (current !== generation || phase !== "dialogue" || !contentReady) return;
+			wakeRequested = false;
+			setEye(0);
+			setPhase("waking");
+			entrance.focus({ preventScroll: true });
+			animateScene(ENTRANCE_TIMING.wake, setEye, startCharacterDialogue);
+		};
+		void prepareCharacterScene().then(reveal, reveal);
 	}
 
 	function updateDialogueActions(): void {
 		const last = dialogueIndex >= dialogue.length - 1;
 		const complete = visibleCount >= characters.length;
-		if (nextButton) nextButton.hidden = last && complete;
-		if (enterButton) enterButton.hidden = !(last && complete);
+		if (enterButton) {
+			enterButton.hidden = !(last && complete);
+			enterButton.disabled = wakeRequested;
+			enterButton.textContent = wakeRequested ? "场景准备中…" : phase === "character" ? "进入主页" : "睁开眼睛";
+		}
 	}
 
 	function maybeScheduleAuto(): void {
 		cancelAuto();
-		if (phase !== "dialogue" || !autoEnabled || dialogueIndex >= dialogue.length - 1 || visibleCount < characters.length) return;
+		if (!isDialoguePhase() || wakeRequested || !autoEnabled || dialogueIndex >= dialogue.length - 1 || visibleCount < characters.length) return;
 		autoTimer = schedule(() => { autoTimer = 0; showLine(dialogueIndex + 1); }, 2500);
 	}
 
@@ -266,7 +323,7 @@ export function initHomeEntrance(): void {
 	}
 
 	function typeNext(): void {
-		if (phase !== "dialogue") return;
+		if (!isDialoguePhase() || wakeRequested) return;
 		visibleCount++;
 		if (visualText) visualText.textContent = characters.slice(0, visibleCount).join("");
 		if (visibleCount >= characters.length) completeLine();
@@ -290,16 +347,27 @@ export function initHomeEntrance(): void {
 	}
 
 	function advanceDialogue(): void {
-		if (phase !== "dialogue") return;
+		if (!isDialoguePhase() || wakeRequested) return;
 		if (visibleCount < characters.length) { completeLine(); return; }
 		if (dialogueIndex < dialogue.length - 1) showLine(dialogueIndex + 1);
 	}
 
 	function startDialogue(): void {
+		dialogue = narratorDialogue;
 		setPhase("dialogue");
+		void prepareCharacterScene();
 		if (dialogue.length === 0) { finishIntro(); return; }
 		showLine(0);
-		nextButton?.focus({ preventScroll: true });
+		entrance.focus({ preventScroll: true });
+	}
+
+	function startCharacterDialogue(): void {
+		dialogue = characterDialogue;
+		setPhase("character");
+		if (autoButton) autoButton.disabled = false;
+		if (dialogue.length === 0) { finishIntro(); return; }
+		showLine(0);
+		entrance.focus({ preventScroll: true });
 	}
 
 	function requestOpen(): void {
@@ -348,7 +416,6 @@ export function initHomeEntrance(): void {
 		entrance.setAttribute("aria-hidden", "false");
 		setPhase("approaching");
 		if (message) message.textContent = "正在走近图书馆…";
-		if (autoButton) { autoButton.setAttribute("aria-pressed", "false"); autoButton.textContent = "自动推进：关"; }
 		for (const child of Array.from(document.body.children)) {
 			if (!(child instanceof HTMLElement) || child === overlay || ["SCRIPT", "STYLE", "NOSCRIPT"].includes(child.tagName)) continue;
 			inerted.push({ element: child, wasInert: child.inert });
@@ -402,13 +469,17 @@ export function initHomeEntrance(): void {
 	}
 
 	skip?.addEventListener("click", skipEntrance);
-	nextButton?.addEventListener("click", advanceDialogue);
 	enterButton?.addEventListener("click", finishIntro);
+	entrance.addEventListener("click", (event) => {
+		if (!isDialoguePhase() || wakeRequested || event.defaultPrevented) return;
+		// Native click covers mouse and touch, without adding a second pointer/tap action.
+		if (event.target instanceof Element && event.target.closest("button, a, input, select, textarea, [role='button']")) return;
+		advanceDialogue();
+	});
 	autoButton?.addEventListener("click", () => {
-		if (phase !== "dialogue") return;
+		if (!isDialoguePhase() || wakeRequested) return;
 		autoEnabled = !autoEnabled;
-		autoButton.setAttribute("aria-pressed", String(autoEnabled));
-		autoButton.textContent = `自动推进：${autoEnabled ? "开" : "关"}`;
+		updateAutoButton();
 		if (autoEnabled) maybeScheduleAuto();
 		else cancelAuto();
 	});
@@ -421,16 +492,16 @@ export function initHomeEntrance(): void {
 			requestOpen();
 			return;
 		}
-		if (phase === "dialogue" && (event.key === "Enter" || event.key === " ") && !(event.target instanceof HTMLButtonElement)) {
+		if (isDialoguePhase() && (event.key === "Enter" || event.key === " ") && !(event.target instanceof HTMLButtonElement)) {
 			event.preventDefault();
 			advanceDialogue();
 			return;
 		}
 		if (event.key !== "Tab") return;
-		const controls = phase === "dialogue"
-			? [autoButton, ...(enterButton && !enterButton.hidden ? [enterButton] : [nextButton]), skip]
+		const controls = isDialoguePhase()
+			? [autoButton, ...(enterButton && !enterButton.hidden ? [enterButton] : []), skip]
 			: phase === "active" ? [...doors, skip] : [skip];
-		const enabled = controls.filter((control): control is HTMLButtonElement => !!control);
+		const enabled = controls.filter((control): control is HTMLButtonElement => !!control && !control.disabled);
 		if (!enabled.length) return;
 		const first = enabled[0];
 		const last = enabled[enabled.length - 1];

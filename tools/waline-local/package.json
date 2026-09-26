@@ -1,0 +1,12 @@
+{
+	"name": "demiur-waline-local",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"check": "node check.mjs",
+		"start": "node run.mjs"
+	},
+	"dependencies": {
+		"@waline/vercel": "1.41.6"
+	}
+}

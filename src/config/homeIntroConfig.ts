@@ -6,7 +6,7 @@ export const homeIntroConfig: HomeIntroConfig = {
 	eyebrow: "PRIVATE LIBRARY · COLLECTION 2026",
 	title: "欢迎来到我的私人图书馆。",
 	description:
-		"这里收藏笔记、文章、阅读与持续发生的实践。请随意翻阅，也许会在某一页遇见值得带走的线索。",
+		"这里收藏便签、文章、阅读与持续发生的实践。请随意翻阅，也许会在某一页遇见值得带走的线索。",
 	heroArtwork: {
 		src: libraryReadingDesk,
 		darkSrc: libraryReadingDeskNight,
@@ -39,7 +39,7 @@ export const homeIntroConfig: HomeIntroConfig = {
 	catalogEntries: [
 		{
 			code: "NOTE · 01",
-			name: "笔记",
+			name: "便签",
 			description: "随手记录的想法、线索与学习片段。",
 			url: "/dynamic/",
 			icon: "material-symbols:edit-note-outline",
