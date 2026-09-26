@@ -7,6 +7,7 @@ declare global {
 		// 视图设置面板总开关，可在部署平台配置（true / 1 / on / yes 开启）
 		readonly PUBLIC_DISPLAY_SETTINGS?: string;
 		readonly PUBLIC_WALINE_SERVER_URL?: string;
+		readonly PUBLIC_MUSIC_LIBRARY?: "local" | "public";
 	}
 
 	interface ITOCManager {

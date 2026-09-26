@@ -18,6 +18,7 @@
     "new-d": "tsx scripts/new-dynamic.js",
     "new-post": "node scripts/new-post.js",
     "music:import": "node --experimental-strip-types scripts/import-music.ts",
+    "music:export": "node --experimental-strip-types scripts/export-music.ts",
     "format": "biome format --write ./src ./scripts",
     "lint": "biome check --write ./src ./scripts",
     "preinstall": "npx only-allow pnpm",

@@ -35,3 +35,7 @@ pnpm.cmd music:import -- --fetch-cover
 ```
 
 音频、封面与歌词属于公开静态资源。请勿加入无权公开传播的内容。
+
+## 导出选定歌曲到公开清单
+
+导入完成后，可运行 `pnpm music:export -- --list` 查看歌曲 ID，选择歌曲并预览 R2 地址。导出不会上传或修改音乐文件；本地仍使用个人曲库，GitHub Pages 使用独立公开清单。完整步骤见 [公开曲库与 R2 接入](../docs/music-public-library.md)。

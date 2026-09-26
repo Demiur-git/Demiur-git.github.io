@@ -3,7 +3,15 @@ import type {
 	MusicLyricOverride,
 	MusicPlayerConfig,
 } from "../types/musicConfig";
-import musicLibrary from "./musicLibrary.generated.json";
+import { selectMusicLibrary } from "../utils/music-library";
+import localLibrary from "./musicLibrary.generated.json";
+import publicLibrary from "./musicLibrary.public.json";
+
+const musicLibrary = selectMusicLibrary<{ tracks: MusicLocalTrack[] }>(
+	import.meta.env.PUBLIC_MUSIC_LIBRARY,
+	localLibrary,
+	publicLibrary,
+);
 
 const generatedPlaylist = musicLibrary.tracks as MusicLocalTrack[];
 const generatedLyricOverrides = Object.fromEntries(
@@ -24,7 +32,7 @@ const generatedLyricOverrides = Object.fromEntries(
 export const musicPlayerConfig: MusicPlayerConfig = {
 	showInNavbar: false,
 	showInSidebar: false,
-	// 默认使用由 `pnpm music:import` 生成的静态曲库，无需运行时 API。
+	// 本地默认读个人曲库；PUBLIC_MUSIC_LIBRARY=public 使用独立公开清单。
 	mode: "local",
 	volume: 0.7,
 	playMode: "list",

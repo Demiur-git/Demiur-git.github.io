@@ -50,6 +50,7 @@ jobs:
         env:
           # Local-only Waline is not a public comment service.
           PUBLIC_WALINE_SERVER_URL: ''
+          PUBLIC_MUSIC_LIBRARY: 'public'
 
       - name: Create .nojekyll file
         run: touch dist/.nojekyll

@@ -1,0 +1,167 @@
+{
+	"version": 1,
+	"generatedAt": "2026-09-26T09:35:24.467Z",
+	"tracks": [
+		{
+			"id": "artificial-existence-a644f5a000",
+			"name": "Artificial Existence",
+			"artist": "Jun Kuroda",
+			"url": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/artificial-existence-a644f5a000/audio.mp3",
+			"cover": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/artificial-existence-a644f5a000/cover.webp",
+			"lrc": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/artificial-existence-a644f5a000/lyrics.lrc",
+			"album": "Artificial Existence",
+			"duration": 132.284
+		},
+		{
+			"id": "解脱-edc1e93ef9",
+			"name": "解脱",
+			"artist": "浦栗子SpuChestnut",
+			"url": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/%E8%A7%A3%E8%84%B1-edc1e93ef9/audio.mp3",
+			"cover": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/%E8%A7%A3%E8%84%B1-edc1e93ef9/cover.webp",
+			"lrc": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/%E8%A7%A3%E8%84%B1-edc1e93ef9/lyrics.lrc",
+			"album": "十三月iouriber",
+			"duration": 170.256
+		},
+		{
+			"id": "私はあの花火大会に行かなかった-feat-anri-arcane-1b9f0bcc68",
+			"name": "私はあの花火大会に行かなかった (feat. ANRI Arcane)",
+			"artist": "神经罐头 / ANRI Arcane",
+			"url": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/%E7%A7%81%E3%81%AF%E3%81%82%E3%81%AE%E8%8A%B1%E7%81%AB%E5%A4%A7%E4%BC%9A%E3%81%AB%E8%A1%8C%E3%81%8B%E3%81%AA%E3%81%8B%E3%81%A3%E3%81%9F-feat-anri-arcane-1b9f0bcc68/audio.mp3",
+			"cover": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/%E7%A7%81%E3%81%AF%E3%81%82%E3%81%AE%E8%8A%B1%E7%81%AB%E5%A4%A7%E4%BC%9A%E3%81%AB%E8%A1%8C%E3%81%8B%E3%81%AA%E3%81%8B%E3%81%A3%E3%81%9F-feat-anri-arcane-1b9f0bcc68/cover.webp",
+			"lrc": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/%E7%A7%81%E3%81%AF%E3%81%82%E3%81%AE%E8%8A%B1%E7%81%AB%E5%A4%A7%E4%BC%9A%E3%81%AB%E8%A1%8C%E3%81%8B%E3%81%AA%E3%81%8B%E3%81%A3%E3%81%9F-feat-anri-arcane-1b9f0bcc68/lyrics.lrc",
+			"translationLrc": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/%E7%A7%81%E3%81%AF%E3%81%82%E3%81%AE%E8%8A%B1%E7%81%AB%E5%A4%A7%E4%BC%9A%E3%81%AB%E8%A1%8C%E3%81%8B%E3%81%AA%E3%81%8B%E3%81%A3%E3%81%9F-feat-anri-arcane-1b9f0bcc68/lyrics.translation.lrc",
+			"album": "私はあの花火大会に行かなかった",
+			"duration": 176.196
+		},
+		{
+			"id": "但我讨厌摇滚乐-2a2b25e23a",
+			"name": "但我讨厌摇滚乐",
+			"artist": "停電前夜",
+			"url": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/%E4%BD%86%E6%88%91%E8%AE%A8%E5%8E%8C%E6%91%87%E6%BB%9A%E4%B9%90-2a2b25e23a/audio.mp3",
+			"cover": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/%E4%BD%86%E6%88%91%E8%AE%A8%E5%8E%8C%E6%91%87%E6%BB%9A%E4%B9%90-2a2b25e23a/cover.webp",
+			"lrc": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/%E4%BD%86%E6%88%91%E8%AE%A8%E5%8E%8C%E6%91%87%E6%BB%9A%E4%B9%90-2a2b25e23a/lyrics.lrc",
+			"album": "世界梦游",
+			"duration": 284.448
+		},
+		{
+			"id": "藍悼花-feat-lucia-f326dc5e56",
+			"name": "藍悼花 (feat. Lucia)",
+			"artist": "酔シグレ / Lucia",
+			"url": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/%E8%97%8D%E6%82%BC%E8%8A%B1-feat-lucia-f326dc5e56/audio.mp3",
+			"cover": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/%E8%97%8D%E6%82%BC%E8%8A%B1-feat-lucia-f326dc5e56/cover.webp",
+			"lrc": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/%E8%97%8D%E6%82%BC%E8%8A%B1-feat-lucia-f326dc5e56/lyrics.lrc",
+			"translationLrc": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/%E8%97%8D%E6%82%BC%E8%8A%B1-feat-lucia-f326dc5e56/lyrics.translation.lrc",
+			"album": "HARMONICS",
+			"duration": 298.031
+		},
+		{
+			"id": "貰い火傷-8eee9a6686",
+			"name": "貰い火傷",
+			"artist": "kyiku",
+			"url": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/%E8%B2%B0%E3%81%84%E7%81%AB%E5%82%B7-8eee9a6686/audio.mp3",
+			"cover": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/%E8%B2%B0%E3%81%84%E7%81%AB%E5%82%B7-8eee9a6686/cover.webp",
+			"lrc": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/%E8%B2%B0%E3%81%84%E7%81%AB%E5%82%B7-8eee9a6686/lyrics.lrc",
+			"translationLrc": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/%E8%B2%B0%E3%81%84%E7%81%AB%E5%82%B7-8eee9a6686/lyrics.translation.lrc",
+			"album": "貰い火傷",
+			"duration": 231.192
+		},
+		{
+			"id": "水底までは還れない-e30c1c616f",
+			"name": "水底までは還れない",
+			"artist": "kyiku",
+			"url": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/%E6%B0%B4%E5%BA%95%E3%81%BE%E3%81%A7%E3%81%AF%E9%82%84%E3%82%8C%E3%81%AA%E3%81%84-e30c1c616f/audio.mp3",
+			"cover": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/%E6%B0%B4%E5%BA%95%E3%81%BE%E3%81%A7%E3%81%AF%E9%82%84%E3%82%8C%E3%81%AA%E3%81%84-e30c1c616f/cover.webp",
+			"lrc": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/%E6%B0%B4%E5%BA%95%E3%81%BE%E3%81%A7%E3%81%AF%E9%82%84%E3%82%8C%E3%81%AA%E3%81%84-e30c1c616f/lyrics.lrc",
+			"translationLrc": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/%E6%B0%B4%E5%BA%95%E3%81%BE%E3%81%A7%E3%81%AF%E9%82%84%E3%82%8C%E3%81%AA%E3%81%84-e30c1c616f/lyrics.translation.lrc",
+			"album": "水底までは還れない",
+			"duration": 267.288
+		},
+		{
+			"id": "しあわせのはこ-d160c2620d",
+			"name": "しあわせのはこ",
+			"artist": "kyiku / 可不 / ナースロボ＿タイプＴ / 星界",
+			"url": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/%E3%81%97%E3%81%82%E3%82%8F%E3%81%9B%E3%81%AE%E3%81%AF%E3%81%93-d160c2620d/audio.mp3",
+			"cover": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/%E3%81%97%E3%81%82%E3%82%8F%E3%81%9B%E3%81%AE%E3%81%AF%E3%81%93-d160c2620d/cover.webp",
+			"lrc": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/%E3%81%97%E3%81%82%E3%82%8F%E3%81%9B%E3%81%AE%E3%81%AF%E3%81%93-d160c2620d/lyrics.lrc",
+			"translationLrc": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/%E3%81%97%E3%81%82%E3%82%8F%E3%81%9B%E3%81%AE%E3%81%AF%E3%81%93-d160c2620d/lyrics.translation.lrc",
+			"album": "しあわせのはこ",
+			"duration": 220.918
+		},
+		{
+			"id": "溶けきれない背景-11e19bf4eb",
+			"name": "溶けきれない背景",
+			"artist": "kyiku / 裏命",
+			"url": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/%E6%BA%B6%E3%81%91%E3%81%8D%E3%82%8C%E3%81%AA%E3%81%84%E8%83%8C%E6%99%AF-11e19bf4eb/audio.mp3",
+			"cover": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/%E6%BA%B6%E3%81%91%E3%81%8D%E3%82%8C%E3%81%AA%E3%81%84%E8%83%8C%E6%99%AF-11e19bf4eb/cover.webp",
+			"lrc": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/%E6%BA%B6%E3%81%91%E3%81%8D%E3%82%8C%E3%81%AA%E3%81%84%E8%83%8C%E6%99%AF-11e19bf4eb/lyrics.lrc",
+			"translationLrc": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/%E6%BA%B6%E3%81%91%E3%81%8D%E3%82%8C%E3%81%AA%E3%81%84%E8%83%8C%E6%99%AF-11e19bf4eb/lyrics.translation.lrc",
+			"album": "溶けきれない背景",
+			"duration": 218.616
+		},
+		{
+			"id": "glacier-e4853664ce",
+			"name": "Glacier",
+			"artist": "Laur",
+			"url": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/glacier-e4853664ce/audio.mp3",
+			"cover": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/glacier-e4853664ce/cover.webp",
+			"lrc": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/glacier-e4853664ce/lyrics.lrc",
+			"album": "Whiterium",
+			"duration": 173.714
+		},
+		{
+			"id": "avid-ae51e5ec8f",
+			"name": "Avid",
+			"artist": "SawanoHiroyuki[nZk] / 瑞葵(mizuki)",
+			"url": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/avid-ae51e5ec8f/audio.mp3",
+			"cover": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/avid-ae51e5ec8f/cover.webp",
+			"lrc": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/avid-ae51e5ec8f/lyrics.lrc",
+			"translationLrc": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/avid-ae51e5ec8f/lyrics.translation.lrc",
+			"album": "Avid / Hands Up to the Sky",
+			"duration": 250.331
+		},
+		{
+			"id": "恋人を射ち堕とした日-57d100ce02",
+			"name": "恋人を射ち堕とした日",
+			"artist": "Sound Horizon",
+			"url": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/%E6%81%8B%E4%BA%BA%E3%82%92%E5%B0%84%E3%81%A1%E5%A0%95%E3%81%A8%E3%81%97%E3%81%9F%E6%97%A5-57d100ce02/audio.mp3",
+			"cover": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/%E6%81%8B%E4%BA%BA%E3%82%92%E5%B0%84%E3%81%A1%E5%A0%95%E3%81%A8%E3%81%97%E3%81%9F%E6%97%A5-57d100ce02/cover.webp",
+			"lrc": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/%E6%81%8B%E4%BA%BA%E3%82%92%E5%B0%84%E3%81%A1%E5%A0%95%E3%81%A8%E3%81%97%E3%81%9F%E6%97%A5-57d100ce02/lyrics.lrc",
+			"translationLrc": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/%E6%81%8B%E4%BA%BA%E3%82%92%E5%B0%84%E3%81%A1%E5%A0%95%E3%81%A8%E3%81%97%E3%81%9F%E6%97%A5-57d100ce02/lyrics.translation.lrc",
+			"album": "Lost",
+			"duration": 238.289
+		},
+		{
+			"id": "絶対零度-feat-cereus-dada46ba1e",
+			"name": "絶対零度 feat. Cereus",
+			"artist": "藤末樹 / Cereus",
+			"url": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/%E7%B5%B6%E5%AF%BE%E9%9B%B6%E5%BA%A6-feat-cereus-dada46ba1e/audio.mp3",
+			"cover": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/%E7%B5%B6%E5%AF%BE%E9%9B%B6%E5%BA%A6-feat-cereus-dada46ba1e/cover.webp",
+			"lrc": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/%E7%B5%B6%E5%AF%BE%E9%9B%B6%E5%BA%A6-feat-cereus-dada46ba1e/lyrics.lrc",
+			"translationLrc": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/%E7%B5%B6%E5%AF%BE%E9%9B%B6%E5%BA%A6-feat-cereus-dada46ba1e/lyrics.translation.lrc",
+			"album": "絶対零度 feat. Cereus",
+			"duration": 318.096
+		},
+		{
+			"id": "thank-you-for-dears-cc7c180611",
+			"name": "Thank you for dears.",
+			"artist": "GET IN THE RING",
+			"url": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/thank-you-for-dears-cc7c180611/audio.mp3",
+			"cover": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/thank-you-for-dears-cc7c180611/cover.webp",
+			"lrc": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/thank-you-for-dears-cc7c180611/lyrics.lrc",
+			"translationLrc": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/thank-you-for-dears-cc7c180611/lyrics.translation.lrc",
+			"album": "AQ -永久-",
+			"duration": 326.322
+		},
+		{
+			"id": "事切れて-またね-596c4ad144",
+			"name": "事切れて、またね。",
+			"artist": "kyiku",
+			"url": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/%E4%BA%8B%E5%88%87%E3%82%8C%E3%81%A6-%E3%81%BE%E3%81%9F%E3%81%AD-596c4ad144/audio.mp3",
+			"cover": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/%E4%BA%8B%E5%88%87%E3%82%8C%E3%81%A6-%E3%81%BE%E3%81%9F%E3%81%AD-596c4ad144/cover.webp",
+			"lrc": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/%E4%BA%8B%E5%88%87%E3%82%8C%E3%81%A6-%E3%81%BE%E3%81%9F%E3%81%AD-596c4ad144/lyrics.lrc",
+			"translationLrc": "https://pub-1cede912155d4bc592a4f752618100a1.r2.dev/library/%E4%BA%8B%E5%88%87%E3%82%8C%E3%81%A6-%E3%81%BE%E3%81%9F%E3%81%AD-596c4ad144/lyrics.translation.lrc",
+			"album": "事切れて、またね。",
+			"duration": 257.952
+		}
+	]
+}
