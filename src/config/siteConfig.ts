@@ -48,7 +48,7 @@ export const siteConfig: SiteConfig = {
 	subtitle: "便签与文章",
 
 	// 站点 URL
-	site_url: "https://example.com",
+	site_url: "https://demiur-git.github.io",
 
 	// 站点描述
 	description: "记录思考、实践与那些值得反复阅读的事。",

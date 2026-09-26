@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [ master ]
+    branches: [main]
   workflow_dispatch:
 
 # Pages 部署需要的权限
@@ -26,7 +26,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '24'
           
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -34,17 +34,28 @@ jobs:
           version: 11.22.0
           run_install: false
           
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
       - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile
+        run: pnpm install --frozen-lockfile
+
+      - name: Check site
+        run: |
+          pnpm check
+          pnpm type-check
       
       - name: Build site
         run: pnpm run build
+        env:
+          # Local-only Waline is not a public comment service.
+          PUBLIC_WALINE_SERVER_URL: ''
 
       - name: Create .nojekyll file
         run: touch dist/.nojekyll
       
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v4
         with:
           path: dist  # Astro默认构建输出目录
 
@@ -57,4 +68,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
