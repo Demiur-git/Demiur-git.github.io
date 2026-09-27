@@ -1,0 +1,61 @@
+---
+import { Icon } from "astro-icon/components";
+import "@/styles/environment-info.css";
+---
+
+<environment-info>
+	<button type="button" class="environment-trigger" data-env-toggle aria-label="打开环境信息" aria-expanded="false" aria-controls="environment-panel" title="环境信息">
+		<Icon name="mingcute:time-line" aria-hidden="true" />
+	</button>
+	<section id="environment-panel" class="environment-panel" data-env-panel hidden role="dialog" aria-modal="false" aria-labelledby="environment-title">
+		<header class="environment-header">
+			<button type="button" data-env-handle class="environment-handle" aria-label="移动环境信息窗，方向键调整位置">
+				<span class="environment-kicker">LIBRARY · OBSERVATORY</span>
+				<span id="environment-title">环境信息 <span aria-hidden="true">⠿</span></span>
+			</button>
+			<button type="button" data-env-close class="environment-close" aria-label="收起环境信息">×</button>
+		</header>
+		<div class="environment-body">
+			<section class="environment-clock" aria-label="北京时间">
+				<div class="environment-label">北京时间 · UTC+8</div>
+				<time data-env-time>--:--:--</time>
+				<p data-env-date></p>
+				<small>依据设备时钟，未与标准授时服务器同步</small>
+			</section>
+			<div class="environment-battery"><span>设备电量</span><span data-env-battery>展开后读取</span></div>
+			<section class="environment-location" aria-label="位置与城市">
+				<div class="environment-label">位置</div>
+				<p data-env-place>尚未选择城市</p>
+				<form data-env-search class="environment-search">
+					<label class="sr-only" for="environment-city">城市名称</label>
+					<input id="environment-city" data-env-city name="city" type="search" maxlength="80" placeholder="输入城市，如北京" autocomplete="off" />
+					<button type="submit" data-env-search-button>查找</button>
+				</form>
+				<p data-env-search-status role="status" class="environment-message"></p>
+				<ul data-env-results class="environment-results" aria-label="城市搜索结果"></ul>
+				<div class="environment-actions">
+					<button type="button" data-env-locate>使用当前位置</button>
+					<button type="button" data-env-clear hidden>清除位置</button>
+				</div>
+				<p data-env-location-status role="status" class="environment-message"></p>
+				<small>仅点击后申请定位；约略坐标会发送给天气服务，定位结果只保留在本次会话。</small>
+			</section>
+			<section class="environment-weather" aria-label="当前天气">
+				<div class="environment-label">当前天气</div>
+				<p data-env-weather-status role="status" class="environment-message">选择城市或定位后查看天气</p>
+				<div data-env-weather hidden>
+					<div class="environment-weather-main"><strong data-env-temperature></strong><span data-env-description></span></div>
+					<dl><div><dt>体感</dt><dd data-env-apparent></dd></div><div><dt>湿度</dt><dd data-env-humidity></dd></div><div><dt>风速</dt><dd data-env-wind></dd></div></dl>
+					<small data-env-weather-time></small>
+				</div>
+				<button type="button" data-env-refresh disabled>刷新天气</button>
+				<small class="environment-attribution">来源：<a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo</a> · 非设备现场测量</small>
+			</section>
+			<footer><button type="button" data-env-reset>重置窗口位置</button><span>拖动顶栏移动</span></footer>
+		</div>
+	</section>
+</environment-info>
+
+<script>
+	import "@/utils/environment-window";
+</script>

@@ -22,6 +22,7 @@ import {
 	updateNavbarTransparency,
 } from "@/utils/setting-utils";
 import { isHomePage as isHomePath } from "@/utils/layout-utils";
+import { hasSeenHomeEntrance } from "@/utils/home-entrance-session";
 import { pathsEqual, url } from "@/utils/url-utils";
 import { preserveLiveDevStyles } from "@/utils/swup-dev-styles";
 
@@ -276,9 +277,10 @@ function registerSwupHooks(): void {
 		const destinationPath = new URL(visit.to.url, window.location.href).pathname;
 		const sourcePath = new URL(visit.from.url, window.location.href).pathname;
 		const enteringHome = isHomePath(destinationPath) && !isHomePath(sourcePath);
-		if (enteringHome) document.dispatchEvent(new Event("firefly:home-entrance-start"));
+		const playHomeEntrance = enteringHome && !hasSeenHomeEntrance() && !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+		if (playHomeEntrance) document.dispatchEvent(new Event("firefly:home-entrance-start"));
 		else document.dispatchEvent(new Event("firefly:home-entrance-cancel"));
-		activeHomeEntranceVisit = enteringHome ? visit : null;
+		activeHomeEntranceVisit = playHomeEntrance ? visit : null;
 		startPageTurn(visit.to.url, visit.from.url);
 		activePageTurnVisit = pageTurnActive ? visit : null;
 		// Start progress bar（WAAPI 合成线程动画，不强制回流）

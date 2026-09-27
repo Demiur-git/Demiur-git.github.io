@@ -33,6 +33,7 @@ import {
 import { defaultFavicons } from "@/constants/icon";
 import type { Favicon } from "@/types/config";
 import { isHomePage } from "@/utils/layout-utils";
+import { HOME_INTRO_SEEN_KEY } from "@/utils/home-entrance-session";
 import { getAuthorAvatarUrl, getSiteLogo } from "@/utils/schema-image";
 import { buildSiteGraph, toAbsoluteUrl } from "@/utils/schema-utils";
 import { getOgLocale } from "@/utils/site-config-utils";
@@ -158,6 +159,20 @@ const ogImageAlt = propsOgImageAlt ?? pageTitle;
 <html lang={siteLang} class="bg-(--page-bg) text-[14px] md:text-[16px]" data-home-intro={isHomePageCheck ? "pending" : undefined} data-wallpaper-mode={backgroundWallpaper.mode} data-fullscreen-layout={fullscreenLayout} data-has-wallpaper={hasWallpaper ? "" : undefined} data-tag-style={siteConfig.tagStyle ?? "pill"} data-category-style={siteConfig.categoryStyle ?? "rectangle"}>
   <head>
     <meta charset="UTF-8" />
+    <script is:inline define:vars={{ homeIntroSeenKey: HOME_INTRO_SEEN_KEY }}>
+      // Runs before styles/body paint, including when this document is refreshed.
+      {
+        let homeIntroSeen = window.__demiurHomeIntroSeen === true;
+        try {
+          homeIntroSeen ||= sessionStorage.getItem(homeIntroSeenKey) === "1";
+        } catch {}
+        if (homeIntroSeen) window.__demiurHomeIntroSeen = true;
+        if (document.documentElement.dataset.homeIntro === "pending" &&
+            (homeIntroSeen || window.matchMedia("(prefers-reduced-motion: reduce)").matches)) {
+          document.documentElement.removeAttribute("data-home-intro");
+        }
+      }
+    </script>
     <style is:inline>
 			@layer properties, theme, base, components, utilities;
 		</style>

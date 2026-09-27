@@ -2,6 +2,7 @@ import { buildGateDoor, gateHitStyle, GATE_CAMERA, type GateCamera, type GateSid
 import { buildGateArchitecture } from "@/utils/library-gate-artwork";
 import { ENTRANCE_TIMING, sampleEyeReveal, sampleGateWalk } from "@/utils/home-entrance-motion";
 import { prepareHomeCharacterScene, type HomeCharacterScene } from "@/utils/home-character-scene";
+import { hasSeenHomeEntrance, markHomeEntranceSeen } from "@/utils/home-entrance-session";
 
 interface DialogueLine { speaker: string; text: string }
 type EntrancePhase = "idle" | "approaching" | "active" | "opening" | "walking" | "black" | "dialogue" | "waking" | "character" | "leaving";
@@ -408,8 +409,11 @@ export function initHomeEntrance(): void {
 	}
 
 	function activate(): void {
+		// Duplicate start events must not cancel an already running prologue.
+		if (phase !== "idle") return;
 		clear(false);
-		if (reducedMotion.matches) return;
+		if (reducedMotion.matches || hasSeenHomeEntrance()) return;
+		markHomeEntranceSeen();
 		generation++;
 		previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
 		root.classList.add("is-home-entering");
@@ -515,7 +519,10 @@ export function initHomeEntrance(): void {
 	document.addEventListener("firefly:home-entrance-cancel", () => { if (phase !== "idle" || root.hasAttribute("data-home-intro")) clear(false); });
 	reducedMotion.addEventListener("change", () => { if (reducedMotion.matches && phase !== "idle") clear(true); });
 	window.addEventListener("pageshow", (event) => {
-		if (event.persisted && document.getElementById("home-intro-title")) { activate(); markReady(); }
+		if (!event.persisted) return;
+		// A restored page can contain a suspended, partially played prologue.
+		clear(false);
+		if (!hasSeenHomeEntrance() && document.getElementById("home-intro-title")) { activate(); markReady(); }
 	});
 	if (root.hasAttribute("data-home-intro")) {
 		activate();

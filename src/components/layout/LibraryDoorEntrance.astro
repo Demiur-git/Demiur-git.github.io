@@ -1,9 +1,6 @@
 ---
 import { homeEntranceConfig } from "@/config";
-import { isHomePage } from "@/utils/layout-utils";
 import LibraryGateArtwork from "./LibraryGateArtwork.astro";
-
-const initialHome = isHomePage(Astro.url.pathname);
 ---
 
 <div
@@ -12,7 +9,7 @@ const initialHome = isHomePage(Astro.url.pathname);
 	aria-modal="true"
 	aria-label="图书馆序章"
 	tabindex="-1"
-	aria-hidden={initialHome ? "false" : "true"}
+	aria-hidden="true"
 	data-dialogue={JSON.stringify(homeEntranceConfig.dialogue)}
 	data-character-dialogue={JSON.stringify(homeEntranceConfig.characterDialogue)}
 >

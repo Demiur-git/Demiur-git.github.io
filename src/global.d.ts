@@ -9,6 +9,7 @@ declare global {
 	}
 
 	interface Window {
+		__demiurHomeIntroSeen?: boolean;
 		// biome-ignore lint/suspicious/noExplicitAny: External library
 		swup: any;
 		spineModelInitialized?: boolean;
