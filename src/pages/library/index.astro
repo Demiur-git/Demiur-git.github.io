@@ -1,6 +1,7 @@
 ---
 import { libraryConfig, siteConfig } from "@/config";
 import LibraryHeader from "@/components/layout/LibraryHeader.astro";
+import PulseClue from "@/components/features/PulseClue.astro";
 import MainGridLayout from "@/layouts/MainGridLayout.astro";
 import { getSortedPosts } from "@/utils/content-utils";
 import {
@@ -38,6 +39,7 @@ const entrances = [
 <MainGridLayout title="书库" description="Demiur 的文字馆藏：概览、推荐阅读与最近更新。">
 	<LibraryHeader title="书库" description="把值得慢慢阅读的文字，收进同一座书库。" />
 	<section class="library-board" aria-labelledby="board-title">
+		<PulseClue clue="scrap-af" />
 		<header class="board-heading"><div><small>LIBRARY NOTICEBOARD</small><h2 id="board-title">馆藏公告栏</h2></div><span class="board-note">今日也请慢慢阅读</span></header>
 		<div class="board-summary" aria-label="馆藏概览">{[[posts.length,"篇文章"],[graph.groups.length,"个主分类"],[graph.secondaryCount,"个小标签"]].map(([count,label]) => <div><strong>{count}</strong><span>{label}</span></div>)}</div>
 		<p class="count-note">每篇文章归入一个主分类；小标签按名称去重，不计与所属分类同名的标签。</p>
@@ -45,7 +47,7 @@ const entrances = [
 		{selected.length ? <div class="recommended-grid">{selected.map((post,index) => <a class="reading-notice" href={getPostUrlBySlug(post.id)}><small>READING NOTE · 0{index + 1}</small><h3>{post.data.title}</h3><p>{post.data.description || "翻开这篇馆藏，慢慢阅读。"}</p><span class="notice-category">{post.data.category?.trim() || "未分类"}</span></a>)}</div> : <div class="reading-notice empty-notice"><small>READING NOTE · 待更新</small><h3>阅读通知正在整理</h3><p>站长尚未设置推荐阅读。先从下面的借书卡或最近更新，挑一本感兴趣的馆藏吧。</p></div>}
 		</div>
 	</section>
-	<nav class="library-entrances" aria-label="书库借书卡">{entrances.map(([title, description, href],index) => <a class="borrowing-card" href={url(href)} aria-label={`${title}：${description}`}><small>LIBRARY CARD · 0{index + 1}</small><h2>{title}</h2><p>{description}</p><div class="card-register" aria-hidden="true"><span>借阅日期</span><span>读者签名</span></div><span class="card-stamp" aria-hidden="true">可阅</span></a>)}</nav>
+	<nav class="library-entrances" aria-label="书库借书卡">{entrances.map(([title, description, href],index) => <div class="borrowing-slot"><a class="borrowing-card" href={url(href)} aria-label={`${title}：${description}`}><small>LIBRARY CARD · 0{index + 1}</small><h2>{title}</h2><p>{description}</p><div class="card-register" aria-hidden="true"><span>借阅日期</span><span>读者签名</span></div><span class="card-stamp" aria-hidden="true">可阅</span></a>{index === 0 && <PulseClue clue="archive" />}</div>)}</nav>
 	<section class="library-newspaper" aria-labelledby="recent-title">
 		<div class="paper-meta"><span>THE LIBRARY JOURNAL</span><span>馆藏近讯 · 最新六篇</span></div><header class="paper-masthead"><h2 id="recent-title">书库时报</h2><span>最近更新 / RECENT ARRIVALS</span></header>
 		{recent.length ? <ol class="recent-list">{recent.map((post,index) => <li class:list={[index === 0 && "headline"]}><article><small>{index === 0 ? "本期头条" : `馆藏简讯 / 0${index + 1}`} · {post.data.category?.trim() || "未分类"}</small><h3><a href={getPostUrlBySlug(post.id)}>{post.data.title}</a></h3><p>{post.data.description || "一篇新近整理的文字馆藏，点击标题阅读全文。"}</p><time datetime={(post.data.updated || post.data.published).toISOString()}>{post.data.updated ? "更新" : "发布"} · {date(post.data.updated || post.data.published)}</time></article></li>)}</ol> : <p class="library-muted">书库正在整理，文章发布后会出现在这里。</p>}
@@ -53,6 +55,11 @@ const entrances = [
 	</section>
 </MainGridLayout>
 <style>
+	.library-board, .borrowing-slot { position:relative; }
+	.board-heading { padding-right:2rem; }
+	.borrowing-slot { min-width:0; }
+	.borrowing-card { display:block; height:100%; }
+	.borrowing-card > small { display:block; padding-right:24px; }
 	.library-board, .library-entrances, .library-newspaper { --paper:#faf5e8; --paper-ink:#3b3930; --paper-muted:#69665b; --rule:#d9d1bd; color:var(--paper-ink); margin-top:1.4rem; }
 	:global(.dark) :is(.library-board, .library-entrances, .library-newspaper) { --paper:#202c25; --paper-ink:#e5dfcf; --paper-muted:#b2b6a6; --rule:#435044; }
 	h2, h3 { font-family:var(--font-library-serif); line-height:1.45; overflow-wrap:anywhere; }

@@ -25,6 +25,7 @@ import { isHomePage as isHomePath } from "@/utils/layout-utils";
 import { hasSeenHomeEntrance } from "@/utils/home-entrance-session";
 import { pathsEqual, url } from "@/utils/url-utils";
 import { preserveLiveDevStyles } from "@/utils/swup-dev-styles";
+import { isEasterEggPath, resumeEasterEggMusicIfOutside } from "@/utils/easter-egg-session";
 
 let pageTurnActive = false;
 let pageTurnReadyAt = 0;
@@ -60,6 +61,8 @@ function shouldTurnPage(destination: string, source: string): boolean {
 		const current = new URL(source, window.location.origin);
 		return (
 			next.origin === window.location.origin &&
+			!isEasterEggPath(next.pathname) &&
+			!isEasterEggPath(current.pathname) &&
 			!isHomePath(next.pathname) &&
 			(next.pathname !== current.pathname || next.search !== current.search)
 		);
@@ -278,7 +281,7 @@ function registerSwupHooks(): void {
 		const destinationPath = new URL(visit.to.url, window.location.href).pathname;
 		const sourcePath = new URL(visit.from.url, window.location.href).pathname;
 		const enteringHome = isHomePath(destinationPath) && !isHomePath(sourcePath);
-		const playHomeEntrance = enteringHome && !hasSeenHomeEntrance() && !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+		const playHomeEntrance = enteringHome && !isEasterEggPath(sourcePath) && !hasSeenHomeEntrance() && !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 		if (playHomeEntrance) document.dispatchEvent(new Event("firefly:home-entrance-start"));
 		else document.dispatchEvent(new Event("firefly:home-entrance-cancel"));
 		activeHomeEntranceVisit = playHomeEntrance ? visit : null;
@@ -363,6 +366,7 @@ function registerSwupHooks(): void {
 		}
 	});
 	window.swup.hooks.on("page:view", () => {
+		resumeEasterEggMusicIfOutside();
 		// 更新网格列数和侧边栏组件可见性
 		updateMainGridCols();
 		updateSidebarComponentsVisibility();

@@ -1,0 +1,18 @@
+---
+import MainGridLayout from "@/layouts/MainGridLayout.astro";
+import PulseScene from "@/components/features/PulseScene.astro";
+import { url } from "@/utils/url-utils";
+---
+<MainGridLayout title="">
+	<Fragment slot="head">
+		<meta name="robots" content="noindex, nofollow" />
+		<script is:inline>document.documentElement.setAttribute("data-pulse-pending", "");</script>
+		<style is:global>html[data-pulse-pending]::after { content:""; position:fixed; inset:0; background:#fff; z-index:2147483647; pointer-events:none; }</style>
+		<noscript><style>html::after { display:none!important; } .content-panel, #swup-container, .onload-animation { transform:none!important; animation:none!important; opacity:1!important; } .content-panel { z-index:2147483647!important; }</style></noscript>
+	</Fragment>
+	<div data-pagefind-ignore="all">
+		<PulseScene />
+		<noscript><div class="pulse-static"><a href={url("/music/")}>返回音乐馆藏</a></div></noscript>
+	</div>
+</MainGridLayout>
+<style is:global>.pulse-static { position:fixed; inset:0; background:#fff; color:#000; z-index:2147483646; display:grid; place-items:center; } .pulse-static a { text-decoration:underline; }</style>

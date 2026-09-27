@@ -194,6 +194,17 @@ html:is([data-home-intro="dialogue"], [data-home-intro="character"], [data-home-
 .library-dialogue-choice:hover { border-color: #d2ddda; background: rgb(39 56 61 / 90%); }
 .library-dialogue-choice[hidden] { display: none; }
 .library-dialogue-choice:disabled { cursor: wait; color: #b6c2c5; }
+.library-dialogue-branches {
+	position: absolute;
+	top: 42%;
+	left: 50%;
+	width: min(640px, calc(100% - 2rem));
+	transform: translate(-50%, -50%);
+	display: grid;
+	gap: .75rem;
+}
+.library-dialogue-branches[hidden] { display: none; }
+.library-dialogue-branches .library-dialogue-choice { position: static; width: 100%; transform: none; }
 .library-dialogue-auto:disabled { cursor: wait; opacity: .55; }
 
 /* Character-stage overrides only: the black narration frame stays unchanged. */
@@ -314,6 +325,7 @@ html[data-home-intro="waking"] :is(.library-gate-scene, .library-gate-black, .li
 }
 
 @media (max-height: 640px) {
+	.library-dialogue-branches { top: 25%; gap: .5rem; }
 	.library-dialogue-box { bottom: max(1rem, env(safe-area-inset-bottom)); min-height: 0; max-height: 48dvh; overflow-y: auto; }
 	.library-dialogue-text { min-height: 0; margin-bottom: 0; }
 	.library-dialogue-choice { top: 25%; }

@@ -1,0 +1,15 @@
+---
+import MainGridLayout from "@/layouts/MainGridLayout.astro";
+import NewWorldScene from "@/components/features/NewWorldScene.astro";
+import { url } from "@/utils/url-utils";
+---
+<MainGridLayout title="">
+	<Fragment slot="head">
+		<meta name="robots" content="noindex, nofollow" />
+		<script is:inline>document.documentElement.setAttribute("data-world-pending", "");</script>
+		<style is:global>html[data-world-pending]::after { content:""; position:fixed; inset:0; background:#000; z-index:2147483647; pointer-events:none; }</style>
+		<noscript><style>html::after { display:none!important; } .content-panel, #swup-container, .onload-animation { transform:none!important; animation:none!important; opacity:1!important; } .content-panel { z-index:2147483647!important; }</style></noscript>
+	</Fragment>
+	<div data-pagefind-ignore="all"><NewWorldScene /><noscript><div class="world-static"><a href={url("/pulse/")}>返回</a></div></noscript></div>
+</MainGridLayout>
+<style is:global>.world-static { position:fixed; inset:0; background:#000; color:#ccc; z-index:2147483646; display:grid; place-items:center; } .world-static a { text-decoration:underline; }</style>

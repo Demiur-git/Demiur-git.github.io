@@ -1,5 +1,6 @@
 ---
 import MusicCollection from "@/components/pages/music/MusicCollection.svelte";
+import PulseClue from "@/components/features/PulseClue.astro";
 import { musicPlayerConfig } from "@/config";
 import MainGridLayout from "@/layouts/MainGridLayout.astro";
 
@@ -11,6 +12,8 @@ const description =
 
 <MainGridLayout title={title} description={description}>
 	<div class="collection-page collection-music">
+		<PulseClue clue="music" />
 		<MusicCollection client:load title={title} description={description} />
 	</div>
 </MainGridLayout>
+<style>.collection-music { position:relative; }</style>

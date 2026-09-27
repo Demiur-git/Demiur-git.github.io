@@ -1,5 +1,6 @@
 ---
 import { Icon } from "astro-icon/components";
+import PulseClue from "@/components/features/PulseClue.astro";
 import { booknavPageConfig, siteConfig } from "@/config";
 import I18nKey from "@/i18n/i18nKey";
 import { i18n } from "@/i18n/translation";
@@ -301,4 +302,6 @@ const description =
     }
   </script>
 
+	<div class="tools-index-remnant"><PulseClue clue="posts" /></div>
 </MainGridLayout>
+<style>.tools-index-remnant { position:relative; height:54px; margin-top:.5rem; } .tools-index-remnant :global(pulse-clue) { left:12px; right:auto; }</style>

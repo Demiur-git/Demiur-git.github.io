@@ -5,6 +5,7 @@ import { i18n } from "@i18n/translation";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
 import LibraryHeader from "@/components/layout/LibraryHeader.astro";
 import LibraryStats from "@/components/controls/LibraryStats.astro";
+import PulseClue from "@/components/features/PulseClue.astro";
 import { getSortedPostsList } from "@/utils/content-utils";
 const dates = (await getSortedPostsList()).filter((p) => !p.data.draft).map((p) => p.data.published.toISOString());
 ---
@@ -13,6 +14,7 @@ const dates = (await getSortedPostsList()).filter((p) => !p.data.draft).map((p) 
   <section class="collection-page collection-articles" aria-label="书库归档">
     <LibraryHeader title="归档" description="沿着年份与月份，慢慢翻阅收藏的文字。" code="02" />
     <LibraryStats dates={dates} />
-    <ArchivePanel />
+    <div class="archive-clue-margin"><PulseClue clue="categories" /><ArchivePanel /></div>
   </section>
 </MainGridLayout>
+<style>.archive-clue-margin { position:relative; padding-top:2.5rem; } .archive-clue-margin :global(pulse-clue) { left:4px; right:auto; }</style>

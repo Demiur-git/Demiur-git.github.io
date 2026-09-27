@@ -33,7 +33,7 @@ import LibraryGateArtwork from "./LibraryGateArtwork.astro";
 		<span class="sr-only" id="library-dialogue-help">点击页面或按 Enter、空格推进；文字显示中先补全当前句。每段结束后请选择中央选项继续。</span>
 		<div class="library-dialogue-box">
 			<div class="library-dialogue-top">
-				<span class="library-dialogue-index" data-dialogue-index>01 / 03</span>
+				<span class="library-dialogue-index" data-dialogue-index>01 / {String(homeEntranceConfig.dialogue.length).padStart(2, "0")}</span>
 				<button class="library-dialogue-auto" data-dialogue-auto type="button" aria-label="自动推进" aria-pressed="false" title="开启自动推进">
 					<svg viewBox="0 0 44 44" aria-hidden="true" focusable="false">
 						<path d="M9 5L39 22L9 39Z" />
@@ -46,6 +46,11 @@ import LibraryGateArtwork from "./LibraryGateArtwork.astro";
 			<span class="sr-only" data-dialogue-accessible aria-live="polite"></span>
 		</div>
 		<button class="library-dialogue-choice" data-dialogue-enter type="button" hidden>睁开眼睛</button>
+		<div class="library-dialogue-branches" data-dialogue-branches role="group" aria-label="选择探索方式" hidden>
+			{homeEntranceConfig.characterChoices.map((choice) => (
+				<button class="library-dialogue-choice" data-dialogue-branch data-branch-dialogue={JSON.stringify(choice.dialogue)} type="button">{choice.label}</button>
+			))}
+		</div>
 	</section>
 	<button class="library-door-skip" data-door-skip type="button">跳过</button>
 </div>

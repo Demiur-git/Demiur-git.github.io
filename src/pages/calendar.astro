@@ -1,5 +1,6 @@
 ---
 import CalendarWorkspace from "@/components/pages/calendar/CalendarWorkspace.svelte";
+import PulseClue from "@/components/features/PulseClue.astro";
 import { calendarPageConfig } from "@/config";
 import MainGridLayout from "@/layouts/MainGridLayout.astro";
 ---
@@ -19,5 +20,7 @@ import MainGridLayout from "@/layouts/MainGridLayout.astro";
 			importantDates={calendarPageConfig.importantDates}
 			schedules={calendarPageConfig.schedules}
 		/>
+		<footer class="calendar-remnants" aria-label="日历页边"><PulseClue clue="tags" /><div class="calendar-scrap"><PulseClue clue="scrap-fine" /></div></footer>
 	</section>
 </MainGridLayout>
+<style>.calendar-remnants { position:relative; height:54px; margin-top:1rem; } .calendar-remnants > :global(pulse-clue) { left:8px; right:auto; } .calendar-scrap { position:relative; height:54px; margin-right:8px; }</style>

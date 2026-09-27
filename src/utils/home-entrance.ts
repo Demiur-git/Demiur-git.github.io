@@ -23,6 +23,8 @@ export function initHomeEntrance(): void {
 	const indexLabel = overlay.querySelector<HTMLElement>("[data-dialogue-index]");
 	const autoButton = overlay.querySelector<HTMLButtonElement>("[data-dialogue-auto]");
 	const enterButton = overlay.querySelector<HTMLButtonElement>("[data-dialogue-enter]");
+	const branchPanel = overlay.querySelector<HTMLElement>("[data-dialogue-branches]");
+	const branchButtons = Array.from(overlay.querySelectorAll<HTMLButtonElement>("[data-dialogue-branch]"));
 	const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 	const scene = overlay.querySelector<HTMLElement>(".library-gate-scene");
 	const aperture = overlay.querySelector<SVGPathElement>("[data-gate-aperture]");
@@ -83,6 +85,8 @@ export function initHomeEntrance(): void {
 	let sceneAbort: AbortController | null = null;
 	let characterScene: HomeCharacterScene | null = null;
 	let wakeRequested = false;
+	let branchSelected = false;
+	const needsBranch = (): boolean => phase === "character" && !branchSelected && branchButtons.length > 0;
 	const isDialoguePhase = (): boolean => phase === "dialogue" || phase === "character";
 
 	function prepareCharacterScene(): Promise<void> {
@@ -224,6 +228,8 @@ export function initHomeEntrance(): void {
 		sceneAbort = null;
 		characterScene = null;
 		wakeRequested = false;
+		branchSelected = false;
+		if (branchPanel) branchPanel.hidden = true;
 		dialogue = narratorDialogue;
 		characters = [];
 		visibleCount = 0;
@@ -274,6 +280,7 @@ export function initHomeEntrance(): void {
 
 	function finishIntro(): void {
 		if (!isDialoguePhase() || !contentReady || wakeRequested) return;
+		if (needsBranch()) return;
 		if (dialogue.length > 0 && (dialogueIndex < dialogue.length - 1 || visibleCount < characters.length)) return;
 		cancelAuto();
 		cancelTyping();
@@ -301,8 +308,9 @@ export function initHomeEntrance(): void {
 	function updateDialogueActions(): void {
 		const last = dialogueIndex >= dialogue.length - 1;
 		const complete = visibleCount >= characters.length;
+		if (branchPanel) branchPanel.hidden = !(needsBranch() && last && complete);
 		if (enterButton) {
-			enterButton.hidden = !(last && complete);
+			enterButton.hidden = !(last && complete) || needsBranch();
 			enterButton.disabled = wakeRequested;
 			enterButton.textContent = wakeRequested ? "场景准备中…" : phase === "character" ? "进入主页" : "睁开眼睛";
 		}
@@ -320,7 +328,7 @@ export function initHomeEntrance(): void {
 		if (visualText) visualText.textContent = characters.join("");
 		updateDialogueActions();
 		maybeScheduleAuto();
-		if (dialogueIndex === dialogue.length - 1) enterButton?.focus({ preventScroll: true });
+		if (dialogueIndex === dialogue.length - 1) (needsBranch() ? branchButtons[0] : enterButton)?.focus({ preventScroll: true });
 	}
 
 	function typeNext(): void {
@@ -473,6 +481,18 @@ export function initHomeEntrance(): void {
 	}
 
 	skip?.addEventListener("click", skipEntrance);
+	for (const button of branchButtons) {
+		button.addEventListener("click", () => {
+			if (!needsBranch() || branchPanel?.hidden || wakeRequested) return;
+			cancelAuto();
+			cancelTyping();
+			branchSelected = true;
+			dialogue = parseDialogue(button.dataset.branchDialogue);
+			if (branchPanel) branchPanel.hidden = true;
+			showLine(0);
+			entrance.focus({ preventScroll: true });
+		});
+	}
 	enterButton?.addEventListener("click", finishIntro);
 	entrance.addEventListener("click", (event) => {
 		if (!isDialoguePhase() || wakeRequested || event.defaultPrevented) return;
@@ -503,7 +523,7 @@ export function initHomeEntrance(): void {
 		}
 		if (event.key !== "Tab") return;
 		const controls = isDialoguePhase()
-			? [autoButton, ...(enterButton && !enterButton.hidden ? [enterButton] : []), skip]
+			? [autoButton, ...(branchPanel && !branchPanel.hidden ? branchButtons : []), ...(enterButton && !enterButton.hidden ? [enterButton] : []), skip]
 			: phase === "active" ? [...doors, skip] : [skip];
 		const enabled = controls.filter((control): control is HTMLButtonElement => !!control && !control.disabled);
 		if (!enabled.length) return;

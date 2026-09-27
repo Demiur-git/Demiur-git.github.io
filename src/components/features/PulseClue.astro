@@ -1,0 +1,139 @@
+---
+import { pulsePuzzle } from "@/config/pulsePuzzle";
+interface Props { clue: string }
+const { clue } = Astro.props;
+const look = pulsePuzzle.clues.find((item) => item.id === clue)?.style || (clue.startsWith("scrap-") ? clue === "scrap-af" ? "torn-left" : "torn-right" : "index");
+const objectNames: Record<string,string> = {fold:"折角",ticket:"凭条",pencil:"铅笔边注",stamp:"印章",index:"索引贴"};
+const outlines: Record<string,string> = { fold:"M2 3h9l3 4v11H2z M10 3v5h4", ticket:"M2 4h12v3a2 2 0 0 0 0 4v6H2v-6a2 2 0 0 0 0-4z M6 5v11", pencil:"M3 16L11 3l3 2L6 18l-4 1z M10 5l3 2", stamp:"M8 2a8 8 0 1 0 0 16 8 8 0 0 0 0-16 M4 8h8 M5 12h6", index:"M2 4h12v14H2z M4 8h8 M4 11h8 M4 14h5", "torn-left":"M2 2h10l-2 3 3 3-3 3 3 3-3 3 2 2H2z", "torn-right":"M14 2H4l2 3-3 3 3 3-3 3 3 3-2 2h10z" };
+---
+<pulse-clue data-clue={clue} data-look={look} data-pagefind-ignore>
+	<button class="clue-trigger" type="button" hidden aria-label={clue.startsWith("scrap-") ? "查看残缺的便签" : `查看遗留的${objectNames[look] || "纸片"}`}>
+		<svg width="16" height="21" viewBox="0 0 16 21" fill="none" aria-hidden="true"><path d={outlines[look]} stroke="currentColor" stroke-width="1.2" /></svg>
+	</button>
+	<dialog aria-label="遗留的纸片" class:list={["clue-dialog", `paper-${look}`]} popover="manual">
+		<form method="dialog" class="dialog-close"><button aria-label="关闭借阅记录">×</button></form>
+		<p class="clue-caption">遗留的借阅记录</p>
+		<div class="clue-content"></div>
+	</dialog>
+</pulse-clue>
+<script>
+	import { pulsePuzzle } from "@/config/pulsePuzzle";
+	import { collectClue, emptyProgress, getPuzzleProgress, isPuzzleReady, savePuzzleProgress, tryUnlockPuzzle } from "@/utils/pulse-puzzle";
+	import { url } from "@/utils/url-utils";
+	class PulseClue extends HTMLElement {
+		private abort?: AbortController;
+		connectedCallback() {
+			this.abort = new AbortController();
+			const signal = this.abort.signal;
+			const trigger = this.querySelector<HTMLButtonElement>(".clue-trigger")!;
+			const dialog = this.querySelector<HTMLDialogElement>("dialog")!;
+			const sync = () => { trigger.hidden = this.dataset.clue !== "home" && !getPuzzleProgress().started; };
+			sync();
+			window.addEventListener("pulse:progress", sync, { signal });
+			window.addEventListener("storage", sync, { signal });
+			const close = () => { if (dialog.matches(":popover-open")) dialog.hidePopover(); else dialog.close(); };
+			const place = () => {
+				if (!dialog.matches(":popover-open")) return;
+				const rect = trigger.getBoundingClientRect(), size = dialog.getBoundingClientRect();
+				dialog.style.left = `${Math.max(12, Math.min(rect.left, innerWidth - size.width - 12))}px`;
+				dialog.style.top = `${Math.max(12, Math.min(rect.bottom + 8, innerHeight - size.height - 12))}px`;
+			};
+			window.addEventListener("resize", place, {signal});
+			window.addEventListener("scroll", place, {signal, passive:true});
+			const open = () => {
+				this.renderRecord();
+				if (this.dataset.clue === "music") { dialog.removeAttribute("popover"); dialog.showModal(); }
+				else {
+					dialog.showPopover();
+					place();
+					dialog.querySelector<HTMLButtonElement>("button")?.focus({ preventScroll:true });
+				}
+			};
+			trigger.addEventListener("click", open, { signal });
+			dialog.querySelector(".dialog-close")!.addEventListener("submit", (event) => { event.preventDefault(); close(); trigger.focus({preventScroll:true}); }, {signal});
+			dialog.addEventListener("click", (event) => { if (event.target === dialog && this.dataset.clue === "music") close(); }, { signal });
+			document.addEventListener("pointerdown", (event) => { if (dialog.matches(":popover-open") && event.target instanceof Node && !this.contains(event.target)) dialog.hidePopover(); }, {signal});
+			dialog.addEventListener("keydown", (event) => { if (event.key === "Escape" && dialog.matches(":popover-open")) { event.preventDefault(); event.stopPropagation(); close(); trigger.focus({preventScroll:true}); } }, {signal});
+			dialog.addEventListener("close", () => { if (trigger.isConnected && !trigger.hidden) trigger.focus({ preventScroll: true }); }, { signal });
+			if (this.dataset.clue === "music" && new URLSearchParams(location.search).has("find-bookmarks")) {
+				trigger.hidden = false;
+				this.renderRecord(true);
+				dialog.removeAttribute("popover");
+				dialog.showModal();
+				history.replaceState(history.state, "", url("/music/"));
+			}
+		}
+		private renderRecord(lockedVisit = false) {
+			const content = this.querySelector<HTMLElement>(".clue-content")!;
+			const dialog = this.querySelector<HTMLDialogElement>("dialog")!;
+			content.replaceChildren();
+			const paragraph = (text: string, className = "") => { const p = document.createElement("p"); p.textContent = text; p.className = className; content.append(p); };
+			const kind = this.dataset.clue!;
+			if (kind.startsWith("scrap-")) {
+				collectClue(kind);
+				const scrap = pulsePuzzle.scraps.find((item) => item.id === kind)!;
+				paragraph(pulsePuzzle.scrapDescription);
+				paragraph(scrap.fragment, "scrap-fragment"); paragraph(scrap.number, "record-number"); return;
+			}
+			if (kind !== "music") {
+				collectClue(kind);
+				const clue = pulsePuzzle.clues.find((item) => item.id === kind)!;
+				paragraph("借阅序号 / 密文数字"); paragraph(`${clue.order} / ${clue.cipher}`, "record-number"); paragraph(clue.hint);
+				if (kind === "categories") paragraph("start:0", "zero-index"); return;
+			}
+			const progress = getPuzzleProgress();
+			if (lockedVisit) paragraph("这里还未解锁。先寻找主页馆藏目录遗留的折角。", "record-status");
+			if (progress.unlocked) {
+				paragraph("借阅记录已还原。");
+				const enter = document.createElement("a"); enter.href = url("/pulse/"); enter.textContent = "再次进入"; enter.className = "record-action"; content.append(enter);
+				const reset = document.createElement("button"); reset.type = "button"; reset.textContent = "重置探索进度"; reset.className = "record-action";
+				reset.addEventListener("click", () => {
+				content.replaceChildren(); paragraph("确认清除两层探索、数字记录与残纸？");
+					for (const [label, confirmed] of [["确认重置", true], ["取消", false]] as const) {
+						const button = document.createElement("button"); button.textContent = label; button.className = "record-action";
+						button.addEventListener("click", () => { if (confirmed) { savePuzzleProgress(emptyProgress()); dialog.close(); } else this.renderRecord(); }); content.append(button);
+					}
+					content.querySelector<HTMLButtonElement>("button")?.focus();
+				}); content.append(reset); return;
+			}
+			paragraph(`已找到 ${progress.collected.length} / 5 份数字记录，${progress.scraps.length} / 2 块残纸。`);
+			if (!isPuzzleReady(progress)) { paragraph("记录还不完整。遗留的碎片可以回到原处重看。"); return; }
+			paragraph("依借阅序号整理记录，将密文数字还原为英文暗号。");
+			const form = document.createElement("form");
+			const label = document.createElement("label"); label.textContent = "英文暗号";
+			const input = document.createElement("input"); input.type = "text"; input.name = "answer"; input.autocomplete = "off"; input.spellcheck = false; input.required = true; input.maxLength = 80; label.append(input);
+			const submit = document.createElement("button"); submit.textContent = "确认暗号"; submit.type = "submit"; submit.className = "record-action";
+			const status = document.createElement("p"); status.setAttribute("role", "status");
+			form.append(label, submit, status); content.append(form);
+			form.addEventListener("submit", (event) => { event.preventDefault(); if (tryUnlockPuzzle(input.value)) { dialog.close(); if (window.swup) void window.swup.navigate(url("/pulse/")); else location.assign(url("/pulse/")); } else { status.textContent = "暗号不正确，再试一次。已找到的记录仍然保留。"; input.focus(); } });
+		}
+		disconnectedCallback() { this.abort?.abort(); const dialog = this.querySelector<HTMLDialogElement>("dialog"); if (dialog?.matches(":popover-open")) dialog.hidePopover(); dialog?.close(); }
+	}
+	if (!customElements.get("pulse-clue")) customElements.define("pulse-clue", PulseClue);
+</script>
+<style>
+	pulse-clue { position:absolute; right:4px; top:4px; z-index:2; }
+	.clue-trigger { display:grid; place-items:center; width:44px; height:44px; color:var(--library-burgundy, #95656d); opacity:.65; background:transparent; cursor:pointer; }
+	.clue-trigger[hidden] { display:none; } .clue-trigger:hover, .clue-trigger:focus-visible { opacity:1; } .clue-trigger:focus-visible { outline:2px solid currentColor; outline-offset:1px; }
+	.clue-dialog { margin:auto; width:min(440px,calc(100vw - 32px)); padding:2rem; border:1px solid var(--library-rule); border-radius:3px; background:var(--card-bg); color:var(--text-color); box-shadow:0 14px 60px #0004; }
+	.clue-dialog::backdrop { background:#09130f80; } .dialog-close { text-align:right; } .dialog-close button { width:32px; height:32px; font-size:1.5rem; cursor:pointer; }
+	.clue-dialog:not(:modal) { position:fixed; inset:auto; margin:0; width:min(320px,calc(100vw - 24px)); padding:1.25rem 1.5rem; color:var(--library-ink); background:var(--library-paper,#faf4e7); box-shadow:2px 8px 22px #0003; }
+	.clue-dialog:not(:modal)::backdrop { background:transparent; }
+	.clue-dialog:not(:modal) { max-height:calc(100dvh - 24px); overflow-y:auto; }
+	:global(.dark) .clue-dialog:not(:modal) { background:#243029; color:#ddd8ca; }
+	.paper-fold:not(:modal) { border-radius:0; border-top:16px solid #d9ceae; }
+	.paper-ticket:not(:modal) { width:min(270px,calc(100vw - 24px)); border-block:2px dashed var(--library-rule); background-image:repeating-linear-gradient(transparent 0 31px,#94857120 31px 32px); }
+	.paper-pencil:not(:modal) { box-shadow:none; border:0; border-left:1px solid var(--library-rule); font-style:italic; }
+	.paper-stamp:not(:modal) { border:2px double currentColor; color:var(--library-burgundy); border-radius:18px; }
+	.paper-index:not(:modal) { border-top:9px solid #b7b79d; border-left:14px solid #e0d6bc; }
+	.paper-torn-left:not(:modal) { clip-path:polygon(0 0,100% 0,96% 12%,100% 22%,96% 33%,100% 45%,96% 57%,100% 69%,96% 80%,100% 91%,98% 100%,0 100%); }
+	.paper-torn-right:not(:modal) { clip-path:polygon(2% 0,100% 0,100% 100%,0 100%,4% 91%,0 80%,4% 69%,0 57%,4% 45%,0 33%,4% 22%,0 12%); }
+	.clue-content :global(.scrap-fragment) { font:1.5rem var(--font-code); letter-spacing:.12em; }
+	.clue-content :global(.zero-index) { text-align:right; font:.65rem var(--font-code); opacity:.7; }
+	.clue-caption { font-size:.7rem; letter-spacing:.15em; opacity:.7; margin-bottom:1rem; }
+	.clue-content :global(p) { line-height:1.9; margin:.7rem 0; font-size:.9rem; }
+	.clue-content :global(.record-number) { font-size:1.9rem; font-family:var(--font-code); letter-spacing:.1em; }
+	.clue-content :global(.record-action) { display:inline-block; padding:.6rem .8rem; border:1px solid currentColor; margin:.7rem .6rem 0 0; font-size:.85rem; cursor:pointer; }
+	.clue-content :global(input) { display:block; width:100%; border:1px solid var(--library-rule); padding:.6rem; margin-top:.5rem; background:transparent; }
+	.clue-dialog :global(:focus-visible) { outline:2px solid var(--library-burgundy); outline-offset:3px; }
+</style>
