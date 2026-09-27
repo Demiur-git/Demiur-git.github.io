@@ -47,9 +47,9 @@ export const homeIntroConfig: HomeIntroConfig = {
 		},
 		{
 			code: "READ · 02",
-			name: "文章",
+			name: "书库",
 			description: "经过整理，值得慢慢阅读的长篇文字。",
-			url: "/archive/",
+			url: "/library/",
 			icon: "material-symbols:article-outline",
 			tone: "burgundy",
 		},

@@ -3,6 +3,8 @@
 
 import type { NavbarMode } from "../types/siteConfig";
 import { siteConfig } from "./siteConfig"; // 站点基础配置（用于派生 navbarMode）
+export { libraryConfig } from "./libraryConfig";
+export type { LibraryConfig } from "../types/libraryConfig";
 
 /** 解析导航栏模式：navbarMode 优先，否则按旧 stickyNavbar 兼容映射（true→fixed，false→static） */
 export function resolveNavbarMode(navbar: {

@@ -1,0 +1,39 @@
+---
+import { siteConfig } from "@/config";
+import { yearStatistics } from "@/utils/library-data";
+interface Props {
+	dates: string[];
+}
+const { dates } = Astro.props;
+const timezone = siteConfig.timezone || "Asia/Shanghai";
+const stats = yearStatistics(dates, timezone);
+---
+<library-stats class="library-stats" data-dates={JSON.stringify(dates)} data-timezone={timezone}>
+	<div class="card-base"><span>总文章数</span><strong>{dates.length}</strong><small>已公开馆藏</small></div>
+	<div class="card-base"><span><b data-year>{stats.year}</b> 年文章数</span><strong data-count>{stats.count}</strong><small>按发表日期统计</small></div>
+	<div class="card-base"><span>年进度</span><strong><b data-progress>{stats.progress.toFixed(1)}</b><small>%</small></strong><progress value={stats.progress} max="100" aria-label="年进度" /><small>按网站时区 · {timezone}</small></div>
+</library-stats>
+<style>
+	library-stats { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:1rem; margin-bottom:1rem; }
+	div { padding:1.3rem; display:flex; flex-direction:column; gap:.55rem; min-width:0; }
+	span, small { color:var(--content-meta); font-size:.8rem; }
+	strong { font-size:2rem; color:var(--primary); font-family:var(--font-library-serif); }
+	b { font-weight:inherit; } strong small { font-size:1rem; }
+	progress { width:100%; height:5px; accent-color:var(--primary); }
+	@media(max-width:520px) { library-stats { gap:.5rem; } div { padding:.9rem .65rem; } strong { font-size:1.55rem; } small { font-size:.7rem; overflow-wrap:anywhere; } }
+</style>
+<script>
+	import { yearStatistics } from "@/utils/library-data";
+	class LibraryStats extends HTMLElement {
+		private timer?: ReturnType<typeof setInterval>;
+		connectedCallback() { this.update(); this.timer = setInterval(() => this.update(), 60000); }
+		disconnectedCallback() { clearInterval(this.timer); }
+		private update() {
+			const stats = yearStatistics(JSON.parse(this.dataset.dates || "[]"), this.dataset.timezone || "Asia/Shanghai");
+			const set = (selector: string, value: string) => { const el = this.querySelector(selector); if (el) el.textContent = value; };
+			set("[data-year]", String(stats.year)); set("[data-count]", String(stats.count)); set("[data-progress]", stats.progress.toFixed(1));
+			const progress = this.querySelector("progress"); if (progress) progress.value = stats.progress;
+		}
+	}
+	if (!customElements.get("library-stats")) customElements.define("library-stats", LibraryStats);
+</script>

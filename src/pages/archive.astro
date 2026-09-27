@@ -3,18 +3,16 @@ import ArchivePanel from "@components/controls/ArchivePanel.astro";
 import I18nKey from "@i18n/i18nKey";
 import { i18n } from "@i18n/translation";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
+import LibraryHeader from "@/components/layout/LibraryHeader.astro";
+import LibraryStats from "@/components/controls/LibraryStats.astro";
+import { getSortedPostsList } from "@/utils/content-utils";
+const dates = (await getSortedPostsList()).filter((p) => !p.data.draft).map((p) => p.data.published.toISOString());
 ---
 
 <MainGridLayout title={i18n(I18nKey.archive)}>
-  <section class="collection-page collection-articles" aria-labelledby="archive-page-title">
-    <header class="card-base collection-masthead collection-simple-header">
-      <div>
-        <span class="collection-kicker">WRITTEN ARCHIVE · 02</span>
-        <h1 id="archive-page-title">{i18n(I18nKey.archive)}</h1>
-        <p>按年份整理，慢慢翻阅收藏的文字。</p>
-      </div>
-      <span class="collection-index" aria-hidden="true">02</span>
-    </header>
+  <section class="collection-page collection-articles" aria-label="书库归档">
+    <LibraryHeader title="归档" description="沿着年份与月份，慢慢翻阅收藏的文字。" code="02" />
+    <LibraryStats dates={dates} />
     <ArchivePanel />
   </section>
 </MainGridLayout>

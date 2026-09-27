@@ -8,11 +8,12 @@ import { url } from "@/utils/url-utils";
 
 interface Props {
 	page: Page;
+	basePath?: string;
 	class?: string;
 	style?: string;
 }
 
-const { page, style } = Astro.props;
+const { page, style, basePath = "/library/posts/" } = Astro.props;
 
 const HIDDEN = -1;
 
@@ -49,13 +50,13 @@ if (r === page.lastPage - 2) pages.push(page.lastPage - 1);
 if (r < page.lastPage) pages.push(page.lastPage);
 
 const getPageUrl = (p: number) => {
-	if (p === 1) return "/";
-	return `/${p}/`;
+	if (p === 1) return basePath;
+	return `${basePath}${p}/`;
 };
 
 // 传给 PageJump island 的跳转模板。函数没法跨 island 边界传，只能给字符串
-const jumpHrefTemplate = url("/{page}/");
-const jumpHrefFirst = url("/");
+const jumpHrefTemplate = url(`${basePath}{page}/`);
+const jumpHrefFirst = url(basePath);
 ---
 
 <div class:list={[className, "pagination-wrapper flex flex-col gap-4 items-center"]} style={style}>

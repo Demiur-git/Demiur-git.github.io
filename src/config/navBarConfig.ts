@@ -23,9 +23,31 @@ export const navBarConfig: NavBarConfig = {
 			pageKey: "booknav",
 		},
 		{
-			name: "文章",
-			url: "/archive/",
+			name: "书库",
+			url: "/library/",
 			icon: "material-symbols:article-outline",
+			children: [
+				{
+					name: "归档",
+					url: "/archive/",
+					icon: "material-symbols:inventory-2-outline",
+				},
+				{
+					name: "分类",
+					url: "/categories/",
+					icon: "material-symbols:folder-open",
+				},
+				{
+					name: "标签图谱",
+					url: "/tags/",
+					icon: "material-symbols:tag-rounded",
+				},
+				{
+					name: "文章列表",
+					url: "/library/posts/",
+					icon: "material-symbols:article-outline",
+				},
+			],
 		},
 		{
 			name: "我的",

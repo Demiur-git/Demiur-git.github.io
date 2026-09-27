@@ -3,22 +3,22 @@ import { Icon } from "astro-icon/components";
 import I18nKey from "@/i18n/i18nKey";
 import { i18n } from "@/i18n/translation";
 import MainGridLayout from "@/layouts/MainGridLayout.astro";
-import { getCategoryList } from "@/utils/content-utils";
+import LibraryHeader from "@/components/layout/LibraryHeader.astro";
+import { getSortedPostsList } from "@/utils/content-utils";
+import { getCategoryUrl } from "@/utils/url-utils";
 
-const categories = await getCategoryList();
+const counts = new Map<string, number>();
+for (const post of (await getSortedPostsList()).filter((p) => !p.data.draft)) {
+	const name = post.data.category?.trim() || i18n(I18nKey.uncategorized);
+	counts.set(name, (counts.get(name) || 0) + 1);
+}
+const categories = [...counts].map(([name, count]) => ({ name, count, url: getCategoryUrl(name) })).sort((a,b) => b.count - a.count || a.name.localeCompare(b.name,"zh-CN"));
 const totalPosts = categories.reduce((sum, cat) => sum + cat.count, 0);
 ---
 
 <MainGridLayout title={i18n(I18nKey.categories)}>
     <!-- 页面标题 -->
-    <div class="card-base px-8 py-6 mb-4">
-        <div class="text-2xl font-bold text-(--primary) mb-2">
-            {i18n(I18nKey.categories)}
-        </div>
-        <p class="text-30 text-sm">
-            {i18n(I18nKey.allCategories)} · {totalPosts} {i18n(I18nKey.postsCount)}
-        </p>
-    </div>
+    <LibraryHeader title="分类" description={`从不同主题开始阅读 · ${categories.length} 个分类，${totalPosts} 篇文章。`} code="03" />
 
     <!-- 分类卡片列表 -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">

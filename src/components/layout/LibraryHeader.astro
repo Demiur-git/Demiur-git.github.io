@@ -1,0 +1,35 @@
+---
+import { url } from "@/utils/url-utils";
+interface Props {
+	title: string;
+	description: string;
+	code?: string;
+}
+const { title, description, code = "01" } = Astro.props;
+const links = [
+	["归档", "/archive/"],
+	["分类", "/categories/"],
+	["标签图谱", "/tags/"],
+	["文章列表", "/library/posts/"],
+];
+const path = Astro.url.pathname;
+const isHome = path.replace(/\/$/, "") === url("/library/").replace(/\/$/, "");
+---
+{!isHome && <nav class="library-breadcrumb" aria-label="面包屑"><a href={url("/library/")}>书库</a><span aria-hidden="true">/</span><span aria-current="page">{title}</span></nav>}
+<header class="card-base collection-masthead collection-simple-header">
+	<div><span class="collection-kicker">LIBRARY COLLECTION · {code}</span><h1>{title}</h1><p>{description}</p></div>
+	<span class="collection-index" aria-hidden="true">{code}</span>
+</header>
+{!isHome && <nav class="library-sections card-base" aria-label="书库分区">
+	{links.map(([name, href]) => <a href={url(href)} aria-current={path === href || (href === "/library/posts/" && path.startsWith(href)) ? "page" : undefined}>{name}</a>)}
+</nav>}
+<style>
+	header { --collection-accent:var(--library-burgundy); --collection-paper:var(--library-surface); }
+	.library-breadcrumb { display:flex; align-items:center; gap:.5rem; font-size:.85rem; color:var(--library-ink); margin-bottom:.75rem; }
+	.library-breadcrumb a { padding:.3rem; text-decoration:underline; text-underline-offset:4px; }
+	.library-sections { display:flex; flex-wrap:wrap; gap:.4rem; padding:.7rem; margin-block:1rem; }
+	a { padding:.55rem .9rem; border-radius:.35rem; color:var(--content-meta); font-size:.9rem; }
+	a:hover, a[aria-current] { color:var(--primary); background:var(--btn-plain-bg-hover); }
+	a:focus-visible { outline:2px solid var(--primary); outline-offset:2px; }
+	@media(max-width:480px) { a { padding:.55rem .65rem; font-size:.85rem; } }
+</style>

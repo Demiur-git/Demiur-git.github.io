@@ -1,0 +1,71 @@
+---
+import { getCategoryUrl } from "@/utils/url-utils";
+import { layoutTagGraph, type TagGraphData } from "@/utils/library-data";
+interface Props { graph: TagGraphData; }
+const { graph } = Astro.props;
+const layout = layoutTagGraph(graph);
+const groups = graph.groups.map((group) => ({ ...group, href: getCategoryUrl(group.name), tags: group.tags.map((tag) => ({ ...tag, href: `${getCategoryUrl(group.name)}&tag=${encodeURIComponent(tag.name)}` })) }));
+---
+<tag-graph class="card-base tag-graph" data-graph={JSON.stringify(groups)}>
+	<div class="graph-toolbar">
+		<label>查找主次标签 <input type="search" placeholder="输入分类或小标签" aria-label="查找分类或小标签" /></label>
+		<div class="graph-buttons"><button type="button" data-zoom="in" aria-label="放大图谱">＋</button><button type="button" data-zoom="out" aria-label="缩小图谱">−</button><button type="button" data-zoom="reset">重置</button></div>
+	</div>
+	<p class="graph-help">分类是主标签，选中后展开小标签；小标签只连接所属分类。开启移动后拖动或用方向键平移；手机支持双指缩放。</p>
+	{groups.length ? <>
+		<div class="graph-actions"><button class="pan-switch" type="button" aria-pressed="false">移动图谱</button><a class="category-reading" hidden>阅读此分类 →</a></div>
+		<div class="graph-viewport" tabindex="0" aria-label="分类与小标签图谱，使用缩放按钮或方向键浏览">
+			<svg viewBox={`0 0 ${layout.width} ${layout.height}`} role="group" aria-label="分类主节点图谱" data-width={layout.width} data-height={layout.height}>
+				<g data-scene>{layout.nodes.map((node) => <g class="graph-node primary-node" data-category={node.category} role="button" tabindex="0" aria-expanded="false" aria-label={`${node.name}：${node.count} 篇文章，展开小标签`}><title>{node.name}</title><circle cx={node.x} cy={node.y} r={node.radius} /><text x={node.x} y={node.y + 5} class="node-count">{node.count}</text><text x={node.x} y={node.y + node.radius + 24} class="node-label">{node.name.length > 12 ? node.name.slice(0,12) + "…" : node.name}</text></g>)}</g>
+			</svg>
+		</div>
+		<p class="graph-info" aria-live="polite">选中一个主分类，展开它的小标签。</p>
+		<div class="graph-search-results" hidden aria-label="标签搜索结果"></div>
+		<details open class="tag-index"><summary>文字索引 · {groups.length} 个主分类 / {graph.secondaryCount} 个小标签</summary>{groups.map((group) => <details class="index-group" data-category={group.name}><summary>{group.name}<span>{group.count} 篇文章</span></summary><a href={group.href}>阅读此分类 →</a><button type="button" data-expand={group.name}>在图谱中展开</button><div class="index-tags">{group.tags.length ? group.tags.map((tag) => <a href={tag.href}>#{tag.name}<span>{tag.count}</span></a>) : <p>此分类暂无小标签。</p>}</div></details>)}</details>
+	</> : <p class="graph-empty">书库还没有文章。文章入藏后，分类与小标签会出现在这里。</p>}
+</tag-graph>
+<style>
+	tag-graph { display:block; padding:1.5rem; color:var(--library-ink); }
+	.graph-toolbar, .graph-buttons, .graph-actions { display:flex; flex-wrap:wrap; gap:.6rem; align-items:center; justify-content:space-between; }
+	label { display:flex; flex-wrap:wrap; gap:.7rem; align-items:center; font-size:.85rem; }
+	input { border:1px solid var(--line-divider); background:var(--card-bg); padding:.55rem .8rem; border-radius:.3rem; width:220px; max-width:100%; }
+	button { border:1px solid var(--line-divider); padding:.5rem .8rem; border-radius:.3rem; background:var(--btn-plain-bg-hover); cursor:pointer; }
+	button:hover, button[aria-pressed="true"] { color:var(--primary); border-color:var(--primary); }
+	button:focus-visible, input:focus-visible, .graph-viewport:focus-visible, a:focus-visible { outline:2px solid var(--primary); outline-offset:3px; }
+	.graph-help, .graph-info { color:var(--content-meta); font-size:.8rem; line-height:1.8; margin:.8rem 0; }
+	.graph-actions { justify-content:flex-start; font-size:.8rem; margin-bottom:.5rem; }
+	.category-reading { margin-left:auto; color:var(--primary); text-decoration:underline; text-underline-offset:4px; }
+	.graph-viewport { width:100%; height:600px; overflow:hidden; border:1px solid var(--line-divider); border-radius:.4rem; touch-action:pan-y; background:radial-gradient(var(--library-rule) 1px,transparent 1px); background-size:22px 22px; }
+	.graph-viewport[data-pan="true"] { touch-action:none; cursor:grab; }
+	svg { width:100%; height:100%; user-select:none; }
+	:global(tag-graph .graph-edge) { stroke:var(--primary); opacity:.24; fill:none; }
+	:global(tag-graph .graph-node) { cursor:pointer; }
+	:global(tag-graph .graph-node circle) { fill:var(--card-bg); stroke:var(--primary); stroke-width:1.7; }
+	:global(tag-graph .primary-node circle) { fill:var(--btn-plain-bg-hover); stroke-width:2; }
+	:global(tag-graph text) { text-anchor:middle; fill:var(--library-ink); }
+	:global(tag-graph .node-count) { font-size:16px; fill:var(--primary); font-weight:600; }
+	:global(tag-graph .node-label) { font-size:14px; }
+	:global(tag-graph .primary-node .node-label) { font-weight:600; }
+	:global(tag-graph .graph-node:hover circle), :global(tag-graph .graph-node:focus circle), :global(tag-graph .graph-node[data-highlight="true"] circle), :global(tag-graph .graph-node[aria-expanded="true"] circle) { stroke:var(--library-burgundy); stroke-width:3; }
+	:global(tag-graph .graph-node:focus) { outline:none; }
+	:global(tag-graph .graph-node:focus .node-label) { text-decoration:underline; }
+	:global(tag-graph .graph-node[data-muted="true"]) { opacity:.2; }
+	.tag-index { padding-top:1rem; border-top:1px solid var(--line-divider); }
+	summary { cursor:pointer; font-family:var(--font-library-serif); }
+	.index-group { padding:.8rem 0; border-bottom:1px solid var(--line-divider); }
+	.index-group summary span { margin-left:.8rem; color:var(--content-meta); font-size:.75rem; }
+	.index-group > a, .index-group > button { display:inline-block; margin:.65rem .5rem .4rem 0; font-size:.8rem; color:var(--primary); }
+	.index-tags { display:flex; flex-wrap:wrap; gap:.6rem; }
+	.index-tags a { padding:.3rem .5rem; font-size:.85rem; color:var(--primary); border-bottom:1px solid var(--line-divider); overflow-wrap:anywhere; }
+	.index-tags span { margin-left:.5rem; color:var(--content-meta); font-size:.7rem; }
+	.graph-search-results { padding:1rem 0; }
+	:global(tag-graph .search-result) { display:flex; flex-wrap:wrap; align-items:center; gap:.5rem; margin:.5rem 0; font-size:.85rem; }
+	:global(tag-graph .search-result span) { color:var(--content-meta); }
+	:global(tag-graph .search-result a) { color:var(--primary); text-decoration:underline; }
+	[hidden] { display:none; }
+	.graph-empty { padding:3rem 0; text-align:center; color:var(--content-meta); }
+	@media(max-width:480px) { tag-graph { padding:1rem; } .graph-viewport { height:400px; } input { width:100%; } }
+</style>
+<script>
+	import "@/scripts/library-tag-graph";
+</script>

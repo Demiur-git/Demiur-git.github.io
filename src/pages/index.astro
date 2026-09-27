@@ -1,0 +1,7 @@
+---
+import HomeIntro from "@/components/layout/HomeIntro.astro";
+import MainGridLayout from "@/layouts/MainGridLayout.astro";
+import { siteConfig } from "@/config";
+import "@/styles/banner-home.css";
+---
+<MainGridLayout heading={siteConfig.title}><HomeIntro /></MainGridLayout>

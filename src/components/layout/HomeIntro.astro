@@ -120,16 +120,6 @@ import { url } from "@/utils/url-utils";
 			<MusicMiniPlayer variant="sidebar" musicHref={url("/music/")} client:load />
 		</aside>
 
-		<section class="latest-section" aria-labelledby="recent-arrivals-title">
-			<header class="section-heading latest-heading">
-				<div>
-					<p>RECENT ARRIVALS</p>
-					<h2 id="recent-arrivals-title">最近更新</h2>
-				</div>
-				<span>新近入藏的文章与记录。</span>
-			</header>
-			<slot name="recent" />
-		</section>
 	</div>
 </section>
 
@@ -150,16 +140,10 @@ import { url } from "@/utils/url-utils";
 
 	.home-sidebar {
 		grid-column: 2;
-		grid-row: 1 / span 2;
+		grid-row: 1;
 		min-width: 0;
 	}
 
-	.latest-section {
-		display: flex;
-		min-width: 0;
-		flex-direction: column;
-		gap: 1rem;
-	}
 
 	.library-hero {
 		display: grid;
@@ -676,9 +660,6 @@ import { url } from "@/utils/url-utils";
 		}
 	}
 
-	.latest-heading {
-		margin-bottom: 0;
-	}
 
 	@media (max-width: 1100px) {
 		.home-lower {
@@ -856,9 +837,6 @@ import { url } from "@/utils/url-utils";
 			line-height: 1.5;
 		}
 
-		.latest-heading {
-			margin-bottom: -0.65rem;
-		}
 	}
 
 	@media (prefers-reduced-motion: reduce) {

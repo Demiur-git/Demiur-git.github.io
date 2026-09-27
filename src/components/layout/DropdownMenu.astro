@@ -21,8 +21,9 @@ if (!link) {
 const processedLink = link;
 
 const hasChildren = processedLink.children && processedLink.children.length > 0;
+const isLibrary = processedLink.url === "/library/";
 const navHref =
-	!hasChildren && !processedLink.external ? url(processedLink.url) : undefined;
+	(!hasChildren || isLibrary) && !processedLink.external ? url(processedLink.url) : undefined;
 const childPaths = hasChildren
 	? processedLink.children
 			?.filter((child) => !child.external)
@@ -37,21 +38,26 @@ const catalogNumber = String(index + 1).padStart(2, "0");
 	data-dropdown
 	data-nav-href={navHref}
 	data-nav-paths={childPaths}
+	data-library-group={processedLink.url === "/library/" ? "true" : undefined}
 >
 	{hasChildren ? (
+		<>
+		{isLibrary && <a data-nav-parent href={url(processedLink.url)} class="btn-plain h-11 font-bold pl-4 pr-1 library-nav-trigger"><span class="flex items-center gap-1.5 library-nav-label">{processedLink.icon && <Icon name={processedLink.icon} is:inline class="text-[1.1rem] mr-1.5 navbar-icon navbar-menu-icon" />}<span>{processedLink.name}</span></span></a>}
 		<button 
-			class="btn-plain h-11 font-bold px-4 pr-8 dropdown-trigger library-nav-trigger relative"
+			class:list={["btn-plain h-11 font-bold dropdown-trigger library-nav-trigger relative", isLibrary ? "library-expand" : "px-4 pr-8"]}
+			aria-label={isLibrary ? "展开书库分区" : undefined}
+			aria-controls={isLibrary ? "library-desktop-submenu" : undefined}
 			aria-expanded="false"
 			aria-haspopup="true"
 			data-dropdown-trigger
 		>
-			<div class="flex items-center gap-1.5 library-nav-label">
+			{!isLibrary && <div class="flex items-center gap-1.5 library-nav-label">
 				{processedLink.icon && <Icon name={processedLink.icon} is:inline class="text-[1.1rem] mr-1.5 navbar-icon navbar-menu-icon" />}
 				<span>{processedLink.name}</span>
-			</div>
+			</div>}
 			<Icon name="material-symbols:keyboard-arrow-down-rounded" is:inline class="text-[1.2rem] transition-transform duration-200 dropdown-arrow absolute right-2.5 top-1/2 -translate-y-1/2" />
 		</button>
-		<div class="dropdown-menu" data-dropdown-menu>
+		<div class="dropdown-menu" id={isLibrary ? "library-desktop-submenu" : undefined} data-dropdown-menu>
 			<DropdownPanel class="dropdown-content">
 				<div class="catalog-card-heading" aria-hidden="true">
 					<span>LIBRARY INDEX</span>
@@ -76,6 +82,7 @@ const catalogNumber = String(index + 1).padStart(2, "0");
 				))}
 			</DropdownPanel>
 		</div>
+		</>
 	) : (
 		<a 
 			aria-label={processedLink.name} 
@@ -98,6 +105,15 @@ const catalogNumber = String(index + 1).padStart(2, "0");
 	.dropdown-container {
 		@apply relative;
 	}
+	[data-library-group="true"] { display:flex; align-items:center; }
+	.library-expand { width:32px; padding:0; }
+	:global(#navbar) .dropdown-container[data-library-group="true"] .library-expand::after { display:none; }
+	[data-library-group="true"] .dropdown-menu { visibility:hidden; }
+	[data-library-group="true"] .dropdown-content { opacity:0; translate:0 -8px; }
+	[data-library-group="true"][data-open="true"] .dropdown-menu { visibility:visible; pointer-events:auto; }
+	[data-library-group="true"][data-open="true"] .dropdown-content { opacity:1; translate:0 0; }
+	:global(#navbar) [data-library-group="true"] :global(.dropdown-arrow) { rotate:0deg; transform:none; }
+	:global(#navbar) [data-library-group="true"][data-open="true"] :global(.dropdown-arrow) { rotate:180deg; }
 
 	.dropdown-menu {
 		@apply absolute top-full left-1/2 pt-2 pointer-events-none z-50;
@@ -139,17 +155,18 @@ const catalogNumber = String(index + 1).padStart(2, "0");
 			const childPaths = (tab.dataset.navPaths || "").split("|").filter(Boolean);
 			const directMatch = directHref ? normalizePath(directHref) === currentPath : false;
 			const childMatch = childPaths.some((path) => normalizePath(path) === currentPath);
-			const active = directMatch || childMatch;
+			const libraryMatch = tab.dataset.libraryGroup === "true" && (/\/posts\//.test(currentPath) || /\/library(?:\/|$)/.test(currentPath) || /\/series(?:\/|$)/.test(currentPath));
+			const active = directMatch || childMatch || libraryMatch;
 
 			tab.dataset.active = active ? "true" : "false";
-			const link = tab.querySelector<HTMLAnchorElement>(":scope > a");
+			const link = tab.querySelector<HTMLAnchorElement>(":scope > a, [data-nav-parent]");
 			const trigger = tab.querySelector<HTMLButtonElement>("[data-dropdown-trigger]");
 			if (link) {
 				if (directMatch) link.setAttribute("aria-current", "page");
 				else link.removeAttribute("aria-current");
 			}
 			if (trigger) {
-				if (childMatch) trigger.setAttribute("aria-current", "page");
+				if (childMatch || libraryMatch) trigger.setAttribute("aria-current", "page");
 				else trigger.removeAttribute("aria-current");
 			}
 
@@ -159,6 +176,10 @@ const catalogNumber = String(index + 1).padStart(2, "0");
 				if (itemActive) item.setAttribute("aria-current", "page");
 				else item.removeAttribute("aria-current");
 			});
+			if (tab.dataset.libraryGroup === "true") {
+				tab.dataset.open = "false";
+				trigger?.setAttribute("aria-expanded", "false");
+			}
 		});
 	}
 
@@ -172,10 +193,20 @@ const catalogNumber = String(index + 1).padStart(2, "0");
 			const items = dropdown.querySelectorAll('.dropdown-item') as NodeListOf<HTMLElement>;
 			
 			if (!trigger || !menu) return;
+			if (dropdown.getAttribute("data-library-group") === "true") {
+				dropdown.addEventListener("pointerenter", (event) => {
+					if ((event as PointerEvent).pointerType === "mouse") openDropdown(dropdown, trigger, menu);
+				});
+				dropdown.addEventListener("pointerleave", (event) => {
+					if ((event as PointerEvent).pointerType === "mouse" && !menu.contains(document.activeElement)) closeDropdown(dropdown, trigger, menu);
+				});
+				trigger.addEventListener("click", () => toggleDropdown(dropdown, trigger, menu));
+			}
 			
 			// 键盘事件处理
 			trigger.addEventListener('keydown', function(e: KeyboardEvent) {
 				if (e.key === 'Enter' || e.key === ' ') {
+					if (dropdown.getAttribute("data-library-group") === "true") return;
 					e.preventDefault();
 					toggleDropdown(dropdown, trigger, menu);
 				} else if (e.key === 'ArrowDown') {
@@ -235,10 +266,12 @@ const catalogNumber = String(index + 1).padStart(2, "0");
 	}
 
 	function openDropdown(_dropdown: Element, trigger: Element, _menu: Element) {
+		_dropdown.setAttribute("data-open", "true");
 		trigger.setAttribute('aria-expanded', 'true');
 	}
 
 	function closeDropdown(_dropdown: Element, trigger: Element, _menu: Element) {
+		_dropdown.setAttribute("data-open", "false");
 		trigger.setAttribute('aria-expanded', 'false');
 	}
 </script>

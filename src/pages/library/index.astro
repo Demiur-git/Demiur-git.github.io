@@ -1,0 +1,92 @@
+---
+import { libraryConfig, siteConfig } from "@/config";
+import LibraryHeader from "@/components/layout/LibraryHeader.astro";
+import MainGridLayout from "@/layouts/MainGridLayout.astro";
+import { getSortedPosts } from "@/utils/content-utils";
+import {
+	buildTagGraph,
+	dateParts,
+	selectRecommendations,
+} from "@/utils/library-data";
+import { getPostUrlBySlug, url } from "@/utils/url-utils";
+const posts = (await getSortedPosts()).filter((p) => !p.data.draft);
+const graph = buildTagGraph(posts);
+const { selected, diagnostics } = selectRecommendations(
+	posts,
+	libraryConfig.recommendedPostIds,
+);
+for (const message of diagnostics) console.warn(`[书库推荐阅读] ${message}`);
+const recent = [...posts]
+	.sort(
+		(a, b) =>
+			(b.data.updated || b.data.published).getTime() -
+				(a.data.updated || a.data.published).getTime() ||
+			a.id.localeCompare(b.id),
+	)
+	.slice(0, 6);
+const date = (value: Date) => {
+	const p = dateParts(value, siteConfig.timezone || "Asia/Shanghai");
+	return `${p.year}-${String(p.month).padStart(2, "0")}-${String(p.day).padStart(2, "0")}`;
+};
+const entrances = [
+	["归档", "沿着年份与月份，回望每次入藏。", "/archive/"],
+	["分类", "从不同主题开始阅读。", "/categories/"],
+	["标签图谱", "从主分类展开小标签，寻找阅读线索。", "/tags/"],
+	["文章列表", "翻阅全部文章与置顶馆藏。", "/library/posts/"],
+];
+---
+<MainGridLayout title="书库" description="Demiur 的文字馆藏：概览、推荐阅读与最近更新。">
+	<LibraryHeader title="书库" description="把值得慢慢阅读的文字，收进同一座书库。" />
+	<section class="library-board" aria-labelledby="board-title">
+		<header class="board-heading"><div><small>LIBRARY NOTICEBOARD</small><h2 id="board-title">馆藏公告栏</h2></div><span class="board-note">今日也请慢慢阅读</span></header>
+		<div class="board-summary" aria-label="馆藏概览">{[[posts.length,"篇文章"],[graph.groups.length,"个主分类"],[graph.secondaryCount,"个小标签"]].map(([count,label]) => <div><strong>{count}</strong><span>{label}</span></div>)}</div>
+		<p class="count-note">每篇文章归入一个主分类；小标签按名称去重，不计与所属分类同名的标签。</p>
+		<div class="board-notices"><div class="notice-caption"><small>CURATOR'S SELECTION</small><h3 id="recommended-title">推荐阅读</h3><span>馆员的阅读通知</span></div>
+		{selected.length ? <div class="recommended-grid">{selected.map((post,index) => <a class="reading-notice" href={getPostUrlBySlug(post.id)}><small>READING NOTE · 0{index + 1}</small><h3>{post.data.title}</h3><p>{post.data.description || "翻开这篇馆藏，慢慢阅读。"}</p><span class="notice-category">{post.data.category?.trim() || "未分类"}</span></a>)}</div> : <div class="reading-notice empty-notice"><small>READING NOTE · 待更新</small><h3>阅读通知正在整理</h3><p>站长尚未设置推荐阅读。先从下面的借书卡或最近更新，挑一本感兴趣的馆藏吧。</p></div>}
+		</div>
+	</section>
+	<nav class="library-entrances" aria-label="书库借书卡">{entrances.map(([title, description, href],index) => <a class="borrowing-card" href={url(href)} aria-label={`${title}：${description}`}><small>LIBRARY CARD · 0{index + 1}</small><h2>{title}</h2><p>{description}</p><div class="card-register" aria-hidden="true"><span>借阅日期</span><span>读者签名</span></div><span class="card-stamp" aria-hidden="true">可阅</span></a>)}</nav>
+	<section class="library-newspaper" aria-labelledby="recent-title">
+		<div class="paper-meta"><span>THE LIBRARY JOURNAL</span><span>馆藏近讯 · 最新六篇</span></div><header class="paper-masthead"><h2 id="recent-title">书库时报</h2><span>最近更新 / RECENT ARRIVALS</span></header>
+		{recent.length ? <ol class="recent-list">{recent.map((post,index) => <li class:list={[index === 0 && "headline"]}><article><small>{index === 0 ? "本期头条" : `馆藏简讯 / 0${index + 1}`} · {post.data.category?.trim() || "未分类"}</small><h3><a href={getPostUrlBySlug(post.id)}>{post.data.title}</a></h3><p>{post.data.description || "一篇新近整理的文字馆藏，点击标题阅读全文。"}</p><time datetime={(post.data.updated || post.data.published).toISOString()}>{post.data.updated ? "更新" : "发布"} · {date(post.data.updated || post.data.published)}</time></article></li>)}</ol> : <p class="library-muted">书库正在整理，文章发布后会出现在这里。</p>}
+		<footer class="paper-colophon"><span>{siteConfig.title} · 阅读与记录</span><a href={url("/library/posts/")}>翻阅全部馆藏 →</a></footer>
+	</section>
+</MainGridLayout>
+<style>
+	.library-board, .library-entrances, .library-newspaper { --paper:#faf5e8; --paper-ink:#3b3930; --paper-muted:#69665b; --rule:#d9d1bd; color:var(--paper-ink); margin-top:1.4rem; }
+	:global(.dark) :is(.library-board, .library-entrances, .library-newspaper) { --paper:#202c25; --paper-ink:#e5dfcf; --paper-muted:#b2b6a6; --rule:#435044; }
+	h2, h3 { font-family:var(--font-library-serif); line-height:1.45; overflow-wrap:anywhere; }
+	small { font-family:var(--font-code); font-size:.65rem; letter-spacing:.12em; }
+	p { font-size:.87rem; line-height:1.9; } a:focus-visible { outline:2px solid var(--library-burgundy); outline-offset:4px; }
+	.library-board { padding:1.6rem 1.8rem 2rem; border:9px solid #87715b; border-radius:4px; background:linear-gradient(130deg,#ece9da,#d8dece); box-shadow:inset 0 0 0 1px #b19a7d,inset 0 3px 14px #4a443620,0 9px 22px #0002; }
+	:global(.dark) .library-board { border-color:#3e3a2f; background:linear-gradient(130deg,#202c26,#18231e); box-shadow:inset 0 0 0 1px #514a3a,inset 0 3px 14px #0005,0 9px 22px #0003; }
+	.board-heading { display:flex; justify-content:space-between; align-items:center; gap:1rem; border-bottom:1px solid var(--rule); padding-bottom:.9rem; }
+	.board-heading h2 { font-size:1.5rem; margin-top:.2rem; } .board-note { font-family:var(--font-library-serif); font-size:.8rem; color:var(--paper-muted); }
+	.board-summary { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); padding:1rem 0 .5rem; }
+	.board-summary div { display:flex; gap:.5rem; align-items:baseline; justify-content:center; border-right:1px solid var(--rule); }
+	.board-summary div:last-child { border:0; } .board-summary strong { font-size:1.85rem; color:var(--library-burgundy); } .board-summary span { font-size:.85rem; }
+	.count-note { text-align:center; font-size:.7rem; color:var(--paper-muted); margin-bottom:1.3rem; }
+	.board-notices { display:grid; grid-template-columns:145px minmax(0,1fr); gap:1.25rem; align-items:start; }
+	.notice-caption { padding-top:1.2rem; } .notice-caption small { font-size:.55rem; letter-spacing:.06em; } .notice-caption h3 { font-size:1.25rem; margin:.3rem 0; } .notice-caption span { font-size:.75rem; color:var(--paper-muted); }
+	.recommended-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr)); gap:1rem; }
+	.reading-notice { position:relative; background:var(--paper); padding:1.4rem 1.3rem; box-shadow:0 3px 6px #0002; border:1px solid var(--rule); transform:rotate(-.7deg); display:block; }
+	.reading-notice::before { content:""; position:absolute; width:9px; height:9px; border-radius:50%; background:var(--library-burgundy); left:50%; top:8px; box-shadow:1px 2px 2px #0004,inset 1px 1px 1px #fff6; }
+	.reading-notice:nth-child(even) { transform:rotate(.7deg); } .reading-notice h3 { font-size:1.1rem; margin:.65rem 0 .5rem; } .reading-notice p { color:var(--paper-muted); } .notice-category { display:block; font-size:.7rem; margin-top:.9rem; color:var(--library-burgundy); }
+	.library-entrances { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:1rem; padding:.5rem .25rem; }
+	.borrowing-card { position:relative; min-width:0; padding:1.2rem 1.1rem 1rem; background:var(--paper); border:1px solid var(--rule); border-radius:2px; box-shadow:2px 3px 0 var(--rule),0 6px 12px #0002; transition:transform .2s,box-shadow .2s; }
+	.borrowing-card::before { content:""; display:block; height:4px; border-top:1px solid var(--rule); border-bottom:1px solid var(--rule); margin-bottom:.75rem; }
+	.borrowing-card h2 { font-size:1.4rem; margin:.55rem 0; } .borrowing-card p { color:var(--paper-muted); min-height:3.5rem; font-size:.8rem; } .card-register { margin-top:.6rem; font-size:.6rem; color:var(--paper-muted); }
+	.card-register span { display:block; line-height:1.8rem; border-bottom:1px solid var(--rule); } .card-stamp { position:absolute; bottom:1.4rem; right:1rem; padding:.18rem .35rem; color:var(--library-burgundy); border:1px solid currentColor; transform:rotate(-12deg); font-family:var(--font-library-serif); font-size:.8rem; opacity:.8; }
+	.borrowing-card:hover { transform:translateY(-4px); } .borrowing-card:hover h2, .reading-notice:hover h3, .recent-list a:hover { color:var(--library-burgundy); }
+	.library-newspaper { background:var(--paper); padding:1.4rem 1.8rem; border:1px solid var(--rule); box-shadow:0 5px 14px #0002; }
+	.paper-meta, .paper-colophon { display:flex; justify-content:space-between; gap:1rem; font-family:var(--font-code); font-size:.6rem; letter-spacing:.08em; color:var(--paper-muted); }
+	.paper-masthead { text-align:center; padding:.8rem 0 1rem; border-top:1px solid var(--paper-ink); border-bottom:3px double var(--paper-ink); margin-top:.65rem; }
+	.paper-masthead h2 { font-size:2.3rem; letter-spacing:.2em; } .paper-masthead span { font-size:.65rem; letter-spacing:.12em; color:var(--paper-muted); }
+	.recent-list { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); list-style:none; padding:0; margin:1.2rem 0; gap:1.25rem 0; }
+	.recent-list li { padding:0 1.1rem; border-right:1px solid var(--rule); } .recent-list li:nth-child(2), .recent-list li:nth-child(3), .recent-list li:last-child { border-right:0; } .recent-list .headline { grid-column:span 2; grid-row:span 2; border-right:1px solid var(--rule); } .recent-list li:first-child { padding-left:0; }
+	.recent-list h3 { font-size:1.05rem; margin:.55rem 0 .7rem; } .recent-list .headline h3 { font-size:1.8rem; } .recent-list p { color:var(--paper-muted); margin-bottom:.75rem; } .headline p { font-size:.95rem; } time { display:block; font-size:.7rem; color:var(--paper-muted); }
+	.paper-colophon { border-top:1px solid var(--paper-ink); padding-top:.75rem; } .paper-colophon a { text-decoration:underline; text-underline-offset:3px; }
+	@media(max-width:1024px) { .library-entrances { grid-template-columns:repeat(2,minmax(0,1fr)); } .board-notices { grid-template-columns:1fr; } .notice-caption { padding-top:0; display:flex; align-items:baseline; flex-wrap:wrap; gap:.65rem; } .recent-list { grid-template-columns:repeat(2,minmax(0,1fr)); } .recent-list .headline { grid-column:span 2; grid-row:auto; border-bottom:1px solid var(--rule); border-right:0; padding-bottom:1rem; } .recent-list li:nth-child(n + 2) { border-right:1px solid var(--rule); } .recent-list li:nth-child(odd) { border-right:0; } }
+	@media(max-width:480px) { .library-board { padding:1rem .85rem 1.4rem; border-width:6px; } .board-note { display:none; } .board-summary div { flex-direction:column; align-items:center; gap:.15rem; } .board-summary span { font-size:.7rem; } .count-note { text-align:left; } .library-entrances { gap:.7rem; } .borrowing-card { padding:1rem .75rem; } .borrowing-card small { font-size:.52rem; letter-spacing:.04em; } .borrowing-card h2 { font-size:1.2rem; } .borrowing-card p { min-height:4.5rem; } .library-newspaper { padding:1rem; } .paper-meta { font-size:.5rem; letter-spacing:0; } .paper-masthead h2 { font-size:2rem; } .recent-list { display:block; } .recent-list li, .recent-list li:nth-child(n), .recent-list .headline { border-right:0; border-bottom:1px solid var(--rule); padding:1rem 0; } .recent-list li:last-child { border-bottom:0; } .recent-list .headline h3 { font-size:1.5rem; } .paper-colophon { flex-wrap:wrap; } }
+	@media(prefers-reduced-motion:reduce) { .borrowing-card { transition:none; } .borrowing-card:hover { transform:none; } }
+</style>

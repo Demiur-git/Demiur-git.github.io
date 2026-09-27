@@ -4,6 +4,7 @@ import I18nKey from "@/i18n/i18nKey";
 import { i18n } from "@/i18n/translation";
 import { getSortedPostsList } from "@/utils/content-utils";
 import { getPostUrlBySlug, url } from "@/utils/url-utils";
+import { dateParts } from "@/utils/library-data";
 
 // 归档列表：全量按年分组，服务端渲染。筛选（?tag=/?category=/?uncategorized）
 // 与年份折叠由客户端脚本处理——数据本身在构建期已全部就绪。
@@ -12,17 +13,26 @@ const sortedPostsList = await getSortedPostsList();
 // 严格按发布时间倒序（不受置顶影响），镜像原 Svelte 版行为
 const posts = sortedPostsList
 	.slice()
+	.filter((post) => !post.data.draft)
 	.sort((a, b) => b.data.published.getTime() - a.data.published.getTime());
 
 // 按年份分组
 const grouped = new Map<number, typeof posts>();
 for (const post of posts) {
-	const year = post.data.published.getFullYear();
+	const year = dateParts(post.data.published, siteConfig.timezone || "Asia/Shanghai").year;
 	if (!grouped.has(year)) grouped.set(year, []);
 	grouped.get(year)?.push(post);
 }
 const groups = Array.from(grouped.entries())
-	.map(([year, yearPosts]) => ({ year, posts: yearPosts }))
+	.map(([year, yearPosts]) => {
+		const months = new Map<number, typeof posts>();
+		for (const post of yearPosts) {
+			const month = dateParts(post.data.published, siteConfig.timezone || "Asia/Shanghai").month;
+			if (!months.has(month)) months.set(month, []);
+			months.get(month)?.push(post);
+		}
+		return { year, posts:yearPosts, months:[...months].sort(([a],[b]) => b-a).map(([month, monthPosts]) => ({ month, posts:monthPosts })) };
+	})
 	.sort((a, b) => b.year - a.year);
 
 // 初始折叠规则：foldArticle 非 false 且多于一年时，除首年外全部折叠
@@ -30,8 +40,9 @@ const foldArticle = siteConfig.foldArticle !== false;
 const collapseAllButFirst = foldArticle && groups.length > 1;
 
 function formatDate(date: Date) {
-	const month = (date.getMonth() + 1).toString().padStart(2, "0");
-	const day = date.getDate().toString().padStart(2, "0");
+	const p = dateParts(date, siteConfig.timezone || "Asia/Shanghai");
+	const month = p.month.toString().padStart(2, "0");
+	const day = p.day.toString().padStart(2, "0");
 	return `${month}-${day}`;
 }
 
@@ -70,6 +81,7 @@ const foldOnFilter = collapseAllButFirst;
       </div>
     </div>
   </div>
+	<p id="archive-no-results" hidden class="py-8 text-center text-50">没有匹配的文章。<a href={url("/archive/")} class="text-(--primary) underline">查看全部归档</a></p>
 
 	{
 		groups.length === 0 && (
@@ -116,13 +128,16 @@ const foldOnFilter = collapseAllButFirst;
         </button>
 
         <div class="archive-year-content" hidden={collapsed}>
-          {group.posts.map((post) => (
+          {group.months.map((monthGroup) => (
+          <div class="archive-month-block" data-month={monthGroup.month}>
+          <h3 class="archive-month-title">{String(monthGroup.month).padStart(2, "0")} 月 <span class="archive-month-count">{monthGroup.posts.length}</span></h3>
+          {monthGroup.posts.map((post) => (
             <a
               href={getPostUrlBySlug(post.id)}
               aria-label={post.data.title}
               class="archive-post group btn-plain block! h-10 w-full rounded-lg hover:text-[initial]"
-              data-tags={JSON.stringify(post.data.tags || [])}
-              data-category={post.data.category || ""}
+              data-tags={JSON.stringify([...new Set((post.data.tags || []).map((tag) => tag.trim()).filter(Boolean))])}
+              data-category={post.data.category?.trim() || ""}
             >
               <div class="flex flex-row justify-start items-center h-full">
                 {/* date */}
@@ -140,11 +155,11 @@ const foldOnFilter = collapseAllButFirst;
                 </div>
 
                 {/* post title */}
-                <div class="w-[70%] md:max-w-[65%] md:w-[65%] text-left font-bold
+                <div class="archive-post-title w-[70%] md:max-w-[65%] md:w-[65%] text-left font-bold
                             group-hover:translate-x-1 transition-all group-hover:text-(--primary)
                             text-75 pr-8 whitespace-nowrap text-ellipsis overflow-hidden flex items-center gap-2">
                   {post.data.category && (
-                    <span class="shrink-0 inline-block text-xs font-medium px-1.5 py-0.5 rounded-sm
+                    <span class="archive-category-badge shrink-0 inline-block text-xs font-medium px-1.5 py-0.5 rounded-sm
                                  bg-[oklch(0.95_0.025_var(--hue))] dark:bg-[oklch(0.25_0.025_var(--hue))]
                                  text-(--primary) group-hover:bg-(--primary) group-hover:text-white!
                                  transition-colors">
@@ -162,6 +177,8 @@ const foldOnFilter = collapseAllButFirst;
               </div>
             </a>
           ))}
+          </div>
+          ))}
         </div>
       </div>
     );
@@ -174,6 +191,16 @@ const foldOnFilter = collapseAllButFirst;
   }
   .archive-arrow {
     display: inline-flex;
+  }
+  .archive-month-title { margin: .75rem 0 .25rem 20%; font-size:.85rem; color:var(--primary); letter-spacing:.08em; }
+  .archive-month-count { margin-left:.5rem; color:var(--content-meta); font-size:.7rem; }
+  .archive-post[hidden], .archive-month-block[hidden], .archive-year-block[hidden] { display:none !important; }
+  @media(max-width:768px) {
+    .archive-month-title { margin-left:30%; }
+    .archive-post { height:auto !important; min-height:3.1rem; padding-block:.4rem; }
+    .archive-post-title { padding-right:.5rem; }
+    .archive-category-badge { display:none; }
+    .archive-post-title > .truncate { white-space:normal; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
   }
 </style>
 
@@ -239,6 +266,12 @@ const foldOnFilter = collapseAllButFirst;
         }
 
         // 更新每年计数显示
+        block.querySelectorAll(".archive-month-block").forEach((month) => {
+          const count = [...month.querySelectorAll(".archive-post")].filter((row) => !row.hidden).length;
+          month.hidden = count === 0;
+          const label = month.querySelector(".archive-month-count");
+          if (label) label.textContent = String(count);
+        });
         const countEl = block.querySelector(".archive-year-count");
         const labelEl = block.querySelector(".archive-year-count-label");
         if (countEl) countEl.textContent = String(visibleCount);
@@ -262,6 +295,8 @@ const foldOnFilter = collapseAllButFirst;
       });
 
       // 填充并显示筛选头部
+      const empty = this.querySelector("#archive-no-results");
+      if (empty) empty.hidden = totalVisible > 0;
       this.renderFilterHeader(tags, categories, uncategorized, totalVisible);
     }
 
@@ -369,7 +404,7 @@ const foldOnFilter = collapseAllButFirst;
                   { transform: willCollapse ? "rotate(0deg)" : "rotate(-90deg)" },
                   { transform: willCollapse ? "rotate(-90deg)" : "rotate(0deg)" },
                 ],
-                { duration: 200, easing: "ease", fill: "forwards" },
+                { duration: matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 200, easing: "ease", fill: "forwards" },
               );
             });
           }

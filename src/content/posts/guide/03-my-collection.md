@@ -1,42 +1,103 @@
 ---
-title: 使用“我的”馆藏
+title: 站长指南（五）：日历、项目与读书计划
 published: 2026-09-25
-description: 认识便签、日历、相册、音乐、项目与读书计划，并找到各自的内容维护入口。
-tags: [网站指南, 馆藏]
-category: 使用指南
-series: 网站使用指南
-seriesOrder: 3
+updated: 2026-09-27
+description: 填写公开日程、项目档案与阅读记录，区分浏览器中的个人安排和随网站发布的配置。
+tags: [站长指南, 日历, 项目, 读书计划]
+category: 站长指南
+series: Demiur 站长维护指南
+seriesOrder: 5
 draft: false
 ---
 
-导航栏的“我的”像一张目录卡，里面依次放着便签、日历、相册、音乐、项目和读书计划六个用途不同的馆藏区。下面先介绍访客如何使用，再标明持有项目源文件的人在哪里补充内容。目前相册、项目和读书计划可能仍是空的，界面会显示相应的空状态。
+“我的”里除了[便签](/dynamic/)、[相册](/gallery/)与[音乐](/music/)，还有日历、项目和读书计划。本篇讲的是站长维护公开内容的方法，不是给网页增加后台写入能力。
 
-## 便签：短记录与开发动态
+## 日历：网页操作不等于公共配置
 
-[便签](/dynamic/)保留原来的短记录功能与网址，可以搜索内容、筛选年份并分享固定链接。添加内容的方法仍是 `pnpm.cmd new-dynamic`，文件仍放在 `src/content/dynamic/`；详细示例见[阅读与发布便签、文章](/posts/guide/02-notes-and-posts/)。
+[日历](/calendar/)由两部分组成：`src/config/calendarPageConfig.ts` 中的公开预设，以及访客在网页上新建、保存在当前浏览器的个人日程。页面会把二者一起显示，但个人安排不会上传、同步到其他设备或写回仓库。
 
-## 日历：日期与计划
+要让所有访客看到某个日期标记，在 `importantDates` 数组中追加条目：
 
-在[日历](/calendar/)中切换月份、选择日期，可以查看当天的节日标记和日程；左右侧栏分别整理重要日期与安排。选中某一天后，还可以在右侧为它创建日程。
+```ts
+{
+  date: "2026-09-27",
+  title: "网站纪念日",
+  category: "anniversary",
+  description: "记录一个值得记住的日子。",
+  repeat: "yearly",
+}
+```
 
-请留意：**在网页上新建的日程只保存在当前浏览器的本地存储中**，不会自动同步到其他设备，也不会写回 GitHub 仓库。站长要预设节日、纪念日或初始日程，应编辑 `src/config/calendarPageConfig.ts`；这些配置会在重新构建后出现在网站上。
+日期使用 `YYYY-MM-DD`。`category` 仅接受 `holiday`、`festival`、`anniversary`、`important`；`repeat: "yearly"` 按公历月日逐年显示，省略则只对应原日期。它不是农历计算器，农历节日应逐年核对日期后录入。
 
-## 相册：桌上的影像册
+要发布一项公共安排，在 `schedules` 数组中追加：
 
-[相册](/gallery/)首页是一张阅览桌。相册有内容时，封面会出现在桌上的影像册上；桌面端悬停或键盘聚焦可看到照片预览与简介，点击进入详情。页面有搜索和标签筛选；手机上直接点击影像册即可打开，不需要先悬停。
+```ts
+{
+  date: "2026-09-28",
+  time: "19:30",
+  title: "整理相册",
+  status: "planned",
+  description: "压缩照片，补充影像册介绍。",
+}
+```
 
-站长添加相册时，要先为相册确定唯一的 `id`，把照片放在 `public/gallery/<id>/`，再在 `src/config/galleryConfig.ts` 的 `albums` 中增加同一 `id` 的名称、简介等资料。可以放一张 `cover.jpg`、`cover.png` 等作为默认封面，也可以在配置里明确指定 `cover`；没有封面时会使用第一张照片。只填配置而没有图片，桌上不会凭空出现真实照片。
+状态可为 `planned`、`in-progress`、`done`。公开安排通过改配置并重新构建更新；浏览器里的个人安排则在网页操作。删除一条预设不会清掉某个访客手动添加的相似安排。
 
-## 音乐：唱片与歌词
+## 项目：一份 Markdown 就是一份档案
 
-打开[音乐馆藏](/music/)可用唱片机控制播放、切歌、进度和音量。点击黑胶唱片会打开选曲界面；滚轮、触控滑动或方向键只是在浏览，**点选歌曲才会切换播放**。有同步歌词时，当前行会跟随进度移动，也可以点击某行跳转；译文与罗马音取决于歌曲是否提供了对应歌词。离开音乐页后，首页播放栏或其他页面的小唱片仍能控制同一个播放器。
+[项目](/projects/)读取 `src/content/projects/`。当前没有专门的新项目命令，可手动创建稳定的英文文件名，例如 `my-site.md`，然后写入：
 
-站长可将有权使用的本地音频及同名封面、LRC 放入项目根目录的 `music-inbox/`，运行 `pnpm.cmd music:import` 生成静态曲库。播放器读取的配置位于 `src/config/musicConfig.ts`，导入清单位于 `src/config/musicLibrary.generated.json`。**只有清单而没有实际音频、封面和歌词文件，部署后的访客无法听到这些歌曲**；公开发布前还应确认素材的使用授权。
+```md
+---
+title: 我的个人网站
+published: 2026-09-27
+description: 记录网站的设计与实现过程。
+tags: [Astro, 网站]
+status: developing
+order: 10
+draft: false
+link:
+  - label: 访问网站
+    icon: material-symbols:language-rounded
+    value: https://demiur-git.github.io/
+---
 
-## 项目与读书计划
+## 项目目标
 
-[项目](/projects/)展示实践记录，可按状态筛选并进入详情。站长在 `src/content/projects/` 添加 Markdown 项目文件，项目的标题、日期、状态和链接等由文件头部提供；配置字段应与现有项目内容集合定义保持一致。没有项目文件时显示空状态。
+在这里说明目标、进展与实现方法。
 
-[读书计划](/reading/)分辨“准备阅读”“正在阅读”“已经读完”三种状态。站长在 `src/config/readingPlanConfig.ts` 的 `books` 数组中增加书名、作者、状态、进度或简短记录；保存并重新构建后才会更新公开页面。
+## 当前进度
 
-想继续修改站名、首页和背景，请读[外观与本地预览指南](/posts/guide/04-customize-and-preview/)。
+记录已经完成的部分和下一步计划。
+```
+
+项目头部必填 `title`、`published`，其余字段按需提供。链接字段是 `link` 数组，地址键名是 `value`，不要照搬工具导航的 `url`。
+
+项目详情网址为 `/projects/my-site/`。当前路由只有一个路径段，项目建议直接放在 `projects/` 根目录，不使用多级子目录。`order` 数字越大越靠前，其后按日期排序；`draft: true` 的项目不进入生产构建。
+
+常用状态为 `planning`、`developing`、`published`、`archived`，分别为计划中、开发中、已发布、已归档；不要照搬日历的状态字段。封面可使用 `image`，例如 `/images/projects/my-site.webp`，但必须先放入真实图片；没有封面就省略。修改项目保持文件名稳定，删除文件并重新发布即可撤下详情，但已公开的图片需另行处理。
+
+## 读书计划：状态与进度
+
+编辑 `src/config/readingPlanConfig.ts` 的 `books` 数组：
+
+```ts
+{
+  title: "待填写的书名",
+  author: "待填写的作者",
+  status: "reading",
+  progress: 35,
+  note: "已读到第三章，准备整理笔记。",
+}
+```
+
+示例不是现有书目，请替换为真实记录。`title` 与 `status` 必填；状态为 `planned`、`reading`、`finished`，分别表示准备、正在和完成阅读。`progress` 按 0–100 的百分比填写，不是页数；无须填写的作者、进度或备注可以省略。
+
+完成一本书时改为 `finished`，需要时将进度改为 100、补上读后记录。删除某条书目时从数组中移除对应对象；这个栏目没有把访客操作写回配置的后台。
+
+## 如何检查改动是否生效
+
+保存后查看对应栏目，确认日期、状态筛选、排序与详情返回正常，再运行检查和完整构建。如果开发服务器还显示旧信息，先确认编辑的是对应配置或内容文件，而不是已经生成的 `dist/`。
+
+相册与音乐步骤已分别放在[第三篇](/posts/guide/05-gallery/)和[第四篇](/posts/guide/06-music/)。下一篇：[维护工具、交流与发布流程](/posts/guide/04-customize-and-preview/)。

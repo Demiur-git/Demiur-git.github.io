@@ -27,10 +27,11 @@ const navTitle = siteConfig.navbar.title || siteConfig.title;
         </header>
         <nav class="mobile-menu-list">
             {processedLinks.map((link, index) => (
-                <div class="mobile-menu-item-root" data-mobile-nav-group>
+                <div class="mobile-menu-item-root" data-mobile-nav-group data-library-group={link.url === "/library/" ? "true" : undefined}>
                     {link.children && link.children.length > 0 ? (
                         /* 有子菜单的项目：书页目录手风琴 */
                         <div class="mobile-dropdown" data-mobile-dropdown>
+                            {link.url === "/library/" ? <div class="mobile-library-heading"><a class="mobile-menu-item" href={url(link.url)} data-nav-href={url(link.url)}><span class="mobile-menu-folio" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>{link.icon && <Icon name={link.icon} class="mobile-menu-item-icon" />}<span class="mobile-menu-item-label">{link.name}</span></a><button type="button" class="mobile-library-expand" data-mobile-dropdown-trigger aria-label="展开书库分区" aria-expanded="false" aria-controls={`mobile-submenu-${index}`}><Icon name="material-symbols:keyboard-arrow-down-rounded" class="mobile-menu-item-arrow" /></button></div> :
                             <button
                                 type="button"
                                 class="mobile-menu-item"
@@ -44,7 +45,7 @@ const navTitle = siteConfig.navbar.title || siteConfig.title;
                                 <Icon name="material-symbols:keyboard-arrow-down-rounded"
                                       class="mobile-menu-item-arrow"
                                 />
-                            </button>
+                            </button>}
                             <div id={`mobile-submenu-${index}`} class="mobile-submenu" data-mobile-submenu inert aria-hidden="true">
                                 {link.children.map((child, childIndex) => (
                                     <a
@@ -99,6 +100,11 @@ const navTitle = siteConfig.navbar.title || siteConfig.title;
     @reference "../../styles/main.css";
 
     /* ---- 目录页手风琴 ---- */
+    .mobile-library-heading { display:flex; align-items:center; }
+    .mobile-library-heading a { flex:1; min-width:0; }
+    .mobile-library-expand { flex:0 0 44px; height:50px; color:var(--drawer-ink); border-bottom:1px solid var(--drawer-rule); }
+    .mobile-library-expand:focus-visible, .mobile-library-heading a:focus-visible { outline:2px solid var(--drawer-accent); outline-offset:-3px; }
+    .mobile-menu-item-root[data-active="true"] .mobile-library-heading a { color:var(--drawer-accent); border-left-color:var(--drawer-accent); }
     .mobile-submenu {
         overflow: hidden;
         max-height: 0;
@@ -466,9 +472,16 @@ const navTitle = siteConfig.navbar.title || siteConfig.title;
             if (active) {
 				item.closest("[data-mobile-nav-group]")?.setAttribute("data-active", "true");
                 const group = item.closest("[data-mobile-dropdown]");
-                if (group) setDropdownExpanded(group, true);
+                if (group && !item.closest(".mobile-library-heading")) setDropdownExpanded(group, true);
             }
         });
+		if (/\/posts\//.test(path) || /\/library(?:\/|$)/.test(path) || /\/series(?:\/|$)/.test(path)) {
+			const group = document.querySelector('[data-mobile-nav-group][data-library-group="true"]');
+			group?.setAttribute("data-active", "true");
+			const dropdown = group?.querySelector("[data-mobile-dropdown]");
+			const parentHref = group?.querySelector<HTMLAnchorElement>(".mobile-library-heading a")?.href;
+			if (dropdown && parentHref && path.replace(/\/+$/, "") !== new URL(parentHref).pathname.replace(/\/+$/, "")) setDropdownExpanded(dropdown, true);
+		}
     }
 
     function setDropdownExpanded(dropdown: Element, isExpanded: boolean) {

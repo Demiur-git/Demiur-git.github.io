@@ -1,0 +1,15 @@
+---
+import type { GetStaticPaths } from "astro";
+import { siteConfig } from "@/config";
+import { getSortedPosts } from "@/utils/content-utils";
+import { url } from "@/utils/url-utils";
+export const getStaticPaths = (async () => {
+	const posts = (await getSortedPosts()).filter((post) => !post.data.draft);
+	const count = Math.ceil(posts.length / siteConfig.pagination.postsPerPage);
+	return Array.from({ length: Math.max(0, count - 1) }, (_, i) => ({
+		params: { page: String(i + 2) },
+	}));
+}) satisfies GetStaticPaths;
+const destination = url(`/library/posts/${Astro.params.page}/`);
+---
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8" /><meta http-equiv="refresh" content={`0;url=${destination}`} /><link rel="canonical" href={new URL(destination, Astro.site).href} /><title>前往书库</title></head><body><a href={destination}>前往书库文章列表</a></body></html>

@@ -44,6 +44,7 @@ function destinationLabel(destination: string): string {
 	const labels = pageTransitionConfig.destinationLabels;
 	if (labels[normalized]) return labels[normalized];
 	if (normalized.startsWith("/posts/")) return "Articles";
+		if (normalized.startsWith("/library/posts/")) return "Articles";
 	if (normalized.startsWith("/dynamic/")) return "Memos";
 	if (normalized.startsWith("/gallery/")) return "Gallery";
 	if (normalized.startsWith("/projects/")) return "Projects";

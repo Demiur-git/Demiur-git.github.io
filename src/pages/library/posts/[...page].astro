@@ -1,0 +1,19 @@
+---
+import type { GetStaticPaths } from "astro";
+import Pagination from "@/components/common/Pagination.astro";
+import PostPage from "@/components/layout/PostPage.astro";
+import LibraryHeader from "@/components/layout/LibraryHeader.astro";
+import MainGridLayout from "@/layouts/MainGridLayout.astro";
+import { siteConfig } from "@/config";
+import { getSortedPosts } from "@/utils/content-utils";
+export const getStaticPaths = (async ({ paginate }) => {
+	const posts = (await getSortedPosts()).filter((post) => !post.data.draft);
+	return paginate(posts, { pageSize: siteConfig.pagination.postsPerPage });
+}) satisfies GetStaticPaths;
+const { page } = Astro.props;
+---
+<MainGridLayout title={`文章列表${page.currentPage > 1 ? ` · ${page.currentPage}` : ""}`}>
+	<LibraryHeader title="文章列表" description="按入藏时间翻阅，置顶文字优先展示。" code="05" />
+	<PostPage page={page} />
+	{page.lastPage > 1 && <Pagination page={page} />}
+</MainGridLayout>

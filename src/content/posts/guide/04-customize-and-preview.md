@@ -1,60 +1,111 @@
 ---
-title: 修改网站外观与本地预览
+title: 站长指南（六）：工具导航、友链、留言与发布
 published: 2026-09-25
-description: 从站名、首页和背景入手修改 Demiur，并在发布前检查网站是否正常构建。
-tags: [网站指南, 配置, 本地预览]
-category: 使用指南
-series: 网站使用指南
-seriesOrder: 4
+updated: 2026-09-27
+description: 维护工具分类、官方图标和友链，管理 Waline 留言及赞助内容，完成本地检查和 GitHub Pages 发布。
+tags: [站长指南, 工具导航, 友链, Waline, 发布]
+category: 站长指南
+series: Demiur 站长维护指南
+seriesOrder: 6
 draft: false
 ---
 
-这一篇写给拥有项目源代码的站长。网站的常用内容集中在配置文件和 Markdown 中，不需要每次都去改页面组件。修改前建议保留一份 Git 提交或分支，以便不满意时回到旧版本。
+[工具导航](/booknav/)与“交流”下的[友链](/friends/)、[留言](/guestbook/)、[赞助](/sponsor/)都有独立维护入口。前台入口名称不会改变它们的路由，本篇继续按当前项目字段说明。
 
-## 先找到对应的入口
+## 工具导航：分类与条目
 
-| 想改什么 | 从哪里开始 |
-| --- | --- |
-| 网站名称、描述、语言和基础设置 | `src/config/siteConfig.ts` |
-| 首页介绍、社交链接与六个馆藏入口 | `src/config/homeIntroConfig.ts` |
-| 顶部栏目和“我的／交流／关于”下拉菜单 | `src/config/navBarConfig.ts` |
-| 工具导航的分类与网站清单 | `src/config/booknavConfig.ts` |
-| 友链及展示设置 | `src/config/friendsConfig.ts`、`src/content/spec/friends.md` |
-| 留言簿介绍及留言服务 | `src/content/spec/guestbook.md`、`src/config/commentConfig.ts` |
-| 赞助方式与支持者名单 | `src/config/sponsorConfig.ts` |
-| 本人姓名、头像和简介 | `src/config/profileConfig.ts` |
-| 关于网站的正文 | `src/content/spec/about.md` |
-| 全站昼夜背景 | `src/config/backgroundWallpaper.ts` |
-| 左下角绫桌宠及其三态图片 | `src/config/pioConfig.ts`、`public/images/oc-pet/` |
+配置位于 `src/config/booknavConfig.ts`。`booknavPageConfig` 控制页头和可选 favicon 服务；`booknavConfig` 是分类数组，分类里的 `items` 是网站数组。目前已收录 AI 助手、模型与本地 AI、开发与开源、算法与练习四组真实工具。
 
-例如，修改 `siteConfig.title` 会改变网站的站名，也会用于切页开书动画的左页；首页大标题则由 `homeIntroConfig.title` 单独控制。“关于本人”读取个人资料配置，“关于网站”读取独立的 Markdown 正文，[“绫”](/about/ling/)则是虚构引导者的独立页面，不会与作者资料混在一起。
+下面是分组结构示例，维护时应改已有组或追加唯一 ID 的新组，不要重复添加同名 ID：
 
-## 维护工具与交流页面
-
-工具导航复用 `booknavConfig` 的分组与条目结构，每组包含 `id`、`name` 和 `items`，每项至少填写 `title` 和 `url`，可补充 `desc`、图标及排序权重。`enabled: false` 的分组或条目不会显示；当前清单为空。外部工具链接会在新窗口打开，不需要把工具本身部署到本站。
-
-友链写入 `friendsConfig`，填写标题、网址、头像、简介、权重与 `enabled`，已启用的条目按权重展示。留言页目前没有在线留言服务；必须先在 `commentConfig.ts` 配置项目支持的评论服务，再重新构建才能收集访客留言，不能把当前空页面当作提交表单。赞助需要在 `sponsorConfig.methods` 填入真实且已启用的方式；没有方式时显示“暂未开放”。私人密钥不应写进公开配置。
-
-这四页的访问开关仍在 `siteConfig.pages` 中，分别是 `booknav`、`friends`、`guestbook`、`sponsor`；只修改导航文字不会改变这些路由。
-
-## 更换图片与外观
-
-首页右侧插画在 `homeIntroConfig.heroArtwork` 中设置亮色和暗色图片。全站壁纸在 `backgroundWallpaper` 的 `src` 与 `darkSrc` 中设置桌面和手机图片；本项目默认引用 `src/assets/images/` 中的日夜图。如果增加自己的图片，先把文件放进项目，再将配置路径指向它，避免只修改路径却没有提交对应素材。
-
-桌宠目前使用绫的 Q 版三态立绘。更换时，可把透明图片放入 `public/images/oc-pet/`，再在 `pioConfig.ts` 中修改待机、眨眼、互动图片路径；三张图片要保持相同画布和人物位置。正常比例立绘用于 `/about/ling/` 页面，与桌宠素材分别维护。这些平面图不是 Live2D 分层原画；若以后要做 Live2D，还需另外准备分层素材与模型。若希望改配色或纸张质感，则先查看 `src/styles/library-theme.css`，并同时检查亮色与暗色模式的可读性。
-
-## 在本地启动和检查
-
-项目使用 Node.js 与 pnpm。按 [README 的环境要求](https://github.com/Demiur-git/personal_pages#本地运行)安装后，在项目根目录运行：
-
-```powershell
-pnpm.cmd install
-pnpm.cmd dev
+```ts
+{
+  id: "development",
+  name: "开发工具",
+  icon: "material-symbols:code-rounded",
+  desc: "代码托管与协作",
+  weight: 20,
+  enabled: true,
+  items: [
+    {
+      title: "GitHub",
+      url: "https://github.com/",
+      desc: "代码托管与开源协作。",
+      icon: "/images/tool-icons/github.png",
+      weight: 10,
+      enabled: true,
+    },
+  ],
+}
 ```
 
-开发服务器默认地址是 `http://localhost:4321`；如果该端口被占用，以终端实际显示的地址为准。Windows PowerShell 若提示禁止运行 `pnpm.ps1`，使用 `pnpm.cmd` 即可，不必为了启动本站放宽系统脚本策略。
+分组必填 `id`、`name`、`items`；网站条目必填 `title`、`url`。权重越大越靠前，分组与组内条目分别排序。`enabled` 默认启用，设置为 `false` 可暂时隐藏，删掉对象则彻底从配置移除。
 
-修改完成后，依次检查内容和生产构建：
+搜索可匹配名称、简介和域名。分类 ID 用于锚点跳转，避免重复或频繁改名。外链应填完整 HTTPS 地址，链接会在新窗口打开。
+
+## 给工具配官方图标
+
+当前已收录工具使用 `public/images/tool-icons/` 中的本地图标。新增工具时，准备有权使用的官方标识文件，并将条目 `icon` 指向 `/images/tool-icons/文件名`；浏览器路径不带 `public`。
+
+`icon` 也支持图片 URL 或站内可用的 Iconify 图标名。`booknavPageConfig.favicon.enabled` 当前为 `false`，不要以为不填图标就必然会自动抓取官方图标；若以后启用外部 favicon 服务，要自行确认服务可用性和请求行为。
+
+不要从不明站点随意复制 Logo，也不要填写不存在的本地文件。改完检查图标失败回退、名称与域名搜索、无结果状态和手机布局。
+
+## 友链：与工具的字段不一样
+
+编辑 `src/config/friendsConfig.ts`。站点列表在 `friendsConfig` 中，页头、自定义正文和排序选项在 `friendsPageConfig` 中。以当前已收录的框架文档为例：
+
+```ts
+{
+  title: "Firefly 文档",
+  imgurl: "/images/friends/firefly.png",
+  desc: "本站使用的 Firefly 模板中文文档。",
+  siteurl: "https://docs-firefly.cuteleaf.cn/zh/",
+  tags: ["框架来源", "Astro", "文档"],
+  weight: 10,
+  enabled: true,
+}
+```
+
+友链网址使用 `siteurl`，头像使用 `imgurl`，不是工具的 `url`、`icon`。除可选 `tags` 外，示例中的字段都应填写；头像文件与配置一起发布。
+
+只有 `enabled: true` 的友链展示，正常按 `weight` 从大到小排序。`friendsPageConfig.randomizeSort` 开启后随机排列，不再按权重呈现。修改介绍正文用 `src/content/spec/friends.md`，并开启 `showCustomContent`；当前该开关关闭，单改 Markdown 不会显示。
+
+删除或隐藏友链不会通知对方，互换链接等外部沟通需自行处理。不要将教程示例当成新的真实友链申请。
+
+## 留言与文章、便签评论
+
+网站已经使用线上 Waline，前端配置在 `src/config/commentConfig.ts`，服务地址通过 `PUBLIC_WALINE_SERVER_URL` 提供。本地 `.env.local` 可填写：
+
+```dotenv
+PUBLIC_WALINE_SERVER_URL=https://demiur-waline.vercel.app
+```
+
+服务地址是公开信息；数据库密码、Cookie 与管理密钥不应放在 `PUBLIC_` 环境变量、公开配置或文章中。环境变量修改后重启开发服务；生产预览则需重新构建。未配置地址时页面显示尚未开放，不连接旧本机服务。
+
+`src/content/spec/guestbook.md` 是留言页介绍。文章通过头部 `comment` 控制自己的评论，便签通过 `dynamicConfig.showComment` 控制弹层评论。三类内容使用独立路径，不要为改标题随意改文件 ID 或评论路径。
+
+本地预览与线上使用同一个服务地址及页面路径，因此本地真实提交也会写入线上数据库；测试时不要公开私人邮箱或留下未清理的样本。
+
+## 审核必须在服务端完成
+
+站长管理入口是 [Waline 后台](https://demiur-waline.vercel.app/ui)。审核留言、回复、拒绝和删除都在后台执行，不是修改网站 Markdown。客户端提示“审核后公开”本身不能实现审核：服务端需启用 `COMMENT_AUDIT=true`，保存后重新部署服务，并实际测试提交后不可见、审核通过后公开的流程。
+
+前端昵称必填、邮箱选填，隐藏邮箱展示。注册 403、数据库连接或域名白名单问题属于服务端排查；脚本加载成功或查询返回 200，并不代表管理员注册和审核已完成。不要为了测试把审核关掉或清空现有数据库。
+
+服务端详细维护说明在仓库的 [Waline 说明](https://github.com/Demiur-git/Demiur-git.github.io/blob/main/docs/waline-online.md)，与网站更新分开管理。
+
+## 赞助内容
+
+`src/config/sponsorConfig.ts` 的 `methods` 保存收款方式，`sponsors` 保存获准公开的支持者信息。当前没有真实收款方式，页面会显示暂未开放。
+
+确有需要时再填真实 `name`、`enabled`，并按实际情况提供 `qrCode` 公共图片路径或 `link`。二维码文件放在 `public/` 的对应目录，不把本机文件路径写到网页。`showSponsorsList` 控制名单展示，`showButtonInPost` 控制文章底部入口。
+
+不要发布测试收款码、虚构金额或未经同意的支持者姓名；这篇教程不会替你启用任何收款渠道。
+
+## 本地检查与生产预览
+
+在项目根目录运行：
 
 ```powershell
 pnpm.cmd check
@@ -63,12 +114,27 @@ pnpm.cmd build
 pnpm.cmd preview
 ```
 
-用本地预览打开首页、文章、便签和“我的”各页面，再切换亮暗模式并检查手机宽度。站内搜索等构建期功能应以完整构建后的预览为准。
+完整构建会处理内容路由、图片、字体和 Pagefind 搜索索引。不要直接编辑 `dist/`，下次构建会覆盖它。查看预览时用终端显示的地址，核对文章、便签空状态、相册图片、工具外链、友链和评论加载。
 
-## 发布之前
+也要在亮暗模式和手机宽度检查长标题、表格和代码块；音乐继续播放、前进后退、序章首次播放及环境信息窗不能因内容更新失效。
 
-本仓库目前的公开网址仍是示例配置。正式部署前，应把 `siteConfig.site_url` 改成真正的网站地址，并在所选静态托管平台完成部署设置；不要仅凭 GitHub 仓库存在就认为网站已经上线。
+## 提交与 GitHub Pages 发布
 
-静态构建只会包含构建时能读到、并随发布产物上传的内容。文章、便签、相册图片和音乐文件都要分别检查；本地个人资料、密钥或无权公开的音频不要误传。确认构建产物和链接正常后，再按自己的发布流程提交与部署。
+当前仓库为 [Demiur-git.github.io](https://github.com/Demiur-git/Demiur-git.github.io)，公开站点为 [Demiur](https://demiur-git.github.io/)。推送 `main` 后，`.github/workflows/deploy.yml` 会执行检查、构建并部署 GitHub Pages，不需要手动把本地 `dist` 提交到仓库。
 
-如果想从访客视角重新走一遍网站，可以回到本系列的[首页导览](/posts/guide/01-tour/)。
+以下只演示发布一篇文章，路径必须替换成真实修改的文件：
+
+```powershell
+git status --short
+git diff
+git add -- src/content/posts/my-first-post.md
+git diff --cached --stat
+git commit -m "docs: 更新文章内容"
+git push origin main
+```
+
+涉及图片、配置或删除文件时，也要逐项暂存相应改动，再核对暂存清单。不要盲目 `git add .`：个人音乐清单仍是已跟踪文件，忽略规则不会自动保护其本地修改；音乐实体、上传凭证和 `.env.local` 也不应发布。
+
+推送后查看仓库 Actions，等部署任务成功，再检查公开页面。修改 Waline 服务变量需部署 Waline；更新 R2 资源需上传 R2；这两件事不会因推送网站仓库自动完成。
+
+遇到构建失败，应保留错误输出并先解决失败原因，而不是跳过检查。需要回顾外观配置时，返回[第一篇维护入口指南](/posts/guide/01-tour/)。
