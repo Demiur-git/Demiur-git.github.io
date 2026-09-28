@@ -1,9 +1,15 @@
+import { pulseScenePath } from "./pulse-route";
 import { url } from "./url-utils";
 
 export function isEasterEggPath(pathname: string): boolean {
-	return [url("/pulse/"), url("/newworld/")].some(
-		(path) => path.replace(/\/+$/, "") === pathname.replace(/\/+$/, ""),
-	);
+	return [
+		url("/pulse/"),
+		pulseScenePath(),
+		url("/newworld/"),
+		url("/starfield/"),
+		url("/echo/"),
+		url("/echo/white/"),
+	].some((path) => path.replace(/\/+$/, "") === pathname.replace(/\/+$/, ""));
 }
 
 let snapshot: { playing: boolean; id: string; source: string } | null = null;

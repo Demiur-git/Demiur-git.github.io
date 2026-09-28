@@ -1,0 +1,9 @@
+---
+import PulsePage from "@/components/features/PulsePage.astro";
+import { pulsePuzzle } from "@/config/pulsePuzzle";
+
+export function getStaticPaths() {
+	return [{ params: { key: pulsePuzzle.holdHint.base64url } }];
+}
+---
+<PulsePage />

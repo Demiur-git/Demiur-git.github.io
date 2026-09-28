@@ -18,7 +18,8 @@ const outlines: Record<string,string> = { fold:"M2 3h9l3 4v11H2z M10 3v5h4", tic
 </pulse-clue>
 <script>
 	import { pulsePuzzle } from "@/config/pulsePuzzle";
-	import { collectClue, emptyProgress, getPuzzleProgress, isPuzzleReady, savePuzzleProgress, tryUnlockPuzzle } from "@/utils/pulse-puzzle";
+	import { collectClue, emptyProgress, getPuzzleProgress, isPuzzleReady, resetEchoBranch, savePuzzleProgress, tryUnlockPuzzle } from "@/utils/pulse-puzzle";
+	import { pulseScenePath } from "@/utils/pulse-route";
 	import { url } from "@/utils/url-utils";
 	class PulseClue extends HTMLElement {
 		private abort?: AbortController;
@@ -83,12 +84,30 @@ const outlines: Record<string,string> = { fold:"M2 3h9l3 4v11H2z M10 3v5h4", tic
 			}
 			const progress = getPuzzleProgress();
 			if (lockedVisit) paragraph("这里还未解锁。先寻找主页馆藏目录遗留的折角。", "record-status");
+			if (progress.echoClueSeen || progress.echoUnlocked) {
+				const resetEcho = document.createElement("button"); resetEcho.type = "button"; resetEcho.textContent = "重置第二条心跳"; resetEcho.className = "record-action";
+				resetEcho.addEventListener("click", () => {
+					content.replaceChildren(); paragraph("只清除项目页批注与第二条心跳的解锁记录？其他探索进度会保留。");
+					for (const [label, confirmed] of [["确认重置", true], ["取消", false]] as const) {
+						const button = document.createElement("button"); button.type = "button"; button.textContent = label; button.className = "record-action";
+						button.addEventListener("click", () => {
+							if (confirmed) resetEchoBranch();
+							this.renderRecord();
+							if (confirmed) {
+								const notice = document.createElement("p"); notice.textContent = "第二条心跳已重置。"; notice.setAttribute("role", "status"); content.prepend(notice);
+							}
+							content.querySelector<HTMLButtonElement>("button")?.focus();
+						}); content.append(button);
+					}
+					content.querySelector<HTMLButtonElement>("button")?.focus();
+				}); content.append(resetEcho);
+			}
 			if (progress.unlocked) {
 				paragraph("借阅记录已还原。");
-				const enter = document.createElement("a"); enter.href = url("/pulse/"); enter.textContent = "再次进入"; enter.className = "record-action"; content.append(enter);
+				const enter = document.createElement("a"); enter.href = pulseScenePath(); enter.textContent = "再次进入"; enter.className = "record-action"; content.append(enter);
 				const reset = document.createElement("button"); reset.type = "button"; reset.textContent = "重置探索进度"; reset.className = "record-action";
 				reset.addEventListener("click", () => {
-				content.replaceChildren(); paragraph("确认清除两层探索、数字记录与残纸？");
+				content.replaceChildren(); paragraph("确认清除全部探索、数字记录与残纸？");
 					for (const [label, confirmed] of [["确认重置", true], ["取消", false]] as const) {
 						const button = document.createElement("button"); button.textContent = label; button.className = "record-action";
 						button.addEventListener("click", () => { if (confirmed) { savePuzzleProgress(emptyProgress()); dialog.close(); } else this.renderRecord(); }); content.append(button);
@@ -105,7 +124,7 @@ const outlines: Record<string,string> = { fold:"M2 3h9l3 4v11H2z M10 3v5h4", tic
 			const submit = document.createElement("button"); submit.textContent = "确认暗号"; submit.type = "submit"; submit.className = "record-action";
 			const status = document.createElement("p"); status.setAttribute("role", "status");
 			form.append(label, submit, status); content.append(form);
-			form.addEventListener("submit", (event) => { event.preventDefault(); if (tryUnlockPuzzle(input.value)) { dialog.close(); if (window.swup) void window.swup.navigate(url("/pulse/")); else location.assign(url("/pulse/")); } else { status.textContent = "暗号不正确，再试一次。已找到的记录仍然保留。"; input.focus(); } });
+			form.addEventListener("submit", (event) => { event.preventDefault(); if (tryUnlockPuzzle(input.value)) { dialog.close(); if (window.swup) void window.swup.navigate(pulseScenePath()); else location.assign(pulseScenePath()); } else { status.textContent = "暗号不正确，再试一次。已找到的记录仍然保留。"; input.focus(); } });
 		}
 		disconnectedCallback() { this.abort?.abort(); const dialog = this.querySelector<HTMLDialogElement>("dialog"); if (dialog?.matches(":popover-open")) dialog.hidePopover(); dialog?.close(); }
 	}

@@ -5,7 +5,7 @@ export const dynamicConfig: DynamicConfig = {
 	title: "便签",
 
 	// 页面描述文本，如果留空则使用 i18n 中的翻译
-	description: "短想法、过程记录和留给未来的线索。",
+	description: "馆长的一些短想法、过程记录和留给未来的线索",
 
 	// 动态头像和名称的跳转地址，支持站内路径或完整 URL
 	profileUrl: "/",

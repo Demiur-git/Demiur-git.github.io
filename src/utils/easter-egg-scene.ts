@@ -42,6 +42,9 @@ export abstract class EasterEggScene extends HTMLElement {
 		this.dialog.focus({ preventScroll: true });
 		document.documentElement.removeAttribute("data-pulse-pending");
 		document.documentElement.removeAttribute("data-world-pending");
+		document.documentElement.removeAttribute("data-starfield-pending");
+		document.documentElement.removeAttribute("data-echo-pending");
+		document.documentElement.removeAttribute("data-echo-white-pending");
 		const motion = matchMedia("(prefers-reduced-motion: reduce)");
 		const update = () => {
 			this.reduced = motion.matches;
@@ -95,7 +98,7 @@ export abstract class EasterEggScene extends HTMLElement {
 					!(
 						event.target instanceof Element &&
 						event.target.closest(
-							"button,a,[data-morse-panel],[data-world-dialogue]",
+							"button,a,[data-morse-panel],[data-world-dialogue],[data-white-dialogue]",
 						)
 					)
 				)
@@ -142,15 +145,26 @@ export abstract class EasterEggScene extends HTMLElement {
 			document.documentElement.style.overflow = previousOverflow;
 		document.documentElement.removeAttribute("data-pulse-pending");
 		document.documentElement.removeAttribute("data-world-pending");
+		document.documentElement.removeAttribute("data-starfield-pending");
+		document.documentElement.removeAttribute("data-echo-pending");
+		document.documentElement.removeAttribute("data-echo-white-pending");
 		// Keep the destination's blank field until its lazy controller mounts.
 		// Otherwise the site wallpaper can peek through between the two scenes.
-		if (!scrollOwners.size && isEasterEggPath(location.pathname))
+		if (!scrollOwners.size && isEasterEggPath(location.pathname)) {
+			const path = location.pathname.replace(/\/+$/, "");
 			document.documentElement.setAttribute(
-				location.pathname.replace(/\/+$/, "").endsWith("/newworld")
+				path.endsWith("/echo/white")
+					? "data-echo-white-pending"
+					: path.endsWith("/newworld")
 					? "data-world-pending"
-					: "data-pulse-pending",
+					: path.endsWith("/starfield")
+						? "data-starfield-pending"
+						: path.endsWith("/echo")
+							? "data-echo-pending"
+							: "data-pulse-pending",
 				"",
 			);
+		}
 		releaseEasterEggMusic(this);
 		if (this.previousFocus?.isConnected)
 			this.previousFocus.focus({ preventScroll: true });

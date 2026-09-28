@@ -58,6 +58,9 @@ music-inbox/*
 # Generated local music assets are private unless explicitly published later.
 public/assets/music/
 
+# Private dialogue source workbook. Only selected public dialogue text belongs in site code.
+/对话.xls
+
 # vibe coding
 .codex*
 .claude

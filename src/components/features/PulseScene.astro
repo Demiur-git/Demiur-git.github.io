@@ -1,15 +1,22 @@
+---
+import { url } from "@/utils/url-utils";
+---
 <pulse-scene data-pagefind-ignore>
 	<dialog class="pulse-screen" aria-label="装饰心电线场景" tabindex="-1">
-		<svg class="pulse-wave" viewBox="0 0 1200 400" preserveAspectRatio="none" aria-hidden="true"><g data-trail></g><path data-static fill="none" stroke="#111" stroke-width="1.4" vector-effect="non-scaling-stroke" /><circle data-scan-head r="2" fill="#111" visibility="hidden" /></svg>
+		<svg class="pulse-wave" viewBox="0 0 1200 400" preserveAspectRatio="none" aria-hidden="true"><g data-trail></g><path data-static fill="none" stroke="#111" stroke-width="1.4" vector-effect="non-scaling-stroke" /><circle data-scan-head r="2" fill="#111" visibility="hidden" /><path data-echo-residue fill="none" stroke="#777" stroke-opacity="0.43" stroke-width="1.1" vector-effect="non-scaling-stroke" visibility="hidden" /><path data-echo-primary fill="none" stroke="#111" stroke-width="1.6" vector-effect="non-scaling-stroke" visibility="hidden" /><path data-echo-ghost fill="none" stroke="#888" stroke-width="1.6" vector-effect="non-scaling-stroke" visibility="hidden" /></svg>
 		<button class="wave-interaction" aria-label="让心电线停留：按住空格" data-wave-hold></button>
+		<button class="echo-interaction" type="button" aria-label="没有消失的短线。按 Enter 或空格选取，再用方向键移动；也可拖动" data-echo-handle hidden></button>
+		<p class="echo-status" data-echo-status role="status" aria-live="polite"></p>
+		<button class="echo-leave" type="button" data-echo-leave hidden>松开第二条线</button>
 		<section class="morse-panel" data-morse-panel hidden aria-label="摩斯输入">
 			<p class="morse-heading">SIGNAL / INPUT</p>
 			<div class="morse-readout" aria-live="polite"><span data-morse-symbols aria-label="当前点划"></span><strong data-morse-letters aria-label="已确认字母"></strong></div>
 			<div class="morse-actions"><button data-morse-action="dot">↑ ·</button><button data-morse-action="dash">↓ —</button><button data-morse-action="confirm">确认字母 ↵</button><button data-morse-action="undo">退格</button><button data-morse-action="clear">清空</button><button data-morse-action="submit">提交</button><button data-morse-action="leave">收起模式</button></div>
 			<p class="morse-status" data-morse-status role="status"></p>
-			<a data-world-entry hidden href="../newworld/">进入深处</a>
+			<a data-world-entry hidden href={url("/newworld/")}>进入深处</a>
+			<a data-starfield-entry hidden href={url("/starfield/")}>进入星空</a>
 		</section>
-		<a class="pulse-return" data-scene-return href="../music/" hidden>返回</a>
+		<a class="pulse-return" data-scene-return href={url("/music/")} hidden>返回</a>
 	</dialog>
 </pulse-scene>
 <script>
@@ -22,6 +29,17 @@
 	.pulse-screen::backdrop { background:#fff; } .pulse-screen:focus { outline:none; }
 	.pulse-wave { position:absolute; left:0; top:50%; width:100%; height:min(40dvh,400px); transform:translateY(-50%); pointer-events:none; }
 	.wave-interaction { position:absolute; left:0; top:50%; width:100%; height:min(40dvh,400px); transform:translateY(-50%); background:transparent; touch-action:none; cursor:default; border:0; }
+	.echo-interaction { position:absolute; z-index:1; left:var(--echo-hit-x,50%); top:var(--echo-hit-y,50%); width:44px; height:44px; transform:translate(-50%,-50%); border:0; background:transparent; touch-action:none; cursor:default; }
+	.echo-interaction[hidden] { display:none; }
+	.echo-interaction:focus-visible { outline:1px dashed #888; outline-offset:-5px; }
+	.echo-status { position:absolute; left:50%; top:calc(50% + min(20dvh,200px) + 8px); transform:translateX(-50%); width:min(480px,calc(100vw - 32px)); margin:0; color:#666; text-align:center; font-size:12px; }
+	.echo-status:empty { display:none; }
+	.echo-leave { position:absolute; z-index:2; left:50%; top:calc(50% + min(20dvh,200px) + 34px); transform:translateX(-50%); min-height:40px; padding:8px 12px; border:1px solid #aaa; background:#fff; color:#333; font-size:12px; cursor:pointer; }
+	.echo-leave[hidden] { display:none; }
+	.echo-leave:focus-visible { outline:2px solid #111; outline-offset:3px; }
+	pulse-scene[data-echo] .echo-interaction { left:0; top:30%; width:100%; height:40%; transform:none; }
+	pulse-scene[data-echo] .wave-interaction,pulse-scene[data-morse] .echo-interaction { pointer-events:none; }
+	pulse-scene[data-morse] .echo-interaction,pulse-scene[data-morse] .echo-status { display:none; }
 	pulse-scene[data-morse] .pulse-wave { height:clamp(100px,24vh,230px); }
 	pulse-scene[data-morse] .wave-interaction { height:max(64px,24vh); }
 	.wave-interaction:focus-visible { outline:1px dashed #777; outline-offset:-8px; }
@@ -36,6 +54,6 @@
 	.morse-panel a { display:inline-block; margin-top:8px; padding:8px 12px; border:1px solid #333; } .morse-panel a[hidden] { display:none; }
 	.pulse-return { position:absolute; bottom:max(28px,env(safe-area-inset-bottom)); right:28px; padding:10px 18px; color:#222; background:#fff; border:1px solid #bbb; font-size:14px; text-decoration:none; }
 	.pulse-return[hidden] { display:none; } .pulse-return:focus-visible { outline:2px solid #111; outline-offset:4px; }
-	@media(max-width:480px) { .morse-panel { top:calc(50% + 65px); max-height:calc(50dvh - 85px); padding:.75rem 0; } .morse-actions button { padding:5px 9px; font-size:12px; } }
-	@media(max-height:520px) { .pulse-wave,.wave-interaction { top:30%; } .morse-panel { top:calc(30% + 50px); max-height:calc(70dvh - 66px); } .pulse-return { top:12px; bottom:auto; right:16px; } }
+	@media(max-width:480px) { .morse-panel { top:calc(50% + 65px); max-height:calc(50dvh - 85px); padding:.75rem 0; } .morse-actions button { padding:5px 9px; font-size:12px; } .echo-leave { top:calc(50% + min(20dvh,200px) + 18px); } }
+	@media(max-height:520px) { .pulse-wave,.wave-interaction { top:30%; } pulse-scene[data-echo] .echo-interaction { top:10%; height:40%; } .echo-status { top:calc(30% + min(20dvh,200px) + 4px); } .echo-leave { top:calc(30% + min(20dvh,200px) + 26px); } .morse-panel { top:calc(30% + 50px); max-height:calc(70dvh - 66px); } .pulse-return { top:12px; bottom:auto; right:16px; } }
 </style>

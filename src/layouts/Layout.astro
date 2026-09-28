@@ -32,6 +32,7 @@ import {
 } from "@/constants/constants";
 import { defaultFavicons } from "@/constants/icon";
 import type { Favicon } from "@/types/config";
+import { isEasterEggPath } from "@/utils/easter-egg-session";
 import { isHomePage } from "@/utils/layout-utils";
 import { HOME_INTRO_SEEN_KEY } from "@/utils/home-entrance-session";
 import { getAuthorAvatarUrl, getSiteLogo } from "@/utils/schema-image";
@@ -131,7 +132,7 @@ const siteLogo = await getSiteLogo();
 
 // canonical：对 /archive/ 与 /search/ 剥离查询串，避免筛选视图自我 canonical 到 ?tag= 等
 const canonicalUrl = getCanonicalUrl(Astro.url);
-const isEasterEgg = /\/(pulse|newworld)\/?$/.test(Astro.url.pathname);
+const isEasterEgg = isEasterEggPath(Astro.url.pathname);
 
 // OG 图片：文章走生成图/封面，非文章页回退到站点 logo
 let ogImageUrl: string | undefined;

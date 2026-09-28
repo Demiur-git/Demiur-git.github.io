@@ -1,0 +1,33 @@
+栏目,文件或目录,可修改的文字,备注
+全站基础,src/config/siteConfig.ts,站名、副标题、网站描述、关键词等全站信息,
+关于本人,src/config/profileConfig.ts,本人姓名、简介、社交链接名称,头像路径也在这里
+主页,src/config/homeIntroConfig.ts,首页主标题、介绍、社交入口、馆藏目录名称与说明,
+全站导航,src/config/navBarConfig.ts,顶栏及下拉菜单文字,
+开屏序章,src/config/homeEntranceConfig.ts,开屏旁白、绫的对话和选项文字,
+桌宠,src/config/pioConfig.ts,绫桌宠的显示名与随机短句,
+切页动画,src/config/pageTransitionConfig.ts,开书切页时显示的英文页面名,
+公告与页脚,src/config/announcementConfig.ts,公告内容与公告链接文字,
+公告与页脚,src/config/FooterConfig.html,自定义页脚文字,
+文章,src/content/posts/,每篇文章的标题、摘要、分类、标签、系列及 Markdown 正文,目前有六篇指南
+便签,src/content/dynamic/,每条便签的正文及内容元信息,目前目录为空
+便签,src/config/dynamicConfig.ts,便签页标题与简介,发布命令和接口不在这里修改
+项目,src/content/projects/,项目标题、简介、标签、链接及正文,目前目录为空
+相册,src/config/galleryConfig.ts,相册名称、简介、地点、标签与密码提示,目前相册清单为空
+日历,src/config/calendarPageConfig.ts,公开节日、纪念日与预设日程的标题和说明,访客保存在浏览器里的日程不在此文件
+读书计划,src/config/readingPlanConfig.ts,页面标题、书名、作者、个人评分与评价,Bangumi 简介与站点评分来自外部同步
+音乐,src/config/musicConfig.ts,音乐页标题与说明,
+音乐,public/assets/music/library/,曲库中的歌词 .lrc 文字,只改本地文件不会自动上传到公开音乐存储
+工具导航,src/config/booknavConfig.ts,工具分类、网站名称和用途说明,
+友链,src/config/friendsConfig.ts,友链名称、简介与标签,
+友链,src/content/spec/friends.md,友链页补充正文,须启用 showCustomContent 才显示
+赞助,src/config/sponsorConfig.ts,赞助页介绍及后续赞助资料,
+留言,src/content/spec/guestbook.md,留言页开头说明,访客留言正文保存在 Waline 服务中
+关于,src/content/spec/about.md,关于网站的正文,
+关于绫,src/pages/about/ling.astro,绫的角色介绍及页面固定文字,
+关于本人,src/pages/about/me.astro,关于我、社交链接等固定标题,
+彩蛋,src/config/pulsePuzzle.ts,彩蛋线索短句、王座对白与选项文字,修改可能影响谜题，请留意解谜逻辑
+版权,src/config/licenseConfig.ts,文章许可证名称,修改前须确认实际授权条款
+通用界面,src/i18n/languages/zh_CN.ts,通用按钮、提示、空状态等中文翻译,
+通用界面,src/i18n/languages/,其他语言的对应翻译文字,按实际使用语言同步修改
+页面固定文字,src/pages/,各页面直接写在页面源码里的标题、说明和提示,修改前先搜索文字所在文件
+组件固定文字,src/components/,组件直接写在源码里的按钮、弹窗和提示文字,修改前先搜索文字所在文件

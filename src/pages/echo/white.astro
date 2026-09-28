@@ -1,0 +1,16 @@
+---
+import EchoWhiteScene from "@/components/features/EchoWhiteScene.astro";
+import MainGridLayout from "@/layouts/MainGridLayout.astro";
+import { url } from "@/utils/url-utils";
+---
+
+<MainGridLayout title="">
+	<Fragment slot="head">
+		<meta name="robots" content="noindex, nofollow" />
+		<script is:inline>document.documentElement.setAttribute("data-echo-white-pending", "");</script>
+		<style is:global>html[data-echo-white-pending]::after { content:""; position:fixed; inset:0; background:#fff; z-index:2147483647; pointer-events:none; }</style>
+		<noscript><style>html::after { display:none!important; } .content-panel, #swup-container, .onload-animation { transform:none!important; animation:none!important; opacity:1!important; } .content-panel { z-index:2147483647!important; }</style></noscript>
+	</Fragment>
+	<div data-pagefind-ignore="all"><EchoWhiteScene /><noscript><div class="white-static"><a href={url("/echo/")}>返回裂缝</a></div></noscript></div>
+</MainGridLayout>
+<style is:global>.white-static { position:fixed; inset:0; display:grid; place-items:center; z-index:2147483646; background:#fff; color:#222; } .white-static a { text-decoration:underline; }</style>

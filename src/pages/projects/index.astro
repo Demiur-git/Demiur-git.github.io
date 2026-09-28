@@ -125,6 +125,14 @@ const statusFilters = PROJECT_STATUS_KEYS.map((key) => {
 			<Icon name="material-symbols:search-off-rounded" class="text-4xl mb-3" />
 			<div class="text-sm">{i18n(I18nKey.searchNoResults)}</div>
 		</div>
+		<project-echo-clue class="project-margin-note">
+			<details>
+				<summary aria-label="翻看页边的旧档案批注"><svg viewBox="0 0 52 20" aria-hidden="true"><path d="M3 10 Q16 8 29 11 T49 10" /><path d="M3 14 Q16 12 29 15 T49 14" /></svg></summary>
+				<div class="project-margin-paper">
+					<p>覆写的记录被擦去，页上仍停着一笔。</p>
+				</div>
+			</details>
+		</project-echo-clue>
 	</section>
 
 	<script slot="head" is:inline>
@@ -194,3 +202,16 @@ const statusFilters = PROJECT_STATUS_KEYS.map((key) => {
 	</script>
 
 </MainGridLayout>
+
+<style>
+	.project-margin-note { display:block; justify-self:end; width:min(300px,100%); margin:0.5rem 0 0 auto; color:var(--content-meta); font-size:0.72rem; }
+	.project-margin-note summary { width:52px; height:24px; margin-left:auto; padding:0; list-style:none; cursor:default; opacity:0.58; }
+	.project-margin-note summary::-webkit-details-marker { display:none; }
+	.project-margin-note summary:hover,.project-margin-note summary:focus-visible { opacity:1; }
+	.project-margin-note summary:focus-visible { outline:2px solid var(--library-moss); outline-offset:3px; }
+	.project-margin-note summary svg { display:block; width:52px; height:20px; fill:none; stroke:currentColor; stroke-width:1; }
+	.project-margin-note summary svg path:last-child { opacity:0.55; }
+	.project-margin-paper { margin-top:0.35rem; padding:0.75rem 1rem; border:1px solid var(--library-rule); background:var(--library-surface); box-shadow:2px 4px 8px rgb(0 0 0 / 9%); transform:rotate(-1deg); }
+	.project-margin-paper p { margin:0.4rem 0 0; line-height:1.65; }
+	@media(prefers-reduced-motion:reduce) { .project-margin-paper { transform:none; } }
+</style>

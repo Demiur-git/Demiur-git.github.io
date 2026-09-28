@@ -1,0 +1,51 @@
+---
+import { url } from "@/utils/url-utils";
+---
+
+<echo-white-scene data-pagefind-ignore>
+	<dialog class="white-screen" aria-label="白色空间" tabindex="-1">
+		<section class="white-dialogue" data-white-dialogue hidden aria-label="白色空间的对话">
+			<header>
+				<span class="white-speaker" data-white-speaker></span>
+				<div class="white-controls">
+					<small data-white-count></small>
+					<button class="white-auto" data-white-auto type="button" aria-pressed="false" aria-label="自动推进：关闭" title="自动推进">
+						<svg viewBox="0 0 40 36" width="34" height="32" aria-hidden="true"><path d="M5 3L36 18L5 33Z" fill="none" stroke="currentColor" stroke-width="1.2" /><text x="16" y="23" text-anchor="middle" font-size="13" fill="currentColor">A</text></svg>
+					</button>
+				</div>
+			</header>
+			<p class="white-words" data-white-words aria-hidden="true"></p>
+			<p class="sr-only" data-white-accessible aria-live="polite"></p>
+			<span class="white-caret" aria-hidden="true">▿</span>
+		</section>
+		<div class="white-choice" data-white-choice hidden><button data-white-back type="button">回去</button></div>
+		<a class="white-return" data-scene-return href={url("/echo/")} hidden>返回裂缝</a>
+	</dialog>
+</echo-white-scene>
+<script>
+	import { EchoWhiteScene } from "@/utils/echo-white-scene";
+	import { registerEasterEgg } from "@/utils/easter-egg-scene";
+	registerEasterEgg("echo-white-scene", EchoWhiteScene);
+</script>
+<style>
+	.white-screen { position:fixed; inset:0; width:100vw; height:100dvh; max-width:none; max-height:none; margin:0; padding:0; overflow:hidden; border:0; background:#fff; color:#202020; overscroll-behavior:none; }
+	.white-screen::backdrop { background:#fff; }
+	.white-screen:focus { outline:none; }
+	.white-dialogue { position:absolute; left:50%; bottom:max(24px,env(safe-area-inset-bottom)); transform:translateX(-50%); width:min(1000px,calc(100vw - 32px)); min-height:165px; padding:18px 26px 26px; border:1px solid #bbb; background:#fffffff0; box-shadow:0 4px 22px #0000000d; }
+	.white-dialogue[hidden],.white-choice[hidden],.white-return[hidden] { display:none; }
+	.white-dialogue header { display:flex; justify-content:space-between; align-items:center; gap:1rem; min-height:42px; font-size:13px; letter-spacing:.12em; }
+	.white-controls { display:flex; align-items:center; gap:14px; }
+	.white-controls small { font:11px monospace; color:#737373; white-space:nowrap; }
+	.white-auto { display:grid; place-items:center; width:44px; height:44px; padding:0; border:1px solid transparent; background:transparent; color:#686868; cursor:pointer; }
+	.white-auto[aria-pressed="true"] { border-color:#767676; background:#eeeeee; color:#222; }
+	.white-words { margin:15px 0 0; min-height:2em; font-size:clamp(15px,1.7vw,20px); line-height:1.9; }
+	.white-caret { position:absolute; right:22px; bottom:11px; color:#777; }
+	.white-choice { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:min(520px,calc(100vw - 48px)); }
+	.white-choice button { width:100%; min-height:52px; padding:14px 24px; border:1px solid #777; background:#ffffffeb; color:#222; letter-spacing:.2em; cursor:pointer; }
+	.white-choice button:hover { background:#eee; }
+	.white-return { position:absolute; top:max(16px,env(safe-area-inset-top)); right:max(16px,env(safe-area-inset-right)); padding:10px 18px; border:1px solid #aaa; background:#fff; color:#333; font-size:13px; text-decoration:none; }
+	.white-screen :focus-visible { outline:2px solid #333; outline-offset:4px; }
+	.sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; }
+	@media(max-width:480px) { .white-dialogue { min-height:175px; padding:12px 18px 24px; } .white-words { margin-top:11px; } }
+	@media(prefers-reduced-motion:reduce) { .white-choice button,.white-auto { transition:none; } }
+</style>

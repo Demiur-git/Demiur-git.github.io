@@ -18,7 +18,7 @@ const totalPosts = categories.reduce((sum, cat) => sum + cat.count, 0);
 
 <MainGridLayout title={i18n(I18nKey.categories)}>
     <!-- 页面标题 -->
-    <LibraryHeader title="分类" description={`从不同主题开始阅读 · ${categories.length} 个分类，${totalPosts} 篇文章。`} code="03" />
+    <LibraryHeader title="分类" description={`从不同主题开始阅读 · ${categories.length} 个分类，${totalPosts} 篇文章`} code="03" />
 
     <!-- 分类卡片列表 -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">

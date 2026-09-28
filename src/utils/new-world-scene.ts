@@ -1,6 +1,7 @@
 import { pulsePuzzle } from "../config/pulsePuzzle";
 import { EasterEggScene } from "./easter-egg-scene";
 import { getPuzzleProgress } from "./pulse-puzzle";
+import { pulseScenePath, pulseSceneRoute } from "./pulse-route";
 import {
 	THRONE_STRUCTURE,
 	buildThroneThreads,
@@ -9,7 +10,6 @@ import {
 	throneView,
 } from "./throne-geometry";
 import { returnHomeThroughWhite } from "./world-return";
-import { url } from "./url-utils";
 
 export class NewWorldScene extends EasterEggScene {
 	private discovered = false;
@@ -17,7 +17,8 @@ export class NewWorldScene extends EasterEggScene {
 	private progress = 0;
 	private lastGeometry = "";
 	private ripples: Array<{ x: number; y: number; born: number }> = [];
-	private phase: "space" | "dialogue" | "rest" | "returning" = "space";
+	private phase: "space" | "dialogue" | "question" | "rest" | "returning" =
+		"space";
 	private walkTime = 0;
 	private walkStrength = 0;
 	private geometryTime = -100;
@@ -31,7 +32,7 @@ export class NewWorldScene extends EasterEggScene {
 		if (this.active) return;
 		if (!getPuzzleProgress().worldUnlocked) {
 			document.documentElement.removeAttribute("data-world-pending");
-			location.replace(url("/pulse/"));
+			location.replace(pulseScenePath());
 			return;
 		}
 		this.discovered = false;
@@ -47,6 +48,7 @@ export class NewWorldScene extends EasterEggScene {
 		this.marks.clear();
 		this.querySelector<HTMLElement>("[data-world-throne]")!.replaceChildren();
 		this.querySelector<HTMLElement>("[data-world-choice]")!.hidden = true;
+		this.querySelector<HTMLElement>("[data-world-question]")!.hidden = true;
 		this.querySelector<HTMLButtonElement>("[data-world-home]")!.disabled =
 			false;
 		this.querySelector<HTMLElement>("[data-world-dialogue]")!.hidden = true;
@@ -60,13 +62,27 @@ export class NewWorldScene extends EasterEggScene {
 			"aria-label",
 			"自动推进：关闭",
 		);
-		const signal = this.mount("/pulse/");
+		const signal = this.mount(pulseSceneRoute());
 		this.querySelector<HTMLButtonElement>(
 			"[data-world-home]",
 		)!.addEventListener(
 			"click",
 			() => {
 				void this.returnHome();
+			},
+			{ signal },
+		);
+		this.querySelector<HTMLButtonElement>(
+			"[data-world-question-button]",
+		)!.addEventListener(
+			"click",
+			() => {
+				if (this.phase !== "question") return;
+				this.querySelector<HTMLElement>("[data-world-question]")!.hidden = true;
+				this.querySelector<HTMLElement>("[data-world-dialogue]")!.hidden = false;
+				this.phase = "dialogue";
+				this.nextLine();
+				this.dialog.focus({ preventScroll: true });
 			},
 			{ signal },
 		);
@@ -105,7 +121,8 @@ export class NewWorldScene extends EasterEggScene {
 					this.advanceDialogue();
 					return;
 				}
-				this.addRipple(event.clientX, event.clientY);
+				if (this.phase === "space")
+					this.addRipple(event.clientX, event.clientY);
 			},
 			{ signal },
 		);
@@ -131,7 +148,7 @@ export class NewWorldScene extends EasterEggScene {
 					if (!this.discovered) this.addRipple(innerWidth / 2, innerHeight / 2);
 					this.moving = true;
 				} else if (
-					this.phase !== "dialogue" &&
+					this.phase === "space" &&
 					["Enter", " "].includes(event.key)
 				) {
 					event.preventDefault();
@@ -262,7 +279,7 @@ export class NewWorldScene extends EasterEggScene {
 				this.visibleTime - this.completedAt >= 2500 &&
 				this.line < pulsePuzzle.worldDialogue.length - 1
 			)
-				this.nextLine();
+				this.advanceCompletedLine();
 		}
 	}
 	private renderGeometry(): void {
@@ -370,6 +387,16 @@ export class NewWorldScene extends EasterEggScene {
 		this.line++;
 		this.showLine();
 	}
+	private advanceCompletedLine(): void {
+		if (this.line === pulsePuzzle.worldQuestion.afterLine) {
+			this.phase = "question";
+			this.querySelector<HTMLElement>("[data-world-dialogue]")!.hidden = true;
+			this.querySelector<HTMLElement>("[data-world-question]")!.hidden = false;
+			this.querySelector<HTMLButtonElement>(
+				"[data-world-question-button]",
+			)!.focus({ preventScroll: true });
+		} else this.nextLine();
+	}
 	private advanceDialogue(): void {
 		const text = pulsePuzzle.worldDialogue[this.line].text;
 		if (this.shown < text.length) {
@@ -378,7 +405,7 @@ export class NewWorldScene extends EasterEggScene {
 			this.completedAt = this.visibleTime;
 			this.querySelector<HTMLElement>("[data-world-words]")!.textContent = text;
 		} else if (this.line < pulsePuzzle.worldDialogue.length - 1)
-			this.nextLine();
+			this.advanceCompletedLine();
 		else {
 			this.phase = "rest";
 			this.querySelector<HTMLElement>("[data-world-dialogue]")!.hidden = true;

@@ -1,8 +1,8 @@
 import type { ProfileConfig } from "../types/profileConfig";
 
 export const profileConfig: ProfileConfig = {
-	avatar: "/avatar.svg",
-	name: "你的名字",
+	avatar: "/images/profile/demiur-avatar.jpg",
+	name: "Demiur",
 	bio: "记录思考、实践与那些值得反复阅读的事。",
 	links: [
 		{

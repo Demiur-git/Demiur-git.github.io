@@ -18,6 +18,7 @@ import {
 import { initIconLoader } from "@/utils/icon-loader";
 import { initImageLoadFadeIn } from "@/utils/lqip-utils";
 import { initHomeEntrance } from "@/utils/home-entrance";
+import { registerProjectEchoClue } from "@/utils/project-echo-clue";
 import { initScroll } from "@/utils/scroll-utils";
 import { initThemeListener, initWallpaperMode } from "@/utils/setting-utils";
 import { setupSwupTransitions } from "@/utils/swup-transitions";
@@ -31,6 +32,7 @@ export function initLayout(): void {
 	window.__fireflyLayoutInit = true;
 
 	initializeFloatingPanels();
+	registerProjectEchoClue();
 
 	setClickOutsideToClose("display-setting", [
 		"display-setting",

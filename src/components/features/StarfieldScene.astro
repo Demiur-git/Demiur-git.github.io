@@ -1,0 +1,62 @@
+---
+import { pulseScenePath } from "@/utils/pulse-route";
+---
+
+<starfield-scene data-pagefind-ignore>
+	<dialog class="star-screen" aria-label="黑白星空，可自由飞行" tabindex="-1">
+		<canvas class="star-canvas" aria-hidden="true"></canvas>
+		<div class="star-look" data-star-look aria-hidden="true"></div>
+		<details class="star-help" open>
+			<summary>操作说明</summary>
+			<p class="desktop-help">W/A/S/D 移动，Q/E 升降；按住鼠标拖动视角，滚轮调整视野。</p>
+			<p class="touch-help">左侧摇杆移动，右侧滑动转向；右下角按钮升降。</p>
+			<p>Esc 返回心电图。这里没有终点，可以随时重置位置。</p>
+		</details>
+		<a class="star-return" data-scene-return href={pulseScenePath()}>返回心电图</a>
+		<button class="star-reset" data-star-reset type="button">重置视角</button>
+		<div class="star-joystick" data-star-joystick role="group" aria-label="移动摇杆"><span data-star-knob></span></div>
+		<div class="star-vertical" role="group" aria-label="升降控制">
+			<button type="button" data-star-vertical="up" aria-label="按住上升">上升 ↑</button>
+			<button type="button" data-star-vertical="down" aria-label="按住下降">下降 ↓</button>
+		</div>
+		<p class="star-error" data-star-error role="alert" hidden>当前浏览器无法绘制星空。你仍可返回心电图。</p>
+	</dialog>
+</starfield-scene>
+<script>
+	import { StarfieldScene } from "@/utils/starfield-scene";
+	import { registerEasterEgg } from "@/utils/easter-egg-scene";
+	registerEasterEgg("starfield-scene", StarfieldScene);
+</script>
+<style>
+	.star-screen { position:fixed; inset:0; width:100vw; height:100dvh; max-width:none; max-height:none; margin:0; padding:0; overflow:hidden; border:0; background:#000; color:#eee; overscroll-behavior:none; }
+	.star-screen::backdrop { background:#000; }
+	.star-screen:focus { outline:none; }
+	.star-canvas { position:absolute; inset:0; width:100%; height:100%; touch-action:none; cursor:grab; }
+	.star-canvas:active { cursor:grabbing; }
+	.star-help { position:absolute; top:max(16px,env(safe-area-inset-top)); left:16px; width:min(330px,calc(100vw - 170px)); z-index:2; padding:9px 12px; border:1px solid #7779; background:#080808e8; color:#ddd; font-size:12px; line-height:1.7; }
+	.star-help summary { cursor:pointer; font-weight:600; letter-spacing:.1em; }
+	.star-help p { margin:6px 0 0; }
+	.touch-help { display:none; }
+	.star-return,.star-reset { position:absolute; right:16px; z-index:3; min-height:44px; padding:10px 14px; border:1px solid #888; background:#080808df; color:#eee; font-size:13px; text-decoration:none; cursor:pointer; }
+	.star-return { top:max(16px,env(safe-area-inset-top)); }
+	.star-reset { top:calc(max(16px,env(safe-area-inset-top)) + 52px); }
+	.star-screen :focus-visible { outline:2px solid #fff; outline-offset:3px; }
+	.star-joystick,.star-look,.star-vertical { display:none; }
+	.star-error { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:min(420px,calc(100vw - 40px)); padding:18px; border:1px solid #aaa; background:#111; text-align:center; }
+	.star-error[hidden] { display:none; }
+	@media(pointer:coarse) {
+		.desktop-help { display:none; }
+		.touch-help { display:block; }
+		.star-look { display:block; position:absolute; top:0; right:0; width:50%; height:100%; touch-action:none; }
+		.star-joystick { display:block; position:absolute; left:24px; bottom:max(28px,env(safe-area-inset-bottom)); width:116px; height:116px; border:1px solid #aaa9; border-radius:50%; background:#15151588; touch-action:none; }
+		.star-joystick span { position:absolute; left:50%; top:50%; width:42px; height:42px; transform:translate(-50%,-50%); border:1px solid #ddd; border-radius:50%; background:#ddd5; pointer-events:none; }
+		.star-vertical { position:absolute; right:20px; bottom:max(28px,env(safe-area-inset-bottom)); display:grid; gap:8px; }
+		.star-vertical button { min-width:74px; min-height:46px; border:1px solid #aaa; background:#101010c9; color:#eee; touch-action:none; }
+	}
+	@media(max-width:480px) {
+		.star-help { top:max(10px,env(safe-area-inset-top)); left:10px; width:calc(100vw - 170px); min-width:150px; font-size:11px; }
+		.star-return,.star-reset { right:10px; padding:8px 10px; font-size:12px; }
+		.star-return { top:max(10px,env(safe-area-inset-top)); }
+		.star-reset { top:calc(max(10px,env(safe-area-inset-top)) + 52px); }
+	}
+</style>

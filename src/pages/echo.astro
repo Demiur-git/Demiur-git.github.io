@@ -1,0 +1,16 @@
+---
+import EchoScene from "@/components/features/EchoScene.astro";
+import MainGridLayout from "@/layouts/MainGridLayout.astro";
+import { pulseScenePath } from "@/utils/pulse-route";
+---
+
+<MainGridLayout title="">
+	<Fragment slot="head">
+		<meta name="robots" content="noindex, nofollow" />
+		<script is:inline>document.documentElement.setAttribute("data-echo-pending", "");</script>
+		<style is:global>html[data-echo-pending]::after { content:""; position:fixed; inset:0; background:#000; z-index:2147483647; pointer-events:none; }</style>
+		<noscript><style>html::after { display:none!important; } .content-panel, #swup-container, .onload-animation { transform:none!important; animation:none!important; opacity:1!important; } .content-panel { z-index:2147483647!important; }</style></noscript>
+	</Fragment>
+	<div data-pagefind-ignore="all"><EchoScene /><noscript><div class="echo-static"><a href={pulseScenePath()}>返回心电图</a></div></noscript></div>
+</MainGridLayout>
+<style is:global>.echo-static { position:fixed; inset:0; display:grid; place-items:center; z-index:2147483646; background:#000; color:#eee; } .echo-static a { text-decoration:underline; }</style>
