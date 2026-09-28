@@ -78,7 +78,7 @@ link:
 
 常用状态为 `planning`、`developing`、`published`、`archived`，分别为计划中、开发中、已发布、已归档；不要照搬日历的状态字段。封面可使用 `image`，例如 `/images/projects/my-site.webp`，但必须先放入真实图片；没有封面就省略。修改项目保持文件名稳定，删除文件并重新发布即可撤下详情，但已公开的图片需另行处理。
 
-## 读书计划：状态与进度
+## 读书计划：三层书架
 
 编辑 `src/config/readingPlanConfig.ts` 的 `books` 数组：
 
@@ -88,11 +88,17 @@ link:
   author: "待填写的作者",
   status: "reading",
   progress: 35,
-  note: "已读到第三章，准备整理笔记。",
+  bangumiSubjectId: 12345,
+  personalRating: 8.5,
+  personalReview: "读后感写在这里。",
 }
 ```
 
-示例不是现有书目，请替换为真实记录。`title` 与 `status` 必填；状态为 `planned`、`reading`、`finished`，分别表示准备、正在和完成阅读。`progress` 按 0–100 的百分比填写，不是页数；无须填写的作者、进度或备注可以省略。
+示例不是现有书目；请替换书名、作者和真实的 Bangumi 条目 ID，确认条目确实对应你手中的版本。`title` 与 `status` 必填；`planned`、`reading`、`finished` 分别位于计划阅读、正在阅读、已经读完三层。`bangumiSubjectId` 是可选的正整数；有它时，构建会从 Bangumi 读取简介、站点评分和原装封面。不填写时显示文字书位，站点评分标为“暂无评分”。
+
+`personalRating` 是可选的 0–10 分数字，不会从 Bangumi 个人账户读取；`personalReview` 是个人评价，旧的 `note` 仍可显示为评价。`progress` 按 0–100 的百分比填写，不是页数。没有个人评分或评价时页面会如实显示“暂无评分／暂无评价”。
+
+本地开发时，新增或更换 Bangumi ID 后运行 `pnpm reading:sync` 更新缓存，再刷新读书计划页。`pnpm build` 也会自动同步；线上评分和封面随下一次部署更新，不在访客浏览时实时请求。同步失败时沿用已有缓存；首次同步失败则保留无封面的书位，请检查条目 ID 与网络后重试。发布时需一并保留生成的书籍元数据及封面文件。
 
 完成一本书时改为 `finished`，需要时将进度改为 100、补上读后记录。删除某条书目时从数组中移除对应对象；这个栏目没有把访客操作写回配置的后台。
 

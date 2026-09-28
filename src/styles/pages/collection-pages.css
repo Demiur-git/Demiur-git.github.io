@@ -259,7 +259,7 @@
 .collection-music .music-page-header { border-left: 4px solid var(--collection-accent); }
 .collection-music .music-kicker { letter-spacing: 0.16em; }
 
-/* 项目像档案夹，读书计划像借阅条；相册另有阅览桌样式。 */
+/* 项目像档案夹；读书计划与相册各有独立书架、阅览桌样式。 */
 .collection-projects .project-file {
 	border-radius: 0.55rem;
 	background: var(--collection-paper);
@@ -272,18 +272,6 @@
 	transform: translateY(-3px);
 	box-shadow: 0 20px 36px rgb(31 26 22 / 14%);
 }
-
-.collection-reading .reading-slip {
-	position: relative;
-	border-left: 4px solid var(--collection-accent);
-	border-radius: 0.25rem 0.7rem 0.7rem 0.25rem;
-	background:
-		repeating-linear-gradient(0deg, transparent 0 2rem, color-mix(in srgb, var(--library-rule) 50%, transparent) 2rem calc(2rem + 1px)),
-		var(--collection-paper);
-}
-
-.collection-reading .reading-slip h3 { color: var(--library-ink); font-family: var(--font-library-serif); }
-.collection-reading .reading-slip p { color: var(--content-meta); }
 
 /* 详情页与入口页延续同一馆藏材质，不干扰正文、图片与阅读功能。 */
 .collection-detail #post-container,
