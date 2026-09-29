@@ -9,15 +9,21 @@ import {
 	emptyProgress,
 	encodeLetter,
 	getPuzzleProgress,
+	isStillnessReady,
 	isPuzzleReady,
 	matchesPuzzleAnswer,
 	parseProgress,
 	resetEchoBranch,
+	resetStillnessBranch,
 	savePuzzleProgress,
 	tryUnlockStarfield,
 	tryUnlockPuzzle,
 	tryUnlockWorld,
 	unlockEcho,
+	unlockStillness,
+	markWorldDialogueDone,
+	markWhiteDialogueDone,
+	markStarfieldVisited,
 } from "../src/utils/pulse-puzzle";
 
 test("the pulse URL suffix decodes to HOLDING and stays in sync with the route", () => {
@@ -109,7 +115,7 @@ test("invalid, old, partial and fabricated persisted progress is normalized", ()
 		false,
 	);
 });
-test("the persisted v2 record is copied into v5 without losing the throne unlock", () => {
+test("the persisted v2 record is copied into v6 without losing the throne unlock", () => {
 	const values = new Map<string, string>();
 	values.set(
 		pulsePuzzle.oldestStorageKey,
@@ -136,7 +142,7 @@ test("the persisted v2 record is copied into v5 without losing the throne unlock
 	try {
 		assert.equal(getPuzzleProgress().worldUnlocked, true);
 		assert.equal(getPuzzleProgress().starfieldUnlocked, false);
-		assert.equal(parseProgress(values.get(pulsePuzzle.storageKey)!).version, 5);
+		assert.equal(parseProgress(values.get(pulsePuzzle.storageKey)!).version, 6);
 		savePuzzleProgress(emptyProgress());
 	} finally {
 		Reflect.deleteProperty(globalThis, "window");
@@ -169,7 +175,75 @@ test("stored v4 echo access migrates with its clue and remains usable", () => {
 		const progress = getPuzzleProgress();
 		assert.equal(progress.echoClueSeen, true);
 		assert.equal(progress.echoUnlocked, true);
-		assert.equal(parseProgress(values.get(pulsePuzzle.storageKey)!).version, 5);
+		assert.equal(parseProgress(values.get(pulsePuzzle.storageKey)!).version, 6);
+		savePuzzleProgress(emptyProgress());
+	} finally {
+		Reflect.deleteProperty(globalThis, "window");
+	}
+});
+test("three unlocks grant stillness access without replaying dialogue or visiting stars", () => {
+	const ready = parseProgress(JSON.stringify({
+		...emptyProgress(),
+		started: true,
+		collected: pulsePuzzle.clues.map((clue) => clue.id),
+		unlocked: true,
+		worldUnlocked: true,
+		starfieldUnlocked: true,
+		echoClueSeen: true,
+		echoUnlocked: true,
+		stillnessUnlocked: true,
+	}));
+	assert.equal(isStillnessReady(ready), true);
+	assert.equal(ready.worldDialogueDone, false);
+	assert.equal(ready.whiteDialogueDone, false);
+	assert.equal(ready.starfieldVisited, false);
+	assert.equal(ready.stillnessUnlocked, true);
+	for (const branch of ["worldUnlocked", "starfieldUnlocked", "echoUnlocked"] as const)
+		assert.equal(isStillnessReady({ ...ready, [branch]: false }), false, `${branch} is required`);
+	assert.equal(parseProgress(JSON.stringify({ ...ready, echoUnlocked: false })).stillnessUnlocked, false);
+});
+
+test("dialogue and star visit records persist but do not gate a new stillness attempt", () => {
+	const values = new Map<string, string>();
+	Object.defineProperty(globalThis, "window", {
+		configurable: true,
+		value: {
+			localStorage: {
+				getItem: (key: string) => values.get(key) ?? null,
+				setItem: (key: string, value: string) => values.set(key, value),
+			},
+			dispatchEvent: () => true,
+		},
+	});
+	try {
+		savePuzzleProgress({
+			...emptyProgress(),
+			started: true,
+			collected: pulsePuzzle.clues.map((clue) => clue.id),
+			unlocked: true,
+			worldUnlocked: true,
+			starfieldUnlocked: true,
+			echoClueSeen: true,
+			echoUnlocked: true,
+		});
+		assert.equal(isStillnessReady(getPuzzleProgress()), true);
+		assert.equal(getPuzzleProgress().worldDialogueDone, false);
+		markWorldDialogueDone();
+		markWhiteDialogueDone();
+		markStarfieldVisited();
+		const stored = parseProgress(values.get(pulsePuzzle.storageKey)!);
+		assert.equal(stored.worldDialogueDone, true);
+		assert.equal(stored.whiteDialogueDone, true);
+		assert.equal(stored.starfieldVisited, true);
+		assert.deepEqual(getPuzzleProgress(), stored);
+		assert.equal(unlockStillness(), true);
+		const beforeReset = getPuzzleProgress();
+		assert.equal(beforeReset.stillnessUnlocked, true);
+		const afterReset = resetStillnessBranch();
+		assert.deepEqual(afterReset, { ...beforeReset, stillnessUnlocked: false });
+		assert.equal(isStillnessReady(afterReset), true);
+		assert.deepEqual(parseProgress(values.get(pulsePuzzle.storageKey)!), afterReset);
+		assert.deepEqual(resetStillnessBranch(), afterReset);
 		savePuzzleProgress(emptyProgress());
 	} finally {
 		Reflect.deleteProperty(globalThis, "window");
@@ -220,19 +294,62 @@ test("blocked storage falls back to memory across collection, unlock and reset",
 		collectEchoClue();
 		assert.equal(unlockEcho(), true);
 		assert.equal(getPuzzleProgress().echoUnlocked, true);
+		assert.equal(isStillnessReady(getPuzzleProgress()), true);
+		assert.equal(unlockStillness(), true);
+		markWorldDialogueDone();
+		markWhiteDialogueDone();
+		markStarfieldVisited();
+		assert.equal(isStillnessReady(getPuzzleProgress()), true);
+		assert.equal(unlockStillness(), true);
+		assert.equal(getPuzzleProgress().stillnessUnlocked, true);
+		assert.equal(resetStillnessBranch().stillnessUnlocked, false);
+		assert.equal(isStillnessReady(getPuzzleProgress()), true);
+		assert.equal(unlockStillness(), true);
 		const beforeReset = getPuzzleProgress();
 		const afterReset = resetEchoBranch();
 		assert.deepEqual(afterReset, {
 			...beforeReset,
 			echoClueSeen: false,
 			echoUnlocked: false,
+			whiteDialogueDone: false,
+			stillnessUnlocked: false,
 		});
+		assert.equal(afterReset.worldDialogueDone, true);
+		assert.equal(afterReset.starfieldVisited, true);
+		assert.equal(isStillnessReady(afterReset), false);
 		assert.equal(unlockEcho(), false);
 		savePuzzleProgress(emptyProgress());
 		assert.deepEqual(getPuzzleProgress(), emptyProgress());
 	} finally {
 		Reflect.deleteProperty(globalThis, "window");
 	}
+});
+
+test("v5 unlocks qualify without inventing visits or completed dialogue", () => {
+	const progress = parseProgress(JSON.stringify({
+		...emptyProgress(),
+		version: 5,
+		started: true,
+		collected: pulsePuzzle.clues.map((clue) => clue.id),
+		unlocked: true,
+		worldUnlocked: true,
+		starfieldUnlocked: true,
+		echoClueSeen: true,
+		echoUnlocked: true,
+		worldDialogueDone: true,
+		whiteDialogueDone: true,
+		starfieldVisited: true,
+		stillnessUnlocked: true,
+	}));
+	assert.equal(progress.version, 6);
+	assert.equal(progress.worldUnlocked, true);
+	assert.equal(progress.starfieldUnlocked, true);
+	assert.equal(progress.echoUnlocked, true);
+	assert.equal(isStillnessReady(progress), true);
+	assert.equal(progress.worldDialogueDone, false);
+	assert.equal(progress.whiteDialogueDone, false);
+	assert.equal(progress.starfieldVisited, false);
+	assert.equal(progress.stillnessUnlocked, false);
 });
 test("v1 migration retains numbers and completed first stage but not scraps or world unlock", () => {
 	const old = {
@@ -244,7 +361,7 @@ test("v1 migration retains numbers and completed first stage but not scraps or w
 		worldUnlocked: true,
 	};
 	const progress = parseProgress(JSON.stringify(old));
-	assert.equal(progress.version, 5);
+	assert.equal(progress.version, 6);
 	assert.equal(progress.unlocked, true);
 	assert.equal(progress.worldUnlocked, false);
 	assert.equal(progress.starfieldUnlocked, false);
@@ -268,7 +385,7 @@ test("v2 migration preserves the throne unlock without inventing a starfield unl
 		starfieldUnlocked: true,
 	};
 	const progress = parseProgress(JSON.stringify(old));
-	assert.equal(progress.version, 5);
+	assert.equal(progress.version, 6);
 	assert.equal(progress.unlocked, true);
 	assert.equal(progress.worldUnlocked, true);
 	assert.equal(progress.starfieldUnlocked, false);

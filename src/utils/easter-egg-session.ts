@@ -9,6 +9,7 @@ export function isEasterEggPath(pathname: string): boolean {
 		url("/starfield/"),
 		url("/echo/"),
 		url("/echo/white/"),
+		url("/stillness/"),
 	].some((path) => path.replace(/\/+$/, "") === pathname.replace(/\/+$/, ""));
 }
 

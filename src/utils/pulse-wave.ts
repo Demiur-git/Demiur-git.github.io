@@ -6,6 +6,16 @@ export interface TraceSegment {
 	born: number;
 }
 
+export function pulseWaveGeometry(intensity: number): { top: number; height: number; viewportHeight: number; maxHeight: number } {
+	const level = Math.max(0, Math.min(1, intensity));
+	return {
+		top: -300 * level,
+		height: 400 + 600 * level,
+		viewportHeight: 40 + 36 * level,
+		maxHeight: 400 + 400 * level,
+	};
+}
+
 // Wave geometry is decorative. Randomness is sampled per beat, never per frame.
 export class PulseScanner {
 	segments: TraceSegment[] = [];
@@ -19,12 +29,12 @@ export class PulseScanner {
 	constructor(private random: () => number = Math.random) {
 		this.newBeat();
 	}
-	private newBeat(): void {
-		this.beatDuration = 700 + this.random() * 450;
-		this.amplitude = 105 + this.random() * 65;
+	private newBeat(intensity = 0): void {
+		this.beatDuration = (700 + this.random() * 450) / (1 + intensity * 0.85);
+		this.amplitude = (105 + this.random() * 65) * (1 + intensity * 1.7);
 		this.spread = 0.8 + this.random() * 0.4;
 	}
-	step(time: number, width = 1200): void {
+	step(time: number, width = 1200, intensity = 0): void {
 		const elapsed = this.lastTime ? time - this.lastTime : 0;
 		if (elapsed <= 0) {
 			this.lastTime = time;
@@ -34,7 +44,7 @@ export class PulseScanner {
 		for (let t = this.lastTime + 12; t <= time; t += 12) {
 			if (t - this.beatStart >= this.beatDuration) {
 				this.beatStart = t;
-				this.newBeat();
+				this.newBeat(intensity);
 			}
 			const phase = (t - this.beatStart) / this.beatDuration;
 			const bump = (center: number, radius: number, height: number) =>
@@ -44,7 +54,7 @@ export class PulseScanner {
 				200 +
 				bump(0.22, 0.05, -this.amplitude * 0.12) +
 				bump(0.4, 0.022, this.amplitude * 0.15) +
-				bump(0.43, 0.018, -this.amplitude) +
+				bump(0.43, 0.018 + intensity * 0.017, -this.amplitude) +
 				bump(0.47, 0.026, this.amplitude * 0.62) +
 				bump(0.69, 0.09, -this.amplitude * 0.2);
 			const next = this.x + (width / 4000) * 12;

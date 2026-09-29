@@ -1,6 +1,6 @@
 import { pulsePuzzle } from "../config/pulsePuzzle";
 import { EasterEggScene } from "./easter-egg-scene";
-import { getPuzzleProgress } from "./pulse-puzzle";
+import { getPuzzleProgress, markWorldDialogueDone } from "./pulse-puzzle";
 import { pulseScenePath, pulseSceneRoute } from "./pulse-route";
 import {
 	THRONE_STRUCTURE,
@@ -408,6 +408,7 @@ export class NewWorldScene extends EasterEggScene {
 			this.advanceCompletedLine();
 		else {
 			this.phase = "rest";
+			markWorldDialogueDone();
 			this.querySelector<HTMLElement>("[data-world-dialogue]")!.hidden = true;
 			this.querySelector<HTMLElement>("[data-world-choice]")!.hidden = false;
 			this.querySelector<HTMLButtonElement>("[data-world-home]")!.focus({

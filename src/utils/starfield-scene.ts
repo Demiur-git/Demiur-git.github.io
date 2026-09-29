@@ -1,5 +1,5 @@
 import { EasterEggScene } from "./easter-egg-scene";
-import { getPuzzleProgress } from "./pulse-puzzle";
+import { getPuzzleProgress, markStarfieldVisited } from "./pulse-puzzle";
 import { pulseScenePath } from "./pulse-route";
 import {
 	generateStarChunk,
@@ -30,6 +30,7 @@ export class StarfieldScene extends EasterEggScene {
 	private dirty = true;
 	private lookPointer: number | null = null;
 	private lastLook = { x: 0, y: 0 };
+	private visitRecorded = false;
 	private joystickPointer: number | null = null;
 	private verticalPointer: number | null = null;
 
@@ -48,6 +49,7 @@ export class StarfieldScene extends EasterEggScene {
 		this.fov = 75;
 		this.lastDraw = -100;
 		this.dirty = true;
+		this.visitRecorded = false;
 		this.canvas = this.querySelector<HTMLCanvasElement>("canvas")!;
 		try {
 			this.context = this.canvas.getContext("2d", { alpha: false });
@@ -351,6 +353,10 @@ export class StarfieldScene extends EasterEggScene {
 			ctx.beginPath();
 			ctx.arc(point.x, point.y, radius, 0, Math.PI * 2);
 			ctx.fill();
+		}
+		if (!this.visitRecorded) {
+			this.visitRecorded = true;
+			markStarfieldVisited();
 		}
 	}
 

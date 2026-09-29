@@ -1,6 +1,6 @@
 import { pulsePuzzle } from "../config/pulsePuzzle";
 import { EasterEggScene } from "./easter-egg-scene";
-import { getPuzzleProgress } from "./pulse-puzzle";
+import { getPuzzleProgress, markWhiteDialogueDone } from "./pulse-puzzle";
 import { url } from "./url-utils";
 
 export class EchoWhiteScene extends EasterEggScene {
@@ -108,6 +108,7 @@ export class EchoWhiteScene extends EasterEggScene {
 			this.nextLine();
 		} else {
 			this.phase = "choice";
+			markWhiteDialogueDone();
 			this.querySelector<HTMLElement>("[data-white-dialogue]")!.hidden = true;
 			this.querySelector<HTMLElement>("[data-white-choice]")!.hidden = false;
 			this.querySelector<HTMLButtonElement>("[data-white-back]")!.focus({ preventScroll: true });

@@ -1,0 +1,16 @@
+---
+import StillnessScene from "@/components/features/StillnessScene.astro";
+import MainGridLayout from "@/layouts/MainGridLayout.astro";
+import { pulseScenePath } from "@/utils/pulse-route";
+---
+
+<MainGridLayout title="">
+	<Fragment slot="head">
+		<meta name="robots" content="noindex, nofollow" />
+		<script is:inline>document.documentElement.setAttribute("data-stillness-pending", "");</script>
+		<style is:global>html[data-stillness-pending]::after { content:""; position:fixed; inset:0; background:#e5e5e5; z-index:2147483647; pointer-events:none; }</style>
+		<noscript><style>html::after { display:none!important; } .content-panel, #swup-container, .onload-animation { transform:none!important; animation:none!important; opacity:1!important; } .content-panel { z-index:2147483647!important; }</style></noscript>
+	</Fragment>
+	<div data-pagefind-ignore="all"><StillnessScene /><noscript><div class="stillness-static"><a href={pulseScenePath()}>返回心电图</a></div></noscript></div>
+</MainGridLayout>
+<style is:global>.stillness-static { position:fixed; inset:0; display:grid; place-items:center; z-index:2147483646; background:#e5e5e5; color:#444; } .stillness-static a { text-decoration:underline; }</style>

@@ -18,7 +18,7 @@ const outlines: Record<string,string> = { fold:"M2 3h9l3 4v11H2z M10 3v5h4", tic
 </pulse-clue>
 <script>
 	import { pulsePuzzle } from "@/config/pulsePuzzle";
-	import { collectClue, emptyProgress, getPuzzleProgress, isPuzzleReady, resetEchoBranch, savePuzzleProgress, tryUnlockPuzzle } from "@/utils/pulse-puzzle";
+	import { collectClue, emptyProgress, getPuzzleProgress, isPuzzleReady, resetEchoBranch, resetStillnessBranch, savePuzzleProgress, tryUnlockPuzzle } from "@/utils/pulse-puzzle";
 	import { pulseScenePath } from "@/utils/pulse-route";
 	import { url } from "@/utils/url-utils";
 	class PulseClue extends HTMLElement {
@@ -101,6 +101,24 @@ const outlines: Record<string,string> = { fold:"M2 3h9l3 4v11H2z M10 3v5h4", tic
 					}
 					content.querySelector<HTMLButtonElement>("button")?.focus();
 				}); content.append(resetEcho);
+			}
+			if (progress.stillnessUnlocked) {
+				const resetStillness = document.createElement("button"); resetStillness.type = "button"; resetStillness.textContent = "重置第四条彩蛋"; resetStillness.className = "record-action"; resetStillness.dataset.resetStillness = "";
+				resetStillness.addEventListener("click", () => {
+					content.replaceChildren(); paragraph("只清除第四条彩蛋的解锁记录？前三条分支、线索与对白记录都会保留。");
+					for (const [label, confirmed] of [["确认重置", true], ["取消", false]] as const) {
+						const button = document.createElement("button"); button.type = "button"; button.textContent = label; button.className = "record-action";
+						button.addEventListener("click", () => {
+							if (confirmed) resetStillnessBranch();
+							this.renderRecord();
+							if (confirmed) {
+								const notice = document.createElement("p"); notice.textContent = "第四条彩蛋已重置。"; notice.setAttribute("role", "status"); content.prepend(notice);
+							}
+							content.querySelector<HTMLButtonElement>(confirmed ? "button" : "[data-reset-stillness]")?.focus();
+						}); content.append(button);
+					}
+					content.querySelector<HTMLButtonElement>("button")?.focus();
+				}); content.append(resetStillness);
 			}
 			if (progress.unlocked) {
 				paragraph("借阅记录已还原。");

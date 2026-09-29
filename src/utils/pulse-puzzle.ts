@@ -10,6 +10,10 @@ export interface PuzzleProgress {
 	starfieldUnlocked: boolean;
 	echoClueSeen: boolean;
 	echoUnlocked: boolean;
+	worldDialogueDone: boolean;
+	whiteDialogueDone: boolean;
+	starfieldVisited: boolean;
+	stillnessUnlocked: boolean;
 }
 
 export function emptyProgress(): PuzzleProgress {
@@ -23,6 +27,10 @@ export function emptyProgress(): PuzzleProgress {
 		starfieldUnlocked: false,
 		echoClueSeen: false,
 		echoUnlocked: false,
+		worldDialogueDone: false,
+		whiteDialogueDone: false,
+		starfieldVisited: false,
+		stillnessUnlocked: false,
 	};
 }
 
@@ -37,7 +45,7 @@ export function isPuzzleReady(progress: PuzzleProgress): boolean {
 export function parseProgress(raw: string | null): PuzzleProgress {
 	try {
 		const data = JSON.parse(raw || "null");
-		if (!data || ![1, 2, 3, 4, pulsePuzzle.version].includes(data.version))
+		if (!data || ![1, 2, 3, 4, 5, pulsePuzzle.version].includes(data.version))
 			return emptyProgress();
 		const progress: PuzzleProgress = {
 			version: pulsePuzzle.version,
@@ -65,6 +73,10 @@ export function parseProgress(raw: string | null): PuzzleProgress {
 			starfieldUnlocked: false,
 			echoClueSeen: false,
 			echoUnlocked: false,
+			worldDialogueDone: false,
+			whiteDialogueDone: false,
+			starfieldVisited: false,
+			stillnessUnlocked: false,
 		};
 		progress.echoClueSeen = data.version >= 5 && data.echoClueSeen === true;
 		if (!progress.started)
@@ -84,6 +96,13 @@ export function parseProgress(raw: string | null): PuzzleProgress {
 			progress.unlocked &&
 			progress.echoClueSeen &&
 			data.echoUnlocked === true;
+		if (data.version >= 6) {
+			progress.worldDialogueDone = progress.worldUnlocked && data.worldDialogueDone === true;
+			progress.whiteDialogueDone = progress.echoUnlocked && data.whiteDialogueDone === true;
+			progress.starfieldVisited = progress.starfieldUnlocked && data.starfieldVisited === true;
+			progress.stillnessUnlocked =
+				isStillnessReady(progress) && data.stillnessUnlocked === true;
+		}
 		return progress;
 	} catch {
 		return emptyProgress();
@@ -126,6 +145,7 @@ export function getPuzzleProgress(): PuzzleProgress {
 			const current = window.localStorage.getItem(pulsePuzzle.storageKey);
 			memory = parseProgress(
 				current ??
+					window.localStorage.getItem(pulsePuzzle.previousStorageKey) ??
 					window.localStorage.getItem(pulsePuzzle.legacyStorageKey) ??
 					window.localStorage.getItem(pulsePuzzle.olderStorageKey) ??
 					window.localStorage.getItem(pulsePuzzle.oldestStorageKey) ??
@@ -217,6 +237,16 @@ export function resetEchoBranch(): PuzzleProgress {
 	const progress = getPuzzleProgress();
 	progress.echoClueSeen = false;
 	progress.echoUnlocked = false;
+	progress.whiteDialogueDone = false;
+	progress.stillnessUnlocked = false;
+	savePuzzleProgress(progress);
+	return getPuzzleProgress();
+}
+
+export function resetStillnessBranch(): PuzzleProgress {
+	const progress = getPuzzleProgress();
+	if (!progress.stillnessUnlocked) return progress;
+	progress.stillnessUnlocked = false;
 	savePuzzleProgress(progress);
 	return getPuzzleProgress();
 }
@@ -226,5 +256,40 @@ export function unlockEcho(): boolean {
 	if (!progress.unlocked || !progress.echoClueSeen) return false;
 	progress.echoUnlocked = true;
 	savePuzzleProgress(progress);
+	return true;
+}
+
+export function isStillnessReady(progress: PuzzleProgress): boolean {
+	return progress.unlocked && progress.worldUnlocked && progress.starfieldUnlocked && progress.echoUnlocked;
+}
+
+export function markWorldDialogueDone(): void {
+	const progress = getPuzzleProgress();
+	if (!progress.worldUnlocked || progress.worldDialogueDone) return;
+	progress.worldDialogueDone = true;
+	savePuzzleProgress(progress);
+}
+
+export function markWhiteDialogueDone(): void {
+	const progress = getPuzzleProgress();
+	if (!progress.echoUnlocked || progress.whiteDialogueDone) return;
+	progress.whiteDialogueDone = true;
+	savePuzzleProgress(progress);
+}
+
+export function markStarfieldVisited(): void {
+	const progress = getPuzzleProgress();
+	if (!progress.starfieldUnlocked || progress.starfieldVisited) return;
+	progress.starfieldVisited = true;
+	savePuzzleProgress(progress);
+}
+
+export function unlockStillness(): boolean {
+	const progress = getPuzzleProgress();
+	if (!isStillnessReady(progress)) return false;
+	if (!progress.stillnessUnlocked) {
+		progress.stillnessUnlocked = true;
+		savePuzzleProgress(progress);
+	}
 	return true;
 }

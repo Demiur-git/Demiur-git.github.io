@@ -80,14 +80,14 @@ test("v3 unlocks migrate without granting the new branch", () => {
 		echoUnlocked: true,
 	};
 	const migrated = parseProgress(JSON.stringify(previous));
-	assert.equal(migrated.version, 5);
+	assert.equal(migrated.version, 6);
 	assert.equal(migrated.worldUnlocked, true);
 	assert.equal(migrated.starfieldUnlocked, true);
 	assert.equal(migrated.echoUnlocked, false);
 	assert.equal(migrated.echoClueSeen, false);
 });
 
-test("v4 echo unlock carries the project clue into v5", () => {
+test("v4 echo unlock carries the project clue into v6", () => {
 	const legacy = {
 		...emptyProgress(),
 		version: 4,

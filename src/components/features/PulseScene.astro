@@ -3,8 +3,12 @@ import { url } from "@/utils/url-utils";
 ---
 <pulse-scene data-pagefind-ignore>
 	<dialog class="pulse-screen" aria-label="装饰心电线场景" tabindex="-1">
+		<div class="stillness-warning" aria-hidden="true"></div>
 		<svg class="pulse-wave" viewBox="0 0 1200 400" preserveAspectRatio="none" aria-hidden="true"><g data-trail></g><path data-static fill="none" stroke="#111" stroke-width="1.4" vector-effect="non-scaling-stroke" /><circle data-scan-head r="2" fill="#111" visibility="hidden" /><path data-echo-residue fill="none" stroke="#777" stroke-opacity="0.43" stroke-width="1.1" vector-effect="non-scaling-stroke" visibility="hidden" /><path data-echo-primary fill="none" stroke="#111" stroke-width="1.6" vector-effect="non-scaling-stroke" visibility="hidden" /><path data-echo-ghost fill="none" stroke="#888" stroke-width="1.6" vector-effect="non-scaling-stroke" visibility="hidden" /></svg>
 		<button class="wave-interaction" aria-label="让心电线停留：按住空格" data-wave-hold></button>
+		<div class="stillness-keys" data-stillness-keys hidden><button type="button" data-stillness-key="J" aria-label="左侧节拍"></button><button type="button" data-stillness-key="K" aria-label="右侧节拍"></button></div>
+		<button class="stillness-revisit" data-stillness-revisit type="button" aria-label="再次进入静止空间" hidden></button>
+		<p class="stillness-status" data-stillness-status role="status"></p>
 		<button class="echo-interaction" type="button" aria-label="没有消失的短线。按 Enter 或空格选取，再用方向键移动；也可拖动" data-echo-handle hidden></button>
 		<p class="echo-status" data-echo-status role="status" aria-live="polite"></p>
 		<button class="echo-leave" type="button" data-echo-leave hidden>松开第二条线</button>
@@ -25,8 +29,19 @@ import { url } from "@/utils/url-utils";
 	registerEasterEgg("pulse-scene", PulseScene);
 </script>
 <style>
-	.pulse-screen { position:fixed; inset:0; margin:0; padding:0; border:0; width:100vw; height:100dvh; max-width:none; max-height:none; overflow:hidden; background:#fff; color:#111; overscroll-behavior:none; }
+	.pulse-screen { position:fixed; inset:0; margin:0; padding:0; border:0; width:100vw; height:100dvh; max-width:none; max-height:none; overflow:hidden; background:var(--stillness-bg,#fff); color:#111; overscroll-behavior:none; }
 	.pulse-screen::backdrop { background:#fff; } .pulse-screen:focus { outline:none; }
+	.stillness-warning { position:absolute; inset:0; pointer-events:none; background:radial-gradient(ellipse at center,transparent 34%,#671a240f 58%,#7117206b 100%); opacity:var(--stillness-warning,0); }
+	.stillness-keys { position:absolute; z-index:2; left:50%; bottom:max(18px,env(safe-area-inset-bottom)); transform:translateX(-50%); display:flex; gap:36px; }
+	.stillness-keys[hidden],.stillness-revisit[hidden] { display:none; }
+	.stillness-keys button { position:relative; width:52px; height:48px; border:0; background:transparent; cursor:default; touch-action:manipulation; }
+	.stillness-keys button::after { content:""; position:absolute; width:18px; height:1px; left:17px; top:24px; background:#7777; transform:rotate(-8deg); }
+	.stillness-keys button:last-child::after { transform:rotate(8deg); }
+	.stillness-keys button:focus-visible,.stillness-revisit:focus-visible { outline:1px dashed #777; outline-offset:2px; }
+	.stillness-revisit { position:absolute; z-index:2; left:50%; top:calc(50% + min(20dvh,200px) - 28px); transform:translateX(-50%); width:64px; height:48px; border:0; background:transparent; }
+	.stillness-revisit::after { content:""; display:block; width:36px; height:1px; margin:auto; background:#7779; }
+	.stillness-status { position:absolute; z-index:2; left:50%; bottom:calc(72px + env(safe-area-inset-bottom)); transform:translateX(-50%); width:min(420px,calc(100vw - 32px)); margin:0; color:#777; font-size:12px; text-align:center; pointer-events:none; }
+	.stillness-status:empty,pulse-scene[data-morse] .stillness-status,pulse-scene[data-echo] .stillness-status { display:none; }
 	.pulse-wave { position:absolute; left:0; top:50%; width:100%; height:min(40dvh,400px); transform:translateY(-50%); pointer-events:none; }
 	.wave-interaction { position:absolute; left:0; top:50%; width:100%; height:min(40dvh,400px); transform:translateY(-50%); background:transparent; touch-action:none; cursor:default; border:0; }
 	.echo-interaction { position:absolute; z-index:1; left:var(--echo-hit-x,50%); top:var(--echo-hit-y,50%); width:44px; height:44px; transform:translate(-50%,-50%); border:0; background:transparent; touch-action:none; cursor:default; }
@@ -40,6 +55,8 @@ import { url } from "@/utils/url-utils";
 	pulse-scene[data-echo] .echo-interaction { left:0; top:30%; width:100%; height:40%; transform:none; }
 	pulse-scene[data-echo] .wave-interaction,pulse-scene[data-morse] .echo-interaction { pointer-events:none; }
 	pulse-scene[data-morse] .echo-interaction,pulse-scene[data-morse] .echo-status { display:none; }
+	pulse-scene[data-flatline] .wave-interaction,pulse-scene[data-flatline] .echo-interaction { pointer-events:none; }
+	pulse-scene[data-morse] .stillness-keys,pulse-scene[data-echo] .stillness-keys,pulse-scene[data-flatline] .stillness-keys { display:none; }
 	pulse-scene[data-morse] .pulse-wave { height:clamp(100px,24vh,230px); }
 	pulse-scene[data-morse] .wave-interaction { height:max(64px,24vh); }
 	.wave-interaction:focus-visible { outline:1px dashed #777; outline-offset:-8px; }
@@ -54,6 +71,6 @@ import { url } from "@/utils/url-utils";
 	.morse-panel a { display:inline-block; margin-top:8px; padding:8px 12px; border:1px solid #333; } .morse-panel a[hidden] { display:none; }
 	.pulse-return { position:absolute; bottom:max(28px,env(safe-area-inset-bottom)); right:28px; padding:10px 18px; color:#222; background:#fff; border:1px solid #bbb; font-size:14px; text-decoration:none; }
 	.pulse-return[hidden] { display:none; } .pulse-return:focus-visible { outline:2px solid #111; outline-offset:4px; }
-	@media(max-width:480px) { .morse-panel { top:calc(50% + 65px); max-height:calc(50dvh - 85px); padding:.75rem 0; } .morse-actions button { padding:5px 9px; font-size:12px; } .echo-leave { top:calc(50% + min(20dvh,200px) + 18px); } }
-	@media(max-height:520px) { .pulse-wave,.wave-interaction { top:30%; } pulse-scene[data-echo] .echo-interaction { top:10%; height:40%; } .echo-status { top:calc(30% + min(20dvh,200px) + 4px); } .echo-leave { top:calc(30% + min(20dvh,200px) + 26px); } .morse-panel { top:calc(30% + 50px); max-height:calc(70dvh - 66px); } .pulse-return { top:12px; bottom:auto; right:16px; } }
+	@media(max-width:480px) { .morse-panel { top:calc(50% + 65px); max-height:calc(50dvh - 85px); padding:.75rem 0; } .morse-actions button { padding:5px 9px; font-size:12px; } .echo-leave { top:calc(50% + min(20dvh,200px) + 18px); } .stillness-keys { gap:42px; } }
+	@media(max-height:520px) { .pulse-wave,.wave-interaction { top:30%; } pulse-scene[data-stillness-building] .pulse-wave,pulse-scene[data-stillness-building] .wave-interaction { top:50%; } pulse-scene[data-echo] .echo-interaction { top:10%; height:40%; } .echo-status { top:calc(30% + min(20dvh,200px) + 4px); } .echo-leave { top:calc(30% + min(20dvh,200px) + 26px); } .morse-panel { top:calc(30% + 50px); max-height:calc(70dvh - 66px); } .pulse-return { top:12px; bottom:auto; right:16px; } }
 </style>

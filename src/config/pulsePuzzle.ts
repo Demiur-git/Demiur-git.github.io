@@ -1,11 +1,12 @@
 // Internal puzzle data. Answers are not rendered as visitor-facing hints.
 export const pulsePuzzle = {
-	storageKey: "demiur-pulse-puzzle-v5",
+	storageKey: "demiur-pulse-puzzle-v6",
+	previousStorageKey: "demiur-pulse-puzzle-v5",
 	legacyStorageKey: "demiur-pulse-puzzle-v4",
 	olderStorageKey: "demiur-pulse-puzzle-v3",
 	oldestStorageKey: "demiur-pulse-puzzle-v2",
 	firstStorageKey: "demiur-pulse-puzzle-v1",
-	version: 5,
+	version: 6,
 	multiplier: 5,
 	offset: 8,
 	alphabetSize: 26,
@@ -109,7 +110,7 @@ export const pulsePuzzle = {
 		{ speaker: "女声", text: "真是的，绝对，绝对，绝对不要再像那样，抛下我了啊" },
 		{ speaker: "男声", text: "不会的，夕月，再也不会了" },
 		{ speaker: "夕月", text: "……再抱紧一些嘛，青，让我再多感受一下你" },
-		{ speaker: "青", text: "嗯————哼！" },
+		{ speaker: "青", text: "嗯，好" },
 		{ speaker: "旁白", text: "（沉默着）" },
 		{ speaker: "青", text: "我说怎么感觉少了些什么，夕月，尾巴没有了的话，就没有办法抽我的大腿了呀，哈哈" },
 		{ speaker: "夕月", text: "嗯？你说什么？！" },

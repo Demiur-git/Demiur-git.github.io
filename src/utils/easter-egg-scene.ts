@@ -45,6 +45,7 @@ export abstract class EasterEggScene extends HTMLElement {
 		document.documentElement.removeAttribute("data-starfield-pending");
 		document.documentElement.removeAttribute("data-echo-pending");
 		document.documentElement.removeAttribute("data-echo-white-pending");
+		document.documentElement.removeAttribute("data-stillness-pending");
 		const motion = matchMedia("(prefers-reduced-motion: reduce)");
 		const update = () => {
 			this.reduced = motion.matches;
@@ -148,12 +149,15 @@ export abstract class EasterEggScene extends HTMLElement {
 		document.documentElement.removeAttribute("data-starfield-pending");
 		document.documentElement.removeAttribute("data-echo-pending");
 		document.documentElement.removeAttribute("data-echo-white-pending");
+		document.documentElement.removeAttribute("data-stillness-pending");
 		// Keep the destination's blank field until its lazy controller mounts.
 		// Otherwise the site wallpaper can peek through between the two scenes.
 		if (!scrollOwners.size && isEasterEggPath(location.pathname)) {
 			const path = location.pathname.replace(/\/+$/, "");
 			document.documentElement.setAttribute(
-				path.endsWith("/echo/white")
+				path.endsWith("/stillness")
+					? "data-stillness-pending"
+					: path.endsWith("/echo/white")
 					? "data-echo-white-pending"
 					: path.endsWith("/newworld")
 					? "data-world-pending"

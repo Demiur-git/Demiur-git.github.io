@@ -9,7 +9,9 @@ import { pulseScenePath } from "@/utils/pulse-route";
 			<path class="echo-line echo-line-two" d="M1240 525 C1025 526 925 448 814 449 C727 443 693 387 600 350" />
 			<path class="echo-seam" d="M600 286 Q593 320 600 350 Q607 386 600 419" />
 		</svg>
+		<svg class="echo-aperture" data-echo-aperture aria-hidden="true"><path data-echo-aperture-path /></svg>
 		<button class="echo-seam-hit" data-echo-seam type="button" aria-label="触碰两条线交汇处的裂缝" hidden></button>
+		<p class="echo-error" data-echo-error role="status" hidden>暂时无法进入，请再试一次。</p>
 		<a class="echo-return" data-scene-return href={pulseScenePath()}>返回心电图</a>
 	</dialog>
 </echo-scene>
@@ -23,13 +25,17 @@ import { pulseScenePath } from "@/utils/pulse-route";
 	.echo-screen::backdrop { background:#000; }
 	.echo-screen:focus { outline:none; }
 	.echo-space { position:absolute; inset:0; width:100%; height:100%; }
+	.echo-aperture { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+	.echo-aperture path { fill:#fff; stroke:#e9e9e9; stroke-width:1; vector-effect:non-scaling-stroke; }
 	.echo-line { fill:none; stroke:#dedede; stroke-width:1.15; vector-effect:non-scaling-stroke; stroke-dasharray:830; stroke-dashoffset:830; animation:echo-draw 2.4s ease-out forwards; }
 	.echo-line-two { stroke:#8d8d8d; animation-delay:0.18s; }
 	.echo-seam { fill:none; stroke:#fff; stroke-width:1.35; vector-effect:non-scaling-stroke; opacity:0; animation:echo-reveal 0.8s ease-out 2s forwards; }
-	.echo-seam-hit { position:absolute; left:50%; top:50%; width:clamp(48px,8vw,76px); height:clamp(150px,25vh,230px); transform:translate(-50%,-50%); border:0; background:transparent; cursor:pointer; touch-action:manipulation; }
+	.echo-seam-hit { position:absolute; left:50%; top:50%; width:clamp(48px,8vw,76px); height:180px; transform:translate(-50%,-50%); border:0; background:transparent; cursor:pointer; touch-action:manipulation; }
 	.echo-seam-hit[hidden] { display:none; }
 	.echo-seam-hit:focus-visible { outline:1px solid #bcbcbc; outline-offset:5px; }
-	.echo-seam-hit:hover::after,.echo-seam-hit:focus-visible::after { content:""; position:absolute; inset:18% 49%; background:#fff; opacity:.28; filter:blur(8px); pointer-events:none; }
+	.echo-seam-hit:disabled { cursor:default; }
+	.echo-error { position:absolute; left:50%; bottom:max(24px,env(safe-area-inset-bottom)); transform:translateX(-50%); max-width:calc(100vw - 40px); margin:0; color:#dadada; font-size:13px; text-align:center; }
+	.echo-error[hidden] { display:none; }
 	echo-scene[data-paused] .echo-line,echo-scene[data-paused] .echo-seam { animation-play-state:paused; }
 	.echo-return { position:absolute; right:max(20px,env(safe-area-inset-right)); bottom:max(20px,env(safe-area-inset-bottom)); min-height:44px; padding:10px 15px; border:1px solid #898989; background:#080808db; color:#eee; font-size:13px; text-decoration:none; }
 	.echo-return[hidden] { display:none; }
