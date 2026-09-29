@@ -5,12 +5,12 @@ updated: 2026-09-27
 description: 分清内容、配置与浏览器数据，修改站名、首页、导航、背景、字体和序章台词。
 tags: [站长指南, 配置, 网站外观]
 category: 站长指南
-series: Demiur 站长维护指南
+series: Palib 站长维护指南
 seriesOrder: 1
 draft: false
 ---
 
-这组教程写给拥有项目源文件的站长。网站前台不是内容管理后台：文章、便签、相册资料与工具清单，大多需要在本地修改文件，再重新构建并发布。下文以当前 Demiur 项目为准；示例只是操作说明，不会自动加入真实栏目。
+这组教程写给拥有项目源文件的站长。网站前台不是内容管理后台：文章、便签、相册资料与工具清单，大多需要在本地修改文件，再重新构建并发布。下文以当前 Palib 网站项目为准；示例只是操作说明，不会自动加入真实栏目。
 
 ## 六篇指南，从哪里开始
 
@@ -62,7 +62,7 @@ pnpm.cmd dev
 
 ## 站名与首页并非同一字段
 
-`siteConfig.title` 控制站名，目前为 `Demiur`，也用于开书动画左页。正式域名由 `siteConfig.site_url` 提供，当前为 `https://demiur-git.github.io`；更换域名时，还应核对部署和评论服务设置。
+`siteConfig.title` 控制站名，目前为 `Palib`，也用于开书动画左页。正式域名由 `siteConfig.site_url` 提供，当前为 `https://demiur-git.github.io`；更换域名时，还应核对部署和评论服务设置。
 
 首页大标题、介绍与社交入口分别在 `homeIntroConfig.title`、`description`、`links` 中；它们不会因改站名自动变成同一段文字。首页馆藏便签来自 `catalogEntries`：改标题、简介、图标和链接即可，不需要修改便签墙组件。
 

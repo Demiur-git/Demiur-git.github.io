@@ -42,7 +42,7 @@ const pages = resolvePageToggles({
 
 export const siteConfig: SiteConfig = {
 	// 站点标题
-	title: "Demiur",
+	title: "Palib",
 
 	// 站点副标题
 	subtitle: "便签与文章",

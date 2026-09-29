@@ -5,7 +5,7 @@ updated: 2026-09-27
 description: 填写公开日程、项目档案与阅读记录，区分浏览器中的个人安排和随网站发布的配置。
 tags: [站长指南, 日历, 项目, 读书计划]
 category: 站长指南
-series: Demiur 站长维护指南
+series: Palib 站长维护指南
 seriesOrder: 5
 draft: false
 ---

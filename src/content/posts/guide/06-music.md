@@ -4,7 +4,7 @@ published: 2026-09-27
 description: 整理音频、曲绘与歌词，区分个人和公开曲库，用明确选曲导出 R2 清单，并检查跨域与实际播放。
 tags: [站长指南, 音乐, LRC, R2]
 category: 站长指南
-series: Demiur 站长维护指南
+series: Palib 站长维护指南
 seriesOrder: 4
 draft: false
 ---

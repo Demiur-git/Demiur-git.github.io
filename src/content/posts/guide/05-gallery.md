@@ -4,7 +4,7 @@ published: 2026-09-27
 description: 从照片目录到影像册配置，设置封面、顺序、简介、标签和远程图片，并检查公开素材的边界。
 tags: [站长指南, 相册, 图片]
 category: 站长指南
-series: Demiur 站长维护指南
+series: Palib 站长维护指南
 seriesOrder: 3
 draft: false
 ---

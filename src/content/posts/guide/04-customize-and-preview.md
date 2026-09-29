@@ -5,7 +5,7 @@ updated: 2026-09-27
 description: 维护工具分类、官方图标和友链，管理 Waline 留言及赞助内容，完成本地检查和 GitHub Pages 发布。
 tags: [站长指南, 工具导航, 友链, Waline, 发布]
 category: 站长指南
-series: Demiur 站长维护指南
+series: Palib 站长维护指南
 seriesOrder: 6
 draft: false
 ---
@@ -120,7 +120,7 @@ pnpm.cmd preview
 
 ## 提交与 GitHub Pages 发布
 
-当前仓库为 [Demiur-git.github.io](https://github.com/Demiur-git/Demiur-git.github.io)，公开站点为 [Demiur](https://demiur-git.github.io/)。推送 `main` 后，`.github/workflows/deploy.yml` 会执行检查、构建并部署 GitHub Pages，不需要手动把本地 `dist` 提交到仓库。
+当前仓库为 [Demiur-git.github.io](https://github.com/Demiur-git/Demiur-git.github.io)，公开站点为 [Palib](https://demiur-git.github.io/)。推送 `main` 后，`.github/workflows/deploy.yml` 会执行检查、构建并部署 GitHub Pages，不需要手动把本地 `dist` 提交到仓库。
 
 以下只演示发布一篇文章，路径必须替换成真实修改的文件：
 

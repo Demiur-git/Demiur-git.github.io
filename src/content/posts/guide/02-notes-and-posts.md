@@ -5,7 +5,7 @@ updated: 2026-09-27
 description: 用现有命令创建 Markdown，设置文章元信息、草稿和系列，维护短动态及其评论标识。
 tags: [站长指南, Markdown, 文章, 便签]
 category: 站长指南
-series: Demiur 站长维护指南
+series: Palib 站长维护指南
 seriesOrder: 2
 draft: false
 ---
