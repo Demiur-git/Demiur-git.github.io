@@ -1,6 +1,7 @@
 ---
 import { getEntry, render } from "astro:content";
 import Markdown from "@components/common/Markdown.astro";
+import AboutNoticeboard from "@/components/layout/AboutNoticeboard.astro";
 import MainGridLayout from "@/layouts/MainGridLayout.astro";
 
 const aboutPost = await getEntry("spec", "about");
@@ -13,9 +14,14 @@ const { Content } = await render(aboutPost);
 ---
 
 <MainGridLayout title="网站" description="关于这个网站">
-	<section class="card-base px-7 py-6 sm:px-9">
-		<Markdown class="mt-2">
-			<Content />
-		</Markdown>
-	</section>
+	<AboutNoticeboard label="网站" number="02">
+		<div class="about-site-stack">
+			<div class="about-site-notice notice-paper taped">
+				<Markdown class="about-site-markdown">
+					<Content />
+				</Markdown>
+				<span class="notice-fold" aria-hidden="true"></span>
+			</div>
+		</div>
+	</AboutNoticeboard>
 </MainGridLayout>

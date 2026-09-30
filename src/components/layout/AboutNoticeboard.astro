@@ -1,0 +1,19 @@
+---
+import "@/styles/pages/about-noticeboard.css";
+
+interface Props {
+	label: string;
+	number: string;
+}
+
+const { label, number } = Astro.props;
+---
+
+<section class="about-noticeboard" aria-label={`${label}公告栏`}>
+	<header class="noticeboard-heading">
+		<span class="noticeboard-index">ABOUT / {number}</span>
+		<span class="noticeboard-section">{label}</span>
+		<span class="noticeboard-rule" aria-hidden="true"></span>
+	</header>
+	<div class="noticeboard-content"><slot /></div>
+</section>
