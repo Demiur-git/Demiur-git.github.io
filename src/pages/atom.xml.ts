@@ -9,8 +9,8 @@ export const prerender = true;
 export async function GET(context: APIContext): Promise<Response> {
 	const includeContent = (siteConfig.feed?.contentMode ?? "full") === "full";
 	const blog = await getSortedPosts();
-	const entries = await renderFeedEntries(blog, { includeContent });
 	const site = context.site ?? new URL(siteConfig.site_url);
+	const entries = await renderFeedEntries(blog, { includeContent, site });
 	const xml = buildAtomFeed({
 		site,
 		title: siteConfig.title,

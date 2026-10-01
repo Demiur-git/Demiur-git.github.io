@@ -1,0 +1,16 @@
+---
+import Library3DScene from "@/components/features/Library3DScene.astro";
+import MainGridLayout from "@/layouts/MainGridLayout.astro";
+import { url } from "@/utils/url-utils";
+import "@/styles/pages/library-3d.css";
+---
+
+<MainGridLayout title="">
+	<Fragment slot="head">
+		<meta name="robots" content="noindex, nofollow" />
+		<script is:inline>document.documentElement.setAttribute("data-library3d-pending", "");</script>
+		<style is:global>html[data-library3d-pending]::after { content:""; position:fixed; inset:0; background:#000; z-index:2147483647; pointer-events:none; }</style>
+		<noscript><style>html::after { display:none!important; } .content-panel,#swup-container,.onload-animation { transform:none!important; animation:none!important; opacity:1!important; } .content-panel { z-index:2147483647!important; }</style></noscript>
+	</Fragment>
+	<div data-pagefind-ignore="all"><Library3DScene /><noscript><div class="library3d-static"><p>线稿参观需要启用 JavaScript。</p><a href={url("/")}>返回主页</a></div></noscript></div>
+</MainGridLayout>

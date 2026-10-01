@@ -1,0 +1,75 @@
+---
+import referenceDay from "@/assets/images/library-reading-desk.png";
+import referenceNight from "@/assets/images/library-reading-desk-night.png";
+import { url } from "@/utils/url-utils";
+import { siteConfig } from "@/config";
+import { LIBRARY_TARGETS, ROOMS } from "@/utils/library-3d-layout";
+const targets=LIBRARY_TARGETS.filter(t=>!t.pageKey||siteConfig.pages[t.pageKey]);
+---
+
+<library-3d-scene data-pagefind-ignore="all">
+	<dialog class="library3d-screen" aria-label="Palib 线稿图书馆参观" tabindex="-1">
+		<canvas class="library3d-canvas" aria-label="线稿图书馆，WASD 行走，按住拖动可调整视角" tabindex="0"></canvas>
+		<div class="library3d-look" data-library-look aria-hidden="true"></div>
+		<div class="library3d-plaques" aria-hidden="true">{ROOMS.map(room=><span data-library-room={room.id} hidden>{room.name}</span>)}</div>
+		<header class="library3d-title"><span>PALIB · INK STUDY</span><h1>线稿图书馆</h1><p data-library-location>沿着过道，自由看看馆藏。</p></header>
+		<nav class="library3d-actions" aria-label="参观控制">
+			<button type="button" data-library-reset>重置位置</button>
+			<a href={url("/")} data-scene-return>返回主页</a>
+		</nav>
+		<details class="library3d-help">
+			<summary>操作说明</summary>
+			<p class="library3d-desktop-help">W/A/S/D 行走，按住 Shift 奔跑；拖动或方向键转向。不需要锁定鼠标。走近物件后按 E 打开对应栏目。</p>
+			<p class="library3d-touch-help">左侧摇杆行走，右侧滑动转向；按住“奔跑”加速，走近物件后轻点入口。</p>
+			<p>大厅后方通往四间功能房，走廊尽头的楼梯可前往二楼回廊与员工休息室。物件先展示介绍，确认后才打开网站栏目。</p>
+			<p>Esc 先收起说明，再次按下返回主页。</p>
+			<button type="button" data-library-reference>前往阅读区观赏位置</button>
+		</details>
+		<div class="library3d-joystick" data-library-joystick role="group" aria-label="行走摇杆"><span data-library-knob></span></div>
+		<button type="button" class="library3d-run" data-library-run aria-pressed="false">按住奔跑</button>
+		<nav class="library3d-interaction" data-library-interaction aria-label="附近的功能物件" hidden>{targets.map(target=><a href={url(target.path)} data-library-item={target.id} hidden><span class="library3d-desktop-key">E · </span>{target.name}</a>)}</nav>
+		<aside class="library3d-reminder" data-library-reminder role="status" aria-live="polite" hidden><span>绫</span><p>嘘……图书馆里最好不要跑闹，慢一点好吗？</p></aside>
+		<div class="library3d-loading" role="status">正在准备线稿空间……</div>
+		<section class="library3d-error" role="alert" hidden>
+			<h2>暂时无法打开线稿空间</h2><p data-library-error-text>请确认浏览器支持 WebGL2，或重试加载。</p><p>下图仅为原图书馆参考，不是当前线稿画面。</p>
+			<div class="library3d-reference"><img class="library3d-reference-day" loading="lazy" decoding="async" src={referenceDay.src} alt="白天的原图书馆背景：木质书架、绿色台灯和窗边阅读区" /><img class="library3d-reference-night" loading="lazy" decoding="async" src={referenceNight.src} alt="夜晚的原图书馆背景：灯光下的书架与阅读区" /></div>
+			<button type="button" data-library-retry>重新加载</button><a href={url("/")}>返回主页</a>
+		</section>
+		<p class="library3d-status" role="status" aria-live="polite" data-library-status></p>
+		<div class="library3d-confirm" data-library-confirm hidden>
+			<section role="dialog" aria-modal="true" aria-labelledby="library-confirm-title" aria-describedby="library-confirm-description">
+				<span data-library-confirm-object></span><h2 id="library-confirm-title" data-library-confirm-title></h2>
+				<p id="library-confirm-description" data-library-confirm-description></p>
+				<p class="library3d-confirm-error" data-library-confirm-error role="status" hidden></p>
+				<div><button type="button" data-library-cancel>继续参观</button><button type="button" data-library-confirm-go>前往页面</button></div>
+			</section>
+		</div>
+	</dialog>
+</library-3d-scene>
+
+<script>
+	import { EasterEggScene, registerEasterEgg } from "@/utils/easter-egg-scene";
+	class LibraryLoadFailure extends EasterEggScene {
+		connectedCallback(): void {
+			if (this.active) return;
+			const signal = this.mount("/"); this.back.hidden = false;
+			this.querySelector<HTMLElement>(".library3d-loading")!.hidden = true;
+			this.querySelector<HTMLElement>(".library3d-error")!.hidden = false;
+			this.querySelector<HTMLElement>("[data-library-error-text]")!.textContent = "线稿组件加载失败，请重试。";
+			for (const button of this.querySelectorAll<HTMLButtonElement>("[data-library-reset],[data-library-reference],[data-library-run]")) button.disabled = true;
+			this.querySelector("[data-library-retry]")!.addEventListener("click", () => location.reload(), { signal });
+		}
+		protected renderFrame(): void {}
+		protected revealReturn(): void { this.back.hidden = false; }
+	}
+	// Heavy renderer and geometry must not enter the ordinary site bundle.
+	async function loadLibrary() {
+		try {
+			const { Library3DScene } = await import("@/utils/library-3d-scene");
+			registerEasterEgg("library-3d-scene", Library3DScene);
+		} catch {
+			registerEasterEgg("library-3d-scene", LibraryLoadFailure);
+		}
+	}
+	void loadLibrary();
+</script>

@@ -1,0 +1,74 @@
+.library3d-screen { position:fixed; inset:0; width:100vw; height:100dvh; max-width:none; max-height:none; margin:0; padding:0; border:0; overflow:hidden; background:#000; color:#ddd; overscroll-behavior:none; font-family:var(--font-library-sans); }
+.library3d-screen::backdrop { background:#000; }
+.library3d-screen:focus { outline:none; }
+.library3d-canvas { position:absolute; inset:0; display:block; width:100%; height:100%; touch-action:none; cursor:grab; outline:none; }
+.library3d-canvas:active { cursor:grabbing; }
+.library3d-screen :is(button,a,summary):focus-visible,.library3d-canvas:focus-visible { outline:1px solid #eee; outline-offset:4px; }
+.library3d-title { position:absolute; left:max(22px,env(safe-area-inset-left)); top:max(20px,env(safe-area-inset-top)); padding:12px 18px; background:#000c; border-left:1px solid #777; pointer-events:none; }
+.library3d-title span { font:10px var(--font-code,monospace); letter-spacing:.17em; color:#999; }
+.library3d-title h1 { margin:4px 0; font:500 22px var(--font-library-serif); }
+.library3d-title p { margin:0; font-size:12px; }
+.library3d-actions { position:absolute; right:max(22px,env(safe-area-inset-right)); top:max(20px,env(safe-area-inset-top)); display:flex; flex-wrap:wrap; justify-content:end; gap:8px; max-width:55%; }
+.library3d-screen :is(button,a) { display:inline-flex; align-items:center; justify-content:center; min-height:44px; padding:10px 14px; border:1px solid #666; background:#000d; color:#ddd; cursor:pointer; font-size:12px; line-height:1.4; text-decoration:none; touch-action:manipulation; }
+.library3d-screen :is(button,a):hover { background:#222; border-color:#ccc; }
+.library3d-screen button:disabled { opacity:.6; cursor:wait; }
+.library3d-screen [hidden] { display:none!important; }
+.library3d-help { position:absolute; left:max(22px,env(safe-area-inset-left)); bottom:max(22px,env(safe-area-inset-bottom)); width:min(355px,calc(100vw - 44px)); border:1px solid #555; background:#000e; padding:12px 15px; font-size:12px; line-height:1.8; }
+.library3d-help summary { cursor:pointer; }
+.library3d-help p { margin:9px 0; }
+.library3d-help button { margin-top:4px; }
+.library3d-touch-help,.library3d-joystick,.library3d-look { display:none; }
+.library3d-loading { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); padding:16px 22px; background:#000e; border:1px solid #555; font-size:14px; }
+.library3d-error { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:min(570px,calc(100vw - 28px)); max-height:calc(100dvh - 28px); overflow:auto; padding:22px; background:#101010; border:1px solid #666; }
+.library3d-error h2 { font:500 22px var(--font-library-serif); margin-bottom:12px; }
+.library3d-error p { line-height:1.7; font-size:13px; }
+.library3d-error img { display:block; width:100%; margin:16px 0; }
+.library3d-reference-night { display:none!important; }
+:root.dark .library3d-reference-night { display:block!important; }
+:root.dark .library3d-reference-day { display:none!important; }
+.library3d-error a { margin-left:8px; }
+.library3d-status { position:absolute; left:50%; bottom:22px; transform:translateX(-50%); max-width:calc(100vw - 36px); padding:7px 12px; background:#000c; font-size:12px; pointer-events:none; }
+.library3d-status:empty { display:none; }
+.library3d-confirm { position:absolute; inset:0; display:grid; place-items:center; background:#0009; padding:20px; }
+.library3d-confirm section { width:min(440px,100%); padding:30px; border:1px solid #aaa; background:#ececea; color:#252525; box-shadow:0 14px 50px #0008; }
+.library3d-confirm section>span { font:10px var(--font-code,monospace); letter-spacing:.16em; border-bottom:1px solid #aaa; padding-bottom:8px; display:block; }
+.library3d-confirm h2 { margin:18px 0 12px; font:500 25px var(--font-library-serif); }
+.library3d-confirm p { font-size:14px; line-height:1.8; margin:12px 0 22px; }
+.library3d-confirm section>div { display:flex; gap:10px; flex-wrap:wrap; }
+.library3d-screen .library3d-confirm button { color:#252525; background:transparent; border-color:#777; flex:1; }
+.library3d-screen .library3d-confirm button:hover { background:#ddd; }
+.library3d-screen .library3d-confirm button:focus-visible { outline-color:#333; }
+.library3d-confirm-error { font-size:12px!important; border-left:2px solid #777; padding-left:10px; }
+.library3d-run { display:none!important; }
+.library3d-plaques { position:absolute; inset:0; pointer-events:none; }
+.library3d-plaques span { position:absolute; transform:translate(-50%,-50%); padding:3px 10px; white-space:nowrap; font-size:12px; color:#ddd; background:#000e; border:1px solid #666; letter-spacing:.12em; }
+.library3d-interaction { position:absolute; bottom:86px; left:50%; transform:translateX(-50%); max-width:calc(100vw - 36px); }
+.library3d-interaction a { border-color:#aaa!important; font-size:14px!important; }
+.library3d-reminder { position:absolute; left:50%; top:24px; transform:translateX(-50%); width:min(350px,calc(100vw - 36px)); border:1px solid #777; background:#090909e8; padding:12px 16px; pointer-events:none; }
+.library3d-reminder span { display:block; font:500 14px var(--font-library-serif); color:#eee; }
+.library3d-reminder p { margin:5px 0 0; line-height:1.7; font-size:13px; }
+.library3d-static { position:fixed; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:2147483646; background:#000; color:#ddd; }
+.library3d-static a { text-decoration:underline; }
+@media(pointer:coarse) {
+	.library3d-desktop-help { display:none; } .library3d-touch-help { display:block; }
+	.library3d-look { display:block; position:absolute; top:0; right:0; width:50%; height:100%; touch-action:none; }
+	.library3d-joystick { display:block; position:absolute; left:max(24px,env(safe-area-inset-left)); bottom:max(25px,env(safe-area-inset-bottom)); width:114px; height:114px; border:1px solid #888; border-radius:50%; background:#0008; touch-action:none; }
+	.library3d-joystick span { position:absolute; left:50%; top:50%; width:43px; height:43px; transform:translate(-50%,-50%); border:1px solid #aaa; border-radius:50%; background:#fff2; pointer-events:none; }
+	.library3d-screen .library3d-help { left:auto; right:18px; max-width:calc(100vw - 168px); }
+	.library3d-screen .library3d-help[open] { bottom:160px; max-width:calc(100vw - 36px); width:355px; }
+	.library3d-screen .library3d-run { display:inline-flex!important; position:absolute; left:max(24px,env(safe-area-inset-left)); bottom:160px; width:114px; touch-action:none; }
+	.library3d-screen .library3d-run[aria-pressed="true"] { background:#333; border-color:#ddd; }
+	.library3d-desktop-key { display:none; }
+	.library3d-interaction { left:auto; right:18px; bottom:80px; width:calc(100vw - 168px); max-width:240px; transform:none; }
+	.library3d-interaction a { width:100%; }
+}
+@media(max-width:600px) {
+	.library3d-title { left:12px; top:max(12px,env(safe-area-inset-top)); padding:9px 12px; max-width:55%; }
+	.library3d-title h1 { font-size:19px; } .library3d-title p { font-size:10px; max-width:155px; }
+	.library3d-title span { font-size:8px; }
+	.library3d-actions { top:max(12px,env(safe-area-inset-top)); right:12px; max-width:40%; gap:5px; }
+	.library3d-actions :is(button,a) { padding:8px 10px; font-size:11px; }
+	.library3d-help { left:12px; bottom:max(15px,env(safe-area-inset-bottom)); font-size:11px; }
+	.library3d-status { bottom:150px; }
+	.library3d-reminder { top:118px; }
+}

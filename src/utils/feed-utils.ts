@@ -1,40 +1,28 @@
-import { loadRenderers } from "astro:container";
 import type { CollectionEntry } from "astro:content";
 import { render } from "astro:content";
-import { getContainerRenderer as getMDXRenderer } from "@astrojs/mdx/container-renderer";
-import { getContainerRenderer as getSvelteRenderer } from "@astrojs/svelte/container-renderer";
+import mdxRenderer from "@astrojs/mdx/server.js";
+import svelteRenderer from "@astrojs/svelte/server.js";
 import I18nKey from "@i18n/i18nKey";
 import { i18n } from "@i18n/translation";
 import { url } from "@utils/url-utils";
 import { experimental_AstroContainer as AstroContainer } from "astro/container";
-import sanitizeHtml from "sanitize-html";
+import {
+	sanitizeFeedHtml,
+	publishedFeedPosts,
+	stripInvalidXmlChars,
+	type SubscriptionEntry,
+} from "@/utils/subscription-utils";
+import { siteConfig } from "@/config";
+
+export { stripInvalidXmlChars } from "@/utils/subscription-utils";
 
 /**
  * 归一化后的 feed 条目，供 RSS 与 Atom 共用。
  */
-export type FeedEntry = {
+export type FeedEntry = SubscriptionEntry & {
 	post: CollectionEntry<"posts">;
-	title: string;
-	/** BASE_URL 感知的相对路径，如 "/posts/foo/" */
-	link: string;
-	published: Date;
-	updated: Date;
-	description: string;
-	/** 已 sanitize 的 HTML 正文，或加密文章提示文案 */
-	content: string;
 	isPasswordProtected: boolean;
 };
-
-/**
- * 移除 XML 非法字符（W3C 字符集规定外），避免 feed 文件解析失败。
- */
-export function stripInvalidXmlChars(str: string): string {
-	return str.replace(
-		// biome-ignore lint/suspicious/noControlCharactersInRegex: https://www.w3.org/TR/xml/#charsets
-		/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F\uFDD0-\uFDEF\uFFFE\uFFFF]/g,
-		"",
-	);
-}
 
 /**
  * XML 文本转义；先剥离非法字符再转义 5 个 XML 特殊字符。
@@ -88,23 +76,21 @@ export function toAbsoluteUrl(site: URL, path: string): string {
  * 渲染全部文章正文为 feed 条目。
  *
  * 复用 AstroContainer + 渲染器（MDX/Svelte），密码文章跳过渲染改用提示文案。
- * 保持「先剥离 XML 非法字符、后 sanitize」的顺序，确保 RSS 输出与旧版逐字节一致。
+ * 仅收录已发布文章，按发布日期排序并清理 HTML、补全资源地址。
  */
 export async function renderFeedEntries(
 	posts: CollectionEntry<"posts">[],
-	opts: { includeContent?: boolean } = {},
+	opts: { includeContent?: boolean; site?: URL } = {},
 ): Promise<FeedEntry[]> {
-	const { includeContent = true } = opts;
-	const renderers = await loadRenderers([
-		getMDXRenderer(),
-		getSvelteRenderer(),
-	]);
-	const container = await AstroContainer.create({ renderers });
+	const { includeContent = true, site = new URL(siteConfig.site_url) } = opts;
+	// A summary page must not initialise an independent renderer inside its own SSR.
+	let container: Awaited<ReturnType<typeof AstroContainer.create>> | undefined;
 	const entries: FeedEntry[] = [];
-	for (const post of posts) {
+	for (const post of publishedFeedPosts(posts)) {
 		const link = url(`/posts/${post.id}/`);
 		const updated = post.data.updated ?? post.data.published;
 		const base: Omit<FeedEntry, "content" | "isPasswordProtected"> = {
+			kind: "post",
 			post,
 			title: post.data.title,
 			link,
@@ -125,15 +111,20 @@ export async function renderFeedEntries(
 			entries.push({ ...base, content: "", isPasswordProtected: false });
 			continue;
 		}
+		if (!container) {
+			// Static imports stay in Vite's SSR graph; native dynamic imports can load
+			// a second Svelte runtime and corrupt subsequent dev-page rendering.
+			container = await AstroContainer.create();
+			container.addServerRenderer({ renderer: mdxRenderer });
+			container.addServerRenderer({ renderer: svelteRenderer });
+		}
 		const { Content } = await render(post);
 		const rawContent = await container.renderToString(Content);
 		const cleanedContent = stripInvalidXmlChars(rawContent);
 		entries.push({
 			...base,
 			content: collapseFeedWhitespace(
-				sanitizeHtml(cleanedContent, {
-					allowedTags: sanitizeHtml.defaults.allowedTags.concat(["img"]),
-				}),
+				sanitizeFeedHtml(cleanedContent, new URL(link, site)),
 			),
 			isPasswordProtected: false,
 		});

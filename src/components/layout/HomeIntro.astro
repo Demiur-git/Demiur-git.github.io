@@ -2,6 +2,7 @@
 import { Picture } from "astro:assets";
 import { Icon } from "astro-icon/components";
 import MusicMiniPlayer from "@/components/features/MusicMiniPlayer.svelte";
+import LibraryVisitWindow from "@/components/features/LibraryVisitWindow.astro";
 import PulseClue from "@/components/features/PulseClue.astro";
 import CatalogDoodle from "@/components/layout/CatalogDoodle.astro";
 import { homeIntroConfig } from "@/config";
@@ -120,6 +121,7 @@ import { url } from "@/utils/url-utils";
 
 		<aside class="home-sidebar" aria-label="主页侧边栏">
 			<MusicMiniPlayer variant="sidebar" musicHref={url("/music/")} client:load />
+			<LibraryVisitWindow />
 		</aside>
 
 	</div>
@@ -141,6 +143,9 @@ import { url } from "@/utils/url-utils";
 	}
 
 	.home-sidebar {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
 		grid-column: 2;
 		grid-row: 1;
 		min-width: 0;

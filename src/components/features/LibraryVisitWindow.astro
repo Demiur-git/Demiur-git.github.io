@@ -1,0 +1,128 @@
+---
+import { url } from "@/utils/url-utils";
+
+// Perspective book spines are decoration, not a second rendered scene.
+const rows = [0, 1, 2, 3];
+const books = Array.from({ length: 14 }, (_, index) => index);
+---
+
+<section class="visit-window" aria-labelledby="library-visit-title">
+	<header>
+		<p class="visit-eyebrow">空间阅览</p>
+		<h2 id="library-visit-title">线稿图书馆</h2>
+	</header>
+	<div class="visit-art" aria-hidden="true">
+		<svg viewBox="0 0 480 300" fill="none" xmlns="http://www.w3.org/2000/svg" focusable="false">
+			<rect width="480" height="300" fill="#000" />
+			<g stroke="#696b6b" stroke-width="0.8" stroke-linejoin="round">
+				<path d="M18 20 240 74 462 20M16 278 240 159 464 278M142 212 240 159 350 215M169 192H312M114 231H368" />
+				<path d="M180 163V95a60 60 0 0 1 120 0v68M186 160V96a54 54 0 0 1 108 0v64M186 98h108M240 42v118M186 98l54-56 54 56M202 57l38 41 38-41M186 127h108M213 99v61M267 99v61" />
+				<path d="M240 24v39M214 76h52l-6-8h-40zM223 76v5M257 76v5" />
+			</g>
+			<g stroke="#b8bab8" stroke-width="1" stroke-linejoin="round">
+				<path d="M18 24 142 63v149L18 263zM22 32l114 36v139L22 252zM350 64l112-40v239l-112-49zM356 69l100-36v220l-100-44z" fill="#000" />
+				{rows.map((row) => <>
+					<path d={`M22 ${78 + row * 43} 136 ${99 + row * 35}v4L22 ${83 + row * 43}zM356 ${100 + row * 35} 456 ${80 + row * 43}v5L356 ${104 + row * 35}z`} />
+					{books.map((book) => {
+						const x = 28 + book * 7.5;
+						const top = 38 + row * 43 + (x - 22) * (0.3 - row * 0.07) + book % 3 * 2;
+						const bottom = 77 + row * 43 + (x - 22) * (0.18 - row * 0.07);
+						return <g stroke="#858985" stroke-width="0.75">
+							<path d={`M${x} ${bottom}v${top - bottom}l4 1v${bottom - top - 1}M${x} ${top + 5}l4 1M${x} ${bottom - 5}l4 1`} />
+							<path d={`M${480 - x} ${bottom}v${top - bottom}l-4 1v${bottom - top - 1}M${480 - x} ${top + 5}l-4 1M${480 - x} ${bottom - 5}l-4 1`} />
+						</g>;
+					})}
+				</>)}
+				<path d="M17 24v239M142 63v149M350 64v150M463 24v239M14 20l129 40v6L14 27zM348 61l118-42v8L348 68zM14 264l130-49v5L14 272zM348 217l118 48v7l-118-49z" />
+			</g>
+			<g stroke="#d5d7d3" stroke-width="1.1" stroke-linejoin="round" fill="#000">
+				<path d="m155 202 96-29 126 54-129 39zM155 202v7l93 65 129-40v-7M248 266v8M162 213v58l7 4v-58M365 237v42l-7 4v-44M249 274v22l7-2v-22" />
+				<path d="m201 208 34-9 25 10-35 11zM225 220v3l35-11v-3M201 208v3l24 12M264 211l25-6 21 9-28 8zM264 211v4l18 10 28-8v-3M282 222v3" />
+				<path d="M254 157c-13 1-22 11-24 21 11 6 27 6 42-1-3-11-9-19-18-20zM253 158c-6 5-8 13-7 22M254 181v26M244 208c4-4 19-4 23 1l-11 4z" />
+				<path d="m302 203 26 11 27-7v42l-27 10-26-12zM308 212l20 8 21-6M308 221l20 8 21-6M308 230l20 8 21-6M302 246v28M355 248v29M328 259v26" />
+			</g>
+			<g stroke="#8c938b" stroke-width="0.9" stroke-linecap="round">
+				<path d="M154 164v18m-8-17 3 17h10l3-17zM154 165c-15-8-16-17-12-23 11 3 14 11 12 23zM154 161c-1-13 7-23 15-24 1 11-5 19-15 24zM154 159c-12-1-20-6-21-13 12-1 20 4 21 13z" />
+			</g>
+		</svg>
+	</div>
+	<p class="visit-description">沿着书架与回廊，自由走一走。</p>
+	<a class="visit-enter" href={url("/library-3d/")}>
+		<span>进入 3D 阅览</span><span aria-hidden="true">↗</span>
+	</a>
+	<p class="visit-support">支持键鼠与触控 · 需 WebGL2</p>
+</section>
+
+<style>
+	.visit-window {
+		min-width: 0;
+		padding: 1.1rem;
+		border: 1px solid var(--library-rule);
+		border-radius: 0.65rem;
+		background: var(--library-paper);
+		color: var(--library-ink);
+	}
+	.visit-eyebrow {
+		margin: 0 0 0.35rem;
+		color: var(--library-moss);
+		font-size: 0.65rem;
+		letter-spacing: 0.16em;
+	}
+	h2 {
+		margin: 0 0 0.85rem;
+		font-family: var(--font-library-serif);
+		font-size: 1.3rem;
+		font-weight: 600;
+	}
+	.visit-art {
+		display: grid;
+		width: 100%;
+		max-width: 28.8rem;
+		max-height: 18rem;
+		margin-inline: auto;
+		aspect-ratio: 16 / 10;
+		place-items: center;
+		overflow: hidden;
+		border: 1px solid var(--library-rule);
+		background: #000;
+	}
+	svg {
+		display: block;
+		width: 100%;
+		height: 100%;
+		max-height: 18rem;
+	}
+	.visit-description {
+		margin: 0.8rem 0;
+		font-size: 0.78rem;
+		line-height: 1.7;
+	}
+	.visit-enter {
+		display: flex;
+		min-height: 44px;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.5rem;
+		padding: 0.65rem 0.8rem;
+		border: 1px solid var(--library-rule);
+		background: color-mix(in srgb, var(--library-moss) 8%, var(--library-paper));
+		color: var(--library-ink);
+		font-size: 0.8rem;
+		font-weight: 600;
+		text-decoration: none;
+	}
+	.visit-enter:hover {
+		border-color: var(--library-moss);
+		background: color-mix(in srgb, var(--library-moss) 15%, var(--library-paper));
+	}
+	.visit-enter:focus-visible {
+		outline: 2px solid var(--library-burgundy);
+		outline-offset: 3px;
+	}
+	.visit-support {
+		margin: 0.65rem 0 0;
+		color: var(--content-meta);
+		font-size: 0.65rem;
+		line-height: 1.6;
+	}
+</style>
