@@ -71,6 +71,8 @@ draft: false
 
 只有 `enabled: true` 的友链展示，正常按 `weight` 从大到小排序。`friendsPageConfig.randomizeSort` 开启后随机排列，不再按权重呈现。修改介绍正文用 `src/content/spec/friends.md`，并开启 `showCustomContent`；当前该开关关闭，单改 Markdown 不会显示。
 
+友链页不再显示分类筛选或卡片标签；`tags` 可以继续维护，搜索仍可匹配名称、简介与这些标签。
+
 删除或隐藏友链不会通知对方，互换链接等外部沟通需自行处理。不要将教程示例当成新的真实友链申请。
 
 ## 留言与文章、便签评论
@@ -84,6 +86,8 @@ PUBLIC_WALINE_SERVER_URL=https://demiur-waline.vercel.app
 服务地址是公开信息；数据库密码、Cookie 与管理密钥不应放在 `PUBLIC_` 环境变量、公开配置或文章中。环境变量修改后重启开发服务；生产预览则需重新构建。未配置地址时页面显示尚未开放，不连接旧本机服务。
 
 `src/content/spec/guestbook.md` 是留言页介绍。文章通过头部 `comment` 控制自己的评论，便签通过 `dynamicConfig.showComment` 控制弹层评论。三类内容使用独立路径，不要为改标题随意改文件 ID 或评论路径。
+
+留言页采用纸笺留言板：上方信纸填写留言，下方展示已经公开的留言与回复。它仍使用 Waline 和原来的 `/guestbook/` 标识，换样式不会迁移或清空留言；文章与便签保留原评论样式。
 
 本地预览与线上使用同一个服务地址及页面路径，因此本地真实提交也会写入线上数据库；测试时不要公开私人邮箱或留下未清理的样本。
 

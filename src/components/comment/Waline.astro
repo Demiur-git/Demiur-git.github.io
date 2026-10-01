@@ -1,7 +1,8 @@
 ---
 import { commentConfig } from "@/config";
 import "@/styles/pages/waline.css";
-interface Props { path: string; }
+interface Props { path: string; variant?: "standard" | "guestbook"; }
+const isGuestbook = Astro.props.variant === "guestbook";
 const config = {
 	...commentConfig.waline,
 	path: Astro.props.path,
@@ -15,10 +16,13 @@ const config = {
 	texRenderer: false,
 	highlighter: false,
 	pageview: Boolean(commentConfig.waline?.visitorCount),
-	locale: { placeholder: "留下你的想法吧。留言审核后公开；昵称必填，邮箱选填且不会展示。" },
+	locale: {
+		placeholder: "留下你的想法吧。留言审核后公开；昵称必填，邮箱选填且不会展示。",
+		...(isGuestbook ? { comment: "留言", sofa: "还没有公开留言，欢迎留下第一张纸笺。", submit: "贴上留言" } : {}),
+	},
 };
 ---
-<waline-comments class="library-waline" data-config={JSON.stringify(config)}>
+<waline-comments class:list={["library-waline", { "guestbook-waline": isGuestbook }]} data-config={JSON.stringify(config)}>
 	<p class="waline-policy">留言审核后公开。昵称必填，邮箱选填且不会展示。</p>
 	<p data-waline-status role="status" aria-live="polite">正在连接留言服务…</p>
 	<button type="button" data-waline-retry class="btn-regular" hidden>重新连接</button>

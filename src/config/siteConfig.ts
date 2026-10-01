@@ -94,7 +94,7 @@ export const siteConfig: SiteConfig = {
 		// 使用 Astro 图标库时不需要设置 valueDark，图标会自动跟随主题亮暗色切换
 		logo: {
 			type: "icon",
-			value: "material-symbols:local-library-outline-rounded",
+			value: "palib",
 		},
 		// 导航栏标题
 		title: "",

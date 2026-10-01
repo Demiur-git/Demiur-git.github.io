@@ -21,6 +21,28 @@ class WalineComments extends HTMLElement {
 	private controller?: AbortController;
 	private generation = 0;
 	private pending = false;
+	private accessibilityObserver?: MutationObserver;
+	private decorateSort = (): void => {
+		if (!this.classList.contains("guestbook-waline")) return;
+		for (const item of this.querySelectorAll<HTMLElement>(".wl-sort li")) {
+			item.tabIndex = 0;
+			item.setAttribute("role", "button");
+			item.setAttribute(
+				"aria-pressed",
+				String(item.classList.contains("active")),
+			);
+		}
+	};
+	private handleKeydown = (event: KeyboardEvent): void => {
+		if (event.key !== "Enter" && event.key !== " ") return;
+		if (
+			!(event.target instanceof HTMLElement) ||
+			!event.target.matches(".wl-sort li[role=button]")
+		)
+			return;
+		event.preventDefault();
+		if (!event.repeat) event.target.click();
+	};
 	private swupHooks?: {
 		before(
 			name: string,
@@ -43,10 +65,13 @@ class WalineComments extends HTMLElement {
 		const instance = this.instance;
 		this.instance = null;
 		this.pending = false;
+		this.accessibilityObserver?.disconnect();
+		this.accessibilityObserver = undefined;
 		instance?.destroy();
 	};
 	connectedCallback(): void {
 		this.addEventListener("click", this.handleClick);
+		this.addEventListener("keydown", this.handleKeydown);
 		document.addEventListener("swup:enable", this.bindSwupCleanup);
 		this.bindSwupCleanup();
 		void this.connect();
@@ -57,6 +82,7 @@ class WalineComments extends HTMLElement {
 		this.swupHooks = undefined;
 		this.releaseClient();
 		this.removeEventListener("click", this.handleClick);
+		this.removeEventListener("keydown", this.handleKeydown);
 	}
 	private handleClick = (event: Event): void => {
 		if ((event.target as Element).closest("[data-waline-retry]"))
@@ -84,6 +110,7 @@ class WalineComments extends HTMLElement {
 		}
 		this.pending = true;
 		this.instance?.destroy();
+		this.accessibilityObserver?.disconnect();
 		this.instance = null;
 		this.setStatus("正在连接留言服务…");
 		const generation = ++this.generation;
@@ -111,10 +138,20 @@ class WalineComments extends HTMLElement {
 			const mount = this.querySelector<HTMLElement>("[data-waline-mount]");
 			if (!mount) return;
 			this.instance = client.init({ ...config, el: mount });
+			if (this.classList.contains("guestbook-waline")) {
+				this.decorateSort();
+				this.accessibilityObserver = new MutationObserver(this.decorateSort);
+				this.accessibilityObserver.observe(mount, {
+					childList: true,
+					subtree: true,
+					attributes: true,
+					attributeFilter: ["class"],
+				});
+			}
 			this.bindSwupCleanup();
 			if (!this.instance) throw new Error("Client unavailable");
 			this.pending = false;
-			this.setStatus("", true);
+			this.setStatus("");
 		} catch {
 			if (!this.isConnected || generation !== this.generation) return;
 			this.pending = false;

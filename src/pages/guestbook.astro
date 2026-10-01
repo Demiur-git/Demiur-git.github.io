@@ -1,91 +1,36 @@
 ---
 import { getEntry, render } from "astro:content";
-import Comment from "@components/comment/index.astro";
-import Markdown from "@components/common/Markdown.astro";
-import { Icon } from "astro-icon/components";
+import Comment from "@/components/comment/index.astro";
+import Markdown from "@/components/common/Markdown.astro";
+import AboutNoticeboard from "@/components/layout/AboutNoticeboard.astro";
 import { commentConfig, siteConfig } from "@/config";
-import I18nKey from "@/i18n/i18nKey";
-import { i18n } from "@/i18n/translation";
 import MainGridLayout from "@/layouts/MainGridLayout.astro";
-import "@/styles/pages/common.css";
+import "@/styles/pages/guestbook.css";
 
-// 检查页面是否启用
-if (!siteConfig.pages.guestbook) {
-	return Astro.redirect("/404/");
-}
-
+if (!siteConfig.pages.guestbook) return Astro.redirect("/404/");
 const guestbookPost = await getEntry("spec", "guestbook");
-
-if (!guestbookPost) {
-	throw new Error("guestbook page content not found");
-}
-
+if (!guestbookPost) throw new Error("guestbook page content not found");
 const { Content } = await render(guestbookPost);
-
-// 检查评论系统是否启用
-const isCommentEnabled = commentConfig?.type && commentConfig.type !== "none" &&
+const isCommentEnabled = commentConfig.type !== "none" &&
 	(commentConfig.type !== "waline" || Boolean(commentConfig.waline?.serverURL));
-
-// 页面标题和描述
-const title = i18n(I18nKey.guestbook);
-const description = i18n(I18nKey.guestbookDescription);
 ---
 
-<MainGridLayout title={title} description={description}>
-  <div class="collection-page collection-directory collection-guestbook">
-  <div
-    class="flex w-full rounded-(--radius-large) overflow-hidden relative min-h-32"
-  >
-    <div class="card-base collection-masthead z-10 px-9 py-6 relative w-full">
-      <!-- 页面标题和描述 -->
-      <div class="mb-8">
-        <div class="page-heading">
-          <div class="page-icon" aria-hidden="true">
-            <Icon name="material-symbols:chat" />
-          </div>
-          <div>
-            <span class="collection-kicker">VISITORS' BOOK · 09</span>
-            <h2>{title}</h2>
-            {description && <p>{description}</p>}
-          </div>
-        </div>
-      </div>
-      
-      <Markdown class="mt-2">
-        <Content />
-      </Markdown>
-    </div>
-  </div>
-
-  <!-- 评论区 -->
-  <div class="mt-4">
-    {isCommentEnabled ? (
-      <Comment post={guestbookPost} customPath="/guestbook/" />
-    ) : (
-      <div class="card-base collection-empty p-8 mb-6 relative overflow-hidden">
-        <div class="text-center py-8 text-(--content-meta)">
-          <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-(--btn-regular-bg) flex items-center justify-center">
-            <svg
-              class="w-8 h-8 text-(--primary)"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-              ></path>
-            </svg>
-          </div>
-          <p class="text-base mb-2">留言暂未开放</p>
-          <p class="text-sm text-(--content-meta) opacity-75">
-            留言服务尚未配置，开放后即可在这里交流。
-          </p>
-        </div>
-      </div>
-    )}
-  </div>
-  </div>
+<MainGridLayout title="留言板" description="在图书馆留下一张纸笺，分享想法、阅读感受与建议。">
+	<div class="guestbook-board">
+		<AboutNoticeboard label="访客留言" number="09" indexLabel="VISITORS">
+			<header class="guestbook-intro notice-paper taped">
+				<p class="notice-overline">NOTES FROM VISITORS</p>
+				<h1>留言板</h1>
+				<Markdown class="guestbook-intro-copy"><Content /></Markdown>
+			</header>
+			{isCommentEnabled ? (
+				<Comment post={guestbookPost} customPath="/guestbook/" variant="guestbook" />
+			) : (
+				<section class="guestbook-unavailable notice-paper" aria-label="留言服务状态">
+					<h2>留言暂未开放</h2>
+					<p>留言服务尚未配置，开放后即可在这里交流。</p>
+				</section>
+			)}
+		</AboutNoticeboard>
+	</div>
 </MainGridLayout>

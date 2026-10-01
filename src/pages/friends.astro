@@ -36,7 +36,6 @@ const isCommentEnabled =
 
 // 使用配置文件中的友链数据，按权重排序
 const items = getEnabledFriends();
-const allTags = [...new Set(items.flatMap((item) => item.tags || []))].sort();
 
 // 页面标题和描述
 const title = friendsPageConfig.title || i18n(I18nKey.friends);
@@ -79,23 +78,6 @@ const description =
                 placeholder={i18n(I18nKey.searchFriends) || "搜索友链..."}
                 class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-(--line-divider) bg-transparent text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 focus:border-(--primary) focus:ring-1 focus:ring-(--primary) outline-none transition-all duration-200 text-sm"
               />
-            </div>
-            <div class="flex flex-wrap gap-2">
-              <button
-                data-tag="all"
-                class="category-pill px-3 py-1.5 rounded-full text-sm font-medium transition-colors duration-200"
-                data-active
-              >
-                {i18n(I18nKey.all)}
-              </button>
-              {allTags.map((tag) => (
-                <button
-                  data-tag={tag}
-                  class="category-pill px-3 py-1.5 rounded-full text-sm font-medium transition-colors duration-200"
-                >
-                  {tag}
-                </button>
-              ))}
             </div>
           </friend-filter>
         )
@@ -151,18 +133,6 @@ const description =
                   {item.desc}
                 </div>
 
-                {/* 标签 */}
-                <div class="flex flex-wrap gap-1 mt-1">
-                  {item.tags && item.tags.length > 0
-                    ? item.tags
-                        .slice(0, 3)
-                        .map((tag) => (
-                          <span class="text-[0.65rem] px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 transition-colors duration-300">
-                            {tag}
-                          </span>
-                        ))
-                    : null}
-                </div>
               </div>
             </a>
           ))
@@ -195,40 +165,21 @@ const description =
   <script slot="head" is:inline>
     if (!customElements.get("friend-filter")) {
       class FriendFilter extends HTMLElement {
-        selectedTag = "all";
 
         constructor() {
           super();
         }
 
         connectedCallback() {
-          this.addEventListener("click", this.handleClick);
           this.addEventListener("input", this.handleInput);
         }
 
         disconnectedCallback() {
-          this.removeEventListener("click", this.handleClick);
           this.removeEventListener("input", this.handleInput);
         }
 
         handleInput(e) {
           if (e.target.matches?.("[data-search]")) this.applyFilters();
-        }
-
-        handleClick(e) {
-          const target = e.target;
-          const button = target.closest("button");
-          if (!button) return;
-
-          this.selectedTag = button.dataset.tag;
-          const filters = this.querySelectorAll("button");
-
-          filters.forEach((f) => {
-            f.removeAttribute("data-active");
-          });
-          button.setAttribute("data-active", "");
-
-          this.applyFilters();
         }
 
         applyFilters() {
@@ -247,16 +198,13 @@ const description =
             const name = (cardEl.querySelector(".font-bold")?.textContent || "").toLowerCase();
             const desc = (cardEl.querySelector(".line-clamp-1")?.textContent || "").toLowerCase();
 
-            const tagMatch =
-              this.selectedTag === "all" ||
-              (this.selectedTag && tags.includes(this.selectedTag));
             const searchMatch =
               !query ||
               name.includes(query) ||
               desc.includes(query) ||
               tags.some((t) => t.toLowerCase().includes(query));
 
-            if (tagMatch && searchMatch) {
+            if (searchMatch) {
               cardEl.style.display = "";
               cardEl.classList.add("animate-fade-in-up");
               hasVisible = true;
