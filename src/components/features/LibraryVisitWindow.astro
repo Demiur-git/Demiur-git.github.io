@@ -9,7 +9,7 @@ const books = Array.from({ length: 14 }, (_, index) => index);
 <section class="visit-window" aria-labelledby="library-visit-title">
 	<header>
 		<p class="visit-eyebrow">空间阅览</p>
-		<h2 id="library-visit-title">线稿图书馆</h2>
+		<h2 id="library-visit-title">图书馆阅览</h2>
 	</header>
 	<div class="visit-art" aria-hidden="true">
 		<svg viewBox="0 0 480 300" fill="none" xmlns="http://www.w3.org/2000/svg" focusable="false">
@@ -46,10 +46,12 @@ const books = Array.from({ length: 14 }, (_, index) => index);
 			</g>
 		</svg>
 	</div>
+	<p class="visit-preview-label">线稿预览</p>
 	<p class="visit-description">沿着书架与回廊，自由走一走。</p>
-	<a class="visit-enter" href={url("/library-3d/")}>
-		<span>进入 3D 阅览</span><span aria-hidden="true">↗</span>
-	</a>
+	<div class="visit-entries">
+		<a class="visit-enter" href={url("/library-3d/?view=ink")}><span>线稿阅览</span><span aria-hidden="true">↗</span></a>
+		<a class="visit-enter" href={url("/library-3d/?view=solid")}><span>实体阅览</span><span aria-hidden="true">↗</span></a>
+	</div>
 	<p class="visit-support">支持键鼠与触控 · 需 WebGL2</p>
 </section>
 
@@ -97,6 +99,8 @@ const books = Array.from({ length: 14 }, (_, index) => index);
 		font-size: 0.78rem;
 		line-height: 1.7;
 	}
+	.visit-preview-label { margin:0.4rem 0 0; font-size:0.65rem; color:var(--library-moss); }
+	.visit-entries { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0.5rem; }
 	.visit-enter {
 		display: flex;
 		min-height: 44px;

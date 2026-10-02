@@ -329,7 +329,7 @@ test("hidden integration, lazy renderer and disposal remain explicit", () => {
 	assert.doesNotMatch(model, /fetch\(|TextureLoader|\.glb|https:\/\//);
 	assert.doesNotMatch(
 		scene,
-		/OrbitControls|exteriorDistance|changeMode|applyTheme|shadowMap/,
+		/OrbitControls|exteriorDistance|applyTheme/,
 	);
 	assert.doesNotMatch(
 		read("src/components/features/Library3DScene.astro"),
@@ -342,11 +342,14 @@ test("home visit window is an accessible static SVG link without a renderer or n
 	const read = (path: string) =>
 		readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 	const entry = read("src/components/features/LibraryVisitWindow.astro");
-	assert.match(entry, /href=\{url\("\/library-3d\/"\)\}/);
+	assert.match(entry, /href=\{url\("\/library-3d\/\?view=ink"\)\}/);
+	assert.match(entry, /href=\{url\("\/library-3d\/\?view=solid"\)\}/);
 	assert.match(entry, /aria-labelledby="library-visit-title"/);
 	assert.match(entry, /<svg viewBox="0 0 480 300"/);
 	assert.match(entry, /focusable="false"/);
-	assert.match(entry, /进入 3D 阅览/);
+	assert.match(entry, /图书馆阅览/);
+	assert.match(entry, /线稿预览/);
+	assert.match(entry, /实体阅览/);
 	assert.doesNotMatch(entry, /<script|<canvas|<use\b|<image\b|three|client:|https:\/\//);
 	const home = read("src/components/layout/HomeIntro.astro");
 	assert.match(home, /<MusicMiniPlayer[^>]*client:load[^>]*\/>\s*<LibraryVisitWindow\s*\/>/);

@@ -14,6 +14,8 @@ const IGNORE_DIRS = [
 	"public/pio/**",
 	"public/assets/images/effects/**",
 	"public/assets/music/**",
+	// PBR data maps are not content images; never put them in the site's LQIP table.
+	"public/assets/library-3d/materials/**",
 	"public/vndb-covers/**",
 ];
 

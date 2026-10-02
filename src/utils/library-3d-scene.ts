@@ -16,7 +16,15 @@ import {
 	WALLPAPER_VIEW,
 	type Visitor,
 } from "./library-3d-layout";
-import { createLibraryModel, type LibraryModel } from "./library-3d-model";
+import { createLibraryModel } from "./library-3d-model";
+import {
+	effectiveLibraryLighting,
+	libraryViewURL,
+	readLibraryView,
+	type LibraryDrawing,
+	type LibraryViewOptions,
+} from "./library-3d-view";
+import type { LibrarySolidRender } from "./library-3d-solid-render";
 import {
 	advanceRunningReminder,
 	freshRunningReminder,
@@ -26,7 +34,14 @@ export class Library3DScene extends EasterEggScene {
 	private renderer?: T.WebGLRenderer;
 	private scene?: T.Scene;
 	private camera?: T.PerspectiveCamera;
-	private model?: LibraryModel;
+	private model?: LibraryDrawing;
+	private solidRender?: LibrarySolidRender;
+	private options: LibraryViewOptions = { view: "ink", lighting: "auto" };
+	private generation = 0;
+	private loadAbort?: AbortController;
+	private changing = false;
+	private themeObserver?: MutationObserver;
+	private settings!: HTMLDetailsElement;
 	private canvas!: HTMLCanvasElement;
 	private visitor: Visitor = { ...ENTRY };
 	private failed = false;
@@ -64,10 +79,15 @@ export class Library3DScene extends EasterEggScene {
 				(a) => a.dataset.libraryItem!,
 			),
 		);
-		const help = this.querySelector<HTMLDetailsElement>("details")!;
+		const help = this.querySelector<HTMLDetailsElement>(".library3d-help")!;
+		this.settings = this.querySelector<HTMLDetailsElement>(
+			"[data-library-settings]",
+		)!;
+		this.options = readLibraryView(location.search);
 		const signal = this.mount("/");
 		this.back.hidden = false;
 		this.dataset.mode = "inside";
+		this.setupSettings(signal);
 		this.dialog.addEventListener(
 			"keydown",
 			(event) => {
@@ -92,12 +112,21 @@ export class Library3DScene extends EasterEggScene {
 					}
 					return;
 				}
+				if (event.key === "Escape" && this.settings.open) {
+					event.preventDefault();
+					event.stopImmediatePropagation();
+					this.settings.open = false;
+					this.clearInput(false);
+					this.canvas.focus({ preventScroll: true });
+					return;
+				}
 				if (event.key === "Escape" && help.open) {
 					event.preventDefault();
 					event.stopImmediatePropagation();
 					help.open = false;
 					return;
 				}
+				if (this.changing || this.settings.open) return;
 				if (event.code === "ShiftLeft" || event.code === "ShiftRight") {
 					this.keys.add(event.code);
 					return;
@@ -107,7 +136,7 @@ export class Library3DScene extends EasterEggScene {
 					event.ctrlKey ||
 					event.metaKey ||
 					(event.target instanceof Element &&
-						event.target.closest("button,a,summary"))
+						event.target.closest("button,a,summary,select,input"))
 				)
 					return;
 				if (event.code === "KeyE" && !event.repeat) {
@@ -135,7 +164,11 @@ export class Library3DScene extends EasterEggScene {
 			(event) => {
 				event.preventDefault();
 				this.onVisibility(false);
-				this.showError("绘制连接已中断。恢复后会重建线稿空间，也可点击重试。");
+				this.loadAbort?.abort();
+				this.generation++;
+				this.showError(
+					"绘制连接已中断。恢复后会重建阅览空间，也可点击重试或切换线稿。",
+				);
 			},
 			{ signal },
 		);
@@ -195,7 +228,114 @@ export class Library3DScene extends EasterEggScene {
 			() => void this.openTarget(),
 			{ signal },
 		);
-		this.prepare();
+		void this.prepare();
+	}
+	private setupSettings(signal: AbortSignal): void {
+		const view = this.querySelector<HTMLSelectElement>("[data-library-view]")!;
+		const lighting = this.querySelector<HTMLSelectElement>(
+			"[data-library-lighting]",
+		)!;
+		this.settings.addEventListener(
+			"toggle",
+			() => {
+				this.clearInput(false);
+				this.motionClock = 0;
+			},
+			{ signal },
+		);
+		view.addEventListener(
+			"change",
+			() => {
+				this.options.view = view.value === "solid" ? "solid" : "ink";
+				this.updateSettingsURL();
+				void this.changeDrawing();
+			},
+			{ signal },
+		);
+		lighting.addEventListener(
+			"change",
+			() => {
+				this.options.lighting =
+					lighting.value === "day" || lighting.value === "night"
+						? lighting.value
+						: "auto";
+				this.clearInput(false);
+				this.updateSettingsURL();
+				this.updateLighting();
+			},
+			{ signal },
+		);
+		this.querySelector("[data-library-fallback]")!.addEventListener(
+			"click",
+			() => {
+				this.options.view = "ink";
+				this.updateSettingsURL();
+				if (this.renderer && this.camera && this.scene)
+					void this.changeDrawing();
+				else void this.prepare();
+			},
+			{ signal },
+		);
+		this.themeObserver = new MutationObserver(() => {
+			if (this.options.lighting === "auto") this.updateLighting();
+		});
+		this.themeObserver.observe(document.documentElement, {
+			attributes: true,
+			attributeFilter: ["class"],
+		});
+		// Back/forward within the same document must respect the current URL as well.
+		window.addEventListener(
+			"popstate",
+			() => {
+				if (!this.active || !location.pathname.includes("library-3d")) return;
+				const next = readLibraryView(location.search),
+					changed = next.view !== this.options.view;
+				this.options = next;
+				this.syncSettings();
+				if (changed) void this.changeDrawing();
+				else this.updateLighting();
+			},
+			{ signal },
+		);
+		this.syncSettings();
+	}
+	private syncSettings(): void {
+		this.querySelector<HTMLSelectElement>("[data-library-view]")!.value =
+			this.options.view;
+		this.querySelector<HTMLSelectElement>("[data-library-lighting]")!.value =
+			this.options.lighting;
+		this.querySelector<HTMLElement>("[data-library-lighting-label]")!.hidden =
+			this.options.view !== "solid";
+		this.querySelector<HTMLElement>("[data-library-fallback]")!.hidden =
+			this.options.view !== "solid";
+	}
+	private updateSettingsURL(): void {
+		history.replaceState(
+			history.state,
+			"",
+			libraryViewURL(location.href, this.options),
+		);
+		this.syncSettings();
+	}
+	private updateLighting(force = false): void {
+		if (
+			!this.model ||
+			!this.renderer ||
+			!this.scene ||
+			this.dataset.view !== "solid"
+		)
+			return;
+		const light = effectiveLibraryLighting(
+			this.options.lighting,
+			document.documentElement.classList.contains("dark"),
+		);
+		if (!force && this.dataset.lighting === light) return;
+		this.model.setLighting?.(light);
+		this.scene.environmentIntensity = light === "day" ? 0.25 : 0.12;
+		this.renderer.toneMappingExposure = light === "day" ? 1.06 : 1.13;
+		this.dataset.lighting = light;
+		this.renderer.shadowMap.needsUpdate = true;
+		this.dirty = true;
 	}
 	private placeVisitor(view: Visitor): void {
 		if (this.failed) return;
@@ -207,7 +347,7 @@ export class Library3DScene extends EasterEggScene {
 		this.dirty = true;
 		this.canvas.focus({ preventScroll: true });
 	}
-	private prepare(): void {
+	private async prepare(): Promise<void> {
 		if (!this.active) return;
 		this.onVisibility(false);
 		this.disposeGraphics();
@@ -226,21 +366,118 @@ export class Library3DScene extends EasterEggScene {
 			this.scene = new T.Scene();
 			this.scene.background = new T.Color(0x000000);
 			this.camera = new T.PerspectiveCamera(60, 1, 0.06, 75);
-			this.model = createLibraryModel();
-			this.scene.add(this.model.root);
-			this.resize();
-			this.updateCamera();
-			this.querySelector<HTMLElement>(".library3d-error")!.hidden = true;
-			this.querySelector<HTMLElement>(".library3d-loading")!.hidden = true;
-			this.dataset.renderer = "webgl2";
-			this.setDisabled(false);
-			this.dirty = true;
-			this.canvas.focus({ preventScroll: true });
-			this.renderFrame(0);
+			await this.changeDrawing();
 		} catch {
 			this.disposeGraphics();
 			this.showError(
-				"浏览器未能创建 WebGL2 线稿空间。请启用硬件加速后重试；下图仅为原图书馆参考。",
+				"浏览器未能创建 WebGL2 阅览空间。请启用硬件加速后重试；下图仅为原图书馆参考。",
+			);
+		}
+	}
+	private async changeDrawing(): Promise<void> {
+		if (!this.active || !this.scene || !this.renderer || !this.camera) return;
+		const generation = ++this.generation;
+		this.loadAbort?.abort();
+		const controller = new AbortController();
+		this.loadAbort = controller;
+		const selected = this.options.view;
+		this.clearInput(false);
+		this.motionClock = 0;
+		this.changing = true;
+		this.setDisabled(true);
+		this.status("");
+		const loading = this.querySelector<HTMLElement>(".library3d-loading")!;
+		loading.textContent =
+			selected === "solid"
+				? "正在准备实体空间与本地材质……"
+				: "正在准备线稿空间……";
+		loading.hidden = false;
+		let next: LibraryDrawing | undefined;
+		try {
+			if (selected === "solid") {
+				const [{ createSolidLibraryModel }, { loadLibraryTextures }] =
+					await Promise.all([
+						import("./library-3d-solid-model"),
+						import("./library-3d-materials"),
+					]);
+				if (generation !== this.generation || !this.active) return;
+				const textures = await loadLibraryTextures(
+					matchMedia("(pointer: coarse)").matches || innerWidth <= 600,
+					controller.signal,
+				);
+				if (generation !== this.generation || !this.active) {
+					textures.dispose();
+					return;
+				}
+				try {
+					next = createSolidLibraryModel(
+						textures,
+						matchMedia("(pointer: coarse)").matches || innerWidth <= 600,
+					);
+				} catch (error) {
+					textures.dispose();
+					throw error;
+				}
+				if (textures.failures.length)
+					this.status(
+						"部分材质暂不可用，已使用基础材质；可通过画面设置切回线稿，或重新加载重试。",
+					);
+			} else next = createLibraryModel();
+			if (generation !== this.generation || !this.active) {
+				next.dispose();
+				return;
+			}
+			// Build before replacing: cancellation/failure never changes the visitor's pose.
+			this.solidRender?.dispose();
+			this.solidRender = undefined;
+			if (this.model) {
+				this.scene.remove(this.model.root);
+				this.model.dispose();
+			}
+			this.model = next;
+			this.scene.add(next.root);
+			this.renderer.shadowMap.enabled = selected === "solid";
+			this.renderer.shadowMap.type = T.PCFShadowMap;
+			this.renderer.shadowMap.autoUpdate = false;
+			this.renderer.shadowMap.needsUpdate = true;
+			this.renderer.toneMapping =
+				selected === "solid" ? T.ACESFilmicToneMapping : T.NoToneMapping;
+			this.renderer.toneMappingExposure = 1;
+			this.dataset.view = selected;
+			if (selected === "solid") {
+				const { LibrarySolidRender } = await import(
+					"./library-3d-solid-render"
+				);
+				if (generation !== this.generation || !this.active) return;
+				this.solidRender = new LibrarySolidRender(
+					this.renderer,
+					this.scene,
+					this.camera,
+				);
+				this.updateLighting(true);
+			} else delete this.dataset.lighting;
+			this.querySelector(".library3d-title h1")!.textContent =
+				selected === "solid" ? "实体图书馆" : "线稿图书馆";
+			this.querySelector(".library3d-title span")!.textContent =
+				selected === "solid" ? "PALIB · MATERIAL STUDY" : "PALIB · INK STUDY";
+			this.failed = false;
+			this.changing = false;
+			this.clearInput(false);
+			this.motionClock = 0;
+			this.querySelector<HTMLElement>(".library3d-error")!.hidden = true;
+			loading.hidden = true;
+			this.dataset.renderer = "webgl2";
+			this.setDisabled(false);
+			this.resize();
+			this.updateCamera();
+			this.dirty = true;
+			if (!this.settings.open) this.canvas.focus({ preventScroll: true });
+			this.renderFrame(0);
+		} catch {
+			if (generation !== this.generation || !this.active) return;
+			this.changing = false;
+			this.showError(
+				"当前阅览画面加载失败，位置与视角已保留。请重新加载，或选择线稿模式。",
 			);
 		}
 	}
@@ -296,6 +533,8 @@ export class Library3DScene extends EasterEggScene {
 		this.camera.aspect = w / h;
 		this.camera.updateProjectionMatrix();
 		this.model.resize(w, h, this.mobile);
+		this.solidRender?.resize(w, h, this.mobile);
+		if (this.solidRender) this.renderer.shadowMap.needsUpdate = true;
 		this.dirty = true;
 	}
 	private setupLook(
@@ -308,6 +547,8 @@ export class Library3DScene extends EasterEggScene {
 			(event) => {
 				if (
 					this.failed ||
+					this.changing ||
+					this.settings.open ||
 					this.cardTarget ||
 					this.opening ||
 					event.pointerType !== type ||
@@ -371,6 +612,8 @@ export class Library3DScene extends EasterEggScene {
 			(event) => {
 				if (
 					this.failed ||
+					this.changing ||
+					this.settings.open ||
 					this.cardTarget ||
 					this.opening ||
 					this.joyPointer !== null
@@ -411,6 +654,8 @@ export class Library3DScene extends EasterEggScene {
 			(event) => {
 				if (
 					this.failed ||
+					this.changing ||
+					this.settings.open ||
 					this.opening ||
 					this.cardTarget ||
 					this.runPointer !== null ||
@@ -444,7 +689,14 @@ export class Library3DScene extends EasterEggScene {
 			(event) => {
 				if (event.code === "Space" || event.code === "Enter") {
 					event.preventDefault();
-					if (!this.failed && !this.opening && !this.cardTarget) update(true);
+					if (
+						!this.failed &&
+						!this.changing &&
+						!this.settings.open &&
+						!this.opening &&
+						!this.cardTarget
+					)
+						update(true);
 				}
 			},
 			{ signal },
@@ -476,7 +728,14 @@ export class Library3DScene extends EasterEggScene {
 				child.inert = inert;
 	}
 	private showCard(): void {
-		if (this.failed || this.opening || this.cardTarget) return;
+		if (
+			this.failed ||
+			this.changing ||
+			this.settings.open ||
+			this.opening ||
+			this.cardTarget
+		)
+			return;
 		const target = nearbyLibraryTarget(this.visitor, this.enabledTargets);
 		if (!target || target.id !== this.target) return;
 		this.cardFocus =
@@ -659,14 +918,22 @@ export class Library3DScene extends EasterEggScene {
 		if (knob) knob.style.transform = "translate(-50%,-50%)";
 	}
 	protected renderFrame(_delta: number): void {
-		if (!this.renderer || !this.scene || !this.camera || this.failed) return;
+		if (
+			!this.renderer ||
+			!this.scene ||
+			!this.camera ||
+			!this.model ||
+			this.failed ||
+			this.changing
+		)
+			return;
 		// Walk by actual visible elapsed time, in collision-safe substeps.
 		const now = performance.now(),
 			dt = this.motionClock
 				? Math.min(0.5, Math.max(0, (now - this.motionClock) / 1000))
 				: 0;
 		this.motionClock = now;
-		const elapsed = this.cardTarget ? 0 : dt;
+		const elapsed = this.cardTarget || this.settings.open ? 0 : dt;
 		const side =
 			Number(this.keys.has("KeyD")) -
 			Number(this.keys.has("KeyA")) +
@@ -730,15 +997,31 @@ export class Library3DScene extends EasterEggScene {
 			return;
 		try {
 			this.updateContext();
-			this.renderer.render(this.scene, this.camera);
+			if (this.model.update?.(this.camera.position))
+				this.renderer.shadowMap.needsUpdate = true;
+			const started = performance.now();
+			this.renderer.info.reset();
+			this.renderer.info.autoReset = false;
+			if (this.solidRender) this.solidRender.render();
+			else this.renderer.render(this.scene, this.camera);
+			this.dataset.drawMs = (performance.now() - started).toFixed(2);
+			this.dataset.drawCalls = String(this.renderer.info.render.calls);
+			this.dataset.triangles = String(this.renderer.info.render.triangles);
+			this.dataset.textures = String(this.renderer.info.memory.textures);
 			this.dirty = false;
 			this.lastDraw = this.visibleTime;
 			this.dataset.frames = String(++this.drawCount);
 		} catch {
-			this.showError("线稿绘制失败，请重试或返回主页。");
+			this.showError("当前画面绘制失败，请重试、切换线稿或返回主页。");
 		}
 	}
 	private disposeGraphics(): void {
+		this.generation++;
+		this.loadAbort?.abort();
+		this.loadAbort = undefined;
+		this.changing = false;
+		this.solidRender?.dispose();
+		this.solidRender = undefined;
 		this.model?.dispose();
 		this.model = undefined;
 		this.renderer?.dispose();
@@ -754,6 +1037,8 @@ export class Library3DScene extends EasterEggScene {
 	protected cleanup(): void {
 		if (!this.active) return;
 		this.closeCard(false);
+		this.themeObserver?.disconnect();
+		this.themeObserver = undefined;
 		this.onVisibility(false);
 		this.disposeGraphics();
 		super.cleanup();

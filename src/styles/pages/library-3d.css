@@ -17,6 +17,13 @@
 .library3d-help summary { cursor:pointer; }
 .library3d-help p { margin:9px 0; }
 .library3d-help button { margin-top:4px; }
+.library3d-settings { position:absolute; right:max(22px,env(safe-area-inset-right)); top:82px; width:220px; padding:12px 15px; border:1px solid #666; background:#000e; font-size:12px; line-height:1.8; }
+.library3d-settings summary { cursor:pointer; }
+.library3d-settings label { display:grid; gap:4px; margin-top:12px; }
+.library3d-settings select { min-height:44px; width:100%; padding:8px; border:1px solid #777; border-radius:0; background:#161616; color:#eee; }
+.library3d-settings select:focus-visible { outline:1px solid white; outline-offset:3px; }
+.library3d-settings p { margin:10px 0 0; color:#aaa; font-size:11px; }
+@media(max-width:600px) { .library3d-settings { top:115px; right:12px; width:min(240px,calc(100vw - 24px)); } .library3d-settings:not([open]) { width:auto; } }
 .library3d-touch-help,.library3d-joystick,.library3d-look { display:none; }
 .library3d-loading { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); padding:16px 22px; background:#000e; border:1px solid #555; font-size:14px; }
 .library3d-error { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:min(570px,calc(100vw - 28px)); max-height:calc(100dvh - 28px); overflow:auto; padding:22px; background:#101010; border:1px solid #666; }
