@@ -7,9 +7,9 @@ import MainGridLayout from "@/layouts/MainGridLayout.astro";
 
 <MainGridLayout title="日历" description="重要日期、日程与计划">
 	<section class="collection-page collection-calendar" aria-labelledby="calendar-page-title">
-		<header class="card-base collection-masthead collection-simple-header">
+		<header class="calendar-masthead collection-masthead collection-simple-header">
 			<div>
-				<span class="collection-kicker">DAILY PLANNER · 03</span>
+				<span class="collection-kicker">LIBRARIAN'S LEDGER · 03</span>
 				<h1 id="calendar-page-title">日历</h1>
 				<p>重要日期、今日安排与未来计划。</p>
 			</div>
@@ -23,4 +23,16 @@ import MainGridLayout from "@/layouts/MainGridLayout.astro";
 		<footer class="calendar-remnants" aria-label="日历页边"><PulseClue clue="tags" /><div class="calendar-scrap"><PulseClue clue="scrap-fine" /></div></footer>
 	</section>
 </MainGridLayout>
-<style>.calendar-remnants { position:relative; height:54px; margin-top:1rem; } .calendar-remnants > :global(pulse-clue) { left:8px; right:auto; } .calendar-scrap { position:relative; height:54px; margin-right:8px; }</style>
+<style>
+	.calendar-masthead {
+		border-left-width: 2px;
+		border-radius: 3px;
+		background-color: #f8f3e7;
+	}
+	:global(:root.dark) .calendar-masthead { background-color: #272c27; }
+	.calendar-masthead .collection-kicker { font-size: 0.6rem; letter-spacing: 0.12em; }
+	.calendar-masthead .collection-index { font-size: 1.6rem; opacity: 0.65; }
+	.calendar-remnants { position: relative; height: 54px; margin-top: 1rem; }
+	.calendar-remnants > :global(pulse-clue) { left: 8px; right: auto; }
+	.calendar-scrap { position: relative; height: 54px; margin-right: 8px; }
+</style>

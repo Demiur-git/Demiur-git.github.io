@@ -244,18 +244,7 @@
 .collection-articles .archive-year-toggle { font-family: var(--font-library-serif); }
 .collection-articles .archive-post { border-bottom: 1px solid color-mix(in srgb, var(--library-rule) 65%, transparent); }
 
-/* 日历、唱片机保留专属版式，统一材质与栏目签。 */
-.collection-calendar :is(.side-panel, .calendar-panel) {
-	border-color: var(--library-rule);
-	border-radius: 0.65rem;
-	background: var(--collection-paper);
-}
-
-.collection-calendar .calendar-panel { border-top: 3px solid var(--collection-accent); }
-.collection-calendar .side-panel { border-top: 3px solid var(--library-moss); }
-.collection-calendar .schedule-panel { border-top-color: var(--library-burgundy); }
-.collection-calendar :is(.panel-kicker, .calendar-year) { font-family: var(--font-code, ui-monospace, monospace); }
-
+/* 唱片机保留专属版式，统一材质与栏目签。日历材质由组件独立管理。 */
 .collection-music .music-page-header { border-left: 4px solid var(--collection-accent); }
 .collection-music .music-kicker { letter-spacing: 0.16em; }
 
