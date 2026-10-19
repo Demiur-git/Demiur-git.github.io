@@ -1,12 +1,12 @@
 ---
-title: 站长指南（五）：日历、项目与读书计划
+title: 站长指南（三）：日历、项目与读书计划
 published: 2026-09-25
 updated: 2026-09-27
 description: 填写公开日程、项目档案与阅读记录，区分浏览器中的个人安排和随网站发布的配置。
 tags: [站长指南, 日历, 项目, 读书计划]
 category: 站长指南
 series: Palib 站长维护指南
-seriesOrder: 5
+seriesOrder: 3
 draft: false
 ---
 
@@ -106,4 +106,3 @@ link:
 
 保存后查看对应栏目，确认日期、状态筛选、排序与详情返回正常，再运行检查和完整构建。如果开发服务器还显示旧信息，先确认编辑的是对应配置或内容文件，而不是已经生成的 `dist/`。
 
-相册与音乐步骤已分别放在[第三篇](/posts/guide/05-gallery/)和[第四篇](/posts/guide/06-music/)。下一篇：[维护工具、交流与发布流程](/posts/guide/04-customize-and-preview/)。

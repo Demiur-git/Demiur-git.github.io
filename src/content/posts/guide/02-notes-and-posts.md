@@ -144,4 +144,4 @@ pnpm.cmd build
 
 运行 `pnpm.cmd check`、`pnpm.cmd type-check` 与 `pnpm.cmd build`，再用 `pnpm.cmd preview` 检查归档、正文、目录、图片和链接。生产搜索索引由完整构建生成，开发模式搜不到新文不代表文章没保存。
 
-本地保存不等于上线；提交与部署步骤见[工具、交流与发布指南](/posts/guide/04-customize-and-preview/)。下一篇是[相册维护](/posts/guide/05-gallery/)。
+本地保存不等于上线；提交与部署步骤见[工具、交流与发布指南](/posts/guide/04-customize-and-preview/)。

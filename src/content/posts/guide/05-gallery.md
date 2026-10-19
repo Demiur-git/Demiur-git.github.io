@@ -1,11 +1,11 @@
 ---
-title: 站长指南（三）：创建与维护相册
+title: 站长指南（五）：创建与维护相册
 published: 2026-09-27
 description: 从照片目录到影像册配置，设置封面、顺序、简介、标签和远程图片，并检查公开素材的边界。
 tags: [站长指南, 相册, 图片]
 category: 站长指南
 series: Palib 站长维护指南
-seriesOrder: 3
+seriesOrder: 5
 draft: false
 ---
 
@@ -86,4 +86,3 @@ https://images.example.com/autumn/02.webp
 4. 照片无不希望公开的 EXIF 定位、证件、人物隐私等信息。
 5. 构建通过，照片与配置一起发布；只提交配置不会把未上传的图片带上网站。
 
-下一篇：[本地导入音乐与发布 R2 曲库](/posts/guide/06-music/)。

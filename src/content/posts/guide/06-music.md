@@ -1,11 +1,11 @@
 ---
-title: 站长指南（四）：音乐导入、双语歌词与 R2 发布
+title: 站长指南（六）：音乐导入、双语歌词与 R2 发布
 published: 2026-09-27
 description: 整理音频、曲绘与歌词，区分个人和公开曲库，用明确选曲导出 R2 清单，并检查跨域与实际播放。
 tags: [站长指南, 音乐, LRC, R2]
 category: 站长指南
 series: Palib 站长维护指南
-seriesOrder: 4
+seriesOrder: 6
 draft: false
 ---
 
@@ -137,4 +137,3 @@ Remove-Item Env:PUBLIC_MUSIC_LIBRARY
 
 取消公开某首歌时，重导出其余曲目并发布新公开清单。清单下架不等于删除 R2 文件；如需撤回直接地址访问，另行删除对应远程资源。仅从收件箱移走音频，也不会自动从已经导入的清单中移除歌曲。
 
-下一篇：[维护日历、项目与读书计划](/posts/guide/03-my-collection/)。

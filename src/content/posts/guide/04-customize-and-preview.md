@@ -1,12 +1,12 @@
 ---
-title: 站长指南（六）：工具导航、友链、留言与发布
+title: 站长指南（四）：工具导航、友链、留言与发布
 published: 2026-09-25
 updated: 2026-09-27
 description: 维护工具分类、官方图标和友链，管理 Waline 留言及赞助内容，完成本地检查和 GitHub Pages 发布。
 tags: [站长指南, 工具导航, 友链, Waline, 发布]
 category: 站长指南
 series: Palib 站长维护指南
-seriesOrder: 6
+seriesOrder: 4
 draft: false
 ---
 
@@ -154,4 +154,3 @@ git push origin main
 
 推送后查看仓库 Actions，等部署任务成功，再检查公开页面。修改 Waline 服务变量需部署 Waline；更新 R2 资源需上传 R2；这两件事不会因推送网站仓库自动完成。
 
-遇到构建失败，应保留错误输出并先解决失败原因，而不是跳过检查。需要回顾外观配置时，返回[第一篇维护入口指南](/posts/guide/01-tour/)。
