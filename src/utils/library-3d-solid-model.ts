@@ -415,7 +415,7 @@ export function createSolidLibraryModel(
 	for (const f of [...ANNEX_WALLS, ...UPPER_WALLS]) wall(f);
 	for (const f of GUARDS.filter((f) => !f.base)) wall(f);
 	box(0, 8.13, 0, 20.5, 0.25, 28.5, plaster, false);
-	box(0, 7.98, 23.75, 19.5, 0.16, 19.5, plaster, false);
+	box(0, 7.88, 23.75, 19.5, 0.16, 19.5, plaster, false);
 	for (const x of [-5.6, 5.6])
 		box(x, UPPER - 0.14, 23.75, 8.2, 0.12, 19.5, plaster, false);
 	for (const z of [-9, -2, 5, 12]) {

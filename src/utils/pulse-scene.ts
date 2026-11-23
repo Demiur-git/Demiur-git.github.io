@@ -1,6 +1,9 @@
+import { PulseEntry, entryDuration, type PulseDestination } from "./pulse-entry";
 import { EasterEggScene } from "./easter-egg-scene";
 import { MorseInput } from "./pulse-morse";
 import {
+	echoDragOffset,
+	echoReveal,
 	advanceEchoHold,
 	clampEchoOffset,
 	DEFAULT_ECHO_RESIDUE,
@@ -29,6 +32,9 @@ import { PulseScanner, pulseWaveGeometry, staticPulsePath } from "./pulse-wave";
 import { coolStillnessRhythm, emptyStillnessRhythm, stillnessIntensity, strikeStillnessRhythm, type RhythmKey } from "./stillness-rhythm";
 import { url } from "./url-utils";
 
+// Only a cancelled in-flight navigation uses this temporary hand-back, never storage.
+let recoveredInput: { symbols: string; letters: string; mode: boolean; failed: boolean; destination: PulseDestination } | null = null;
+
 export class PulseScene extends EasterEggScene {
 	private scanner = new PulseScanner();
 	private input = new MorseInput();
@@ -38,6 +44,14 @@ export class PulseScene extends EasterEggScene {
 	private echoTarget: { x: number; y: number } = { ...ECHO_START };
 	private echoPosition: { x: number; y: number } = { ...ECHO_START };
 	private echoHold = 0;
+	private echoRevealAt = 0;
+	private echoBaseline = 0;
+	private echoPointer: { element: Element; id: number } | null = null;
+	private cancelEchoDrag(): void {
+		this.echoDrag = null;
+		const pointer = this.echoPointer; this.echoPointer = null;
+		if (pointer?.element.hasPointerCapture(pointer.id)) pointer.element.releasePointerCapture(pointer.id);
+	}
 	private echoArmed = false;
 	private echoEligible = false;
 	private echoEligibleAt = 0;
@@ -63,9 +77,45 @@ export class PulseScene extends EasterEggScene {
 	private flatlineElapsed: number | null = null;
 	private stillnessNavigating = false;
 	private warningStrength = 0;
+	private entry: PulseEntry | null = null;
+	private retryDestination: PulseDestination | null = null;
+	private holdFeedback = 0;
+	private beatFeedback = { J: -1000, K: -1000 };
+	private criticalAt = -1000;
+	private confirmedAt = -1000;
+	private entryAllowed(kind: PulseDestination): boolean {
+		const p = getPuzzleProgress();
+		return p.unlocked && (kind === "newworld" ? p.worldUnlocked : kind === "starfield" ? p.starfieldUnlocked : kind === "echo" ? p.echoClueSeen && p.echoUnlocked : isStillnessReady(p) && p.stillnessUnlocked);
+	}
+	private beginEntry(kind: PulseDestination, first = false, flat = false): void {
+		if (this.entry || !this.entryAllowed(kind)) return;
+		this.holdStart = null; this.holdPoint = null; this.echoDrag = null;
+		this.retryDestination = kind;
+		this.querySelector<HTMLElement>("[data-entry-error]")!.hidden = true;
+		this.entry = new PulseEntry(kind, entryDuration(first, this.reduced, flat), this.reduced, this.querySelector<SVGSVGElement>(".pulse-wave")!, (failed, returning) => {
+			if (returning) recoveredInput = { symbols: this.input.symbols, letters: this.input.letters, mode: this.mode, failed, destination: kind };
+			this.entry = null;
+			this.echoSucceeded = false;
+			this.echoMode = false;
+			this.removeAttribute("data-echo");
+			this.querySelector<HTMLElement>("[data-echo-leave]")!.hidden = true;
+			this.resetStillness();
+			this.stillnessUnlocked = getPuzzleProgress().stillnessUnlocked;
+			this.updateStillnessAccess(); this.updateReadout();
+			this.residueRendered = false;
+			this.querySelector<HTMLElement>("[data-entry-error]")!.hidden = !failed;
+		});
+	}
+	protected cleanup(): void {
+		this.cancelEchoDrag();
+		this.entry?.leaveSource();
+		this.entry = null;
+		super.cleanup();
+	}
 	connectedCallback(): void {
 		if (this.active) return;
 		if (!getPuzzleProgress().unlocked) {
+			recoveredInput = null;
 			document.documentElement.removeAttribute("data-pulse-pending");
 			location.replace(`${url("/music/")}?find-bookmarks=1`);
 			return;
@@ -79,6 +129,10 @@ export class PulseScene extends EasterEggScene {
 				"",
 				`${pulseScenePath()}${location.search}${location.hash}`,
 			);
+		this.entry?.dispose(); this.entry = null;
+		this.holdFeedback = 0; this.holdStart = null; this.holdPoint = null;
+		this.beatFeedback = { J: -1000, K: -1000 }; this.criticalAt = -1000;
+		this.querySelector<HTMLElement>("[data-entry-error]")!.hidden = true;
 		this.scanner = new PulseScanner();
 		this.mode = false;
 		this.echoMode = false;
@@ -114,16 +168,44 @@ export class PulseScene extends EasterEggScene {
 		this.querySelector<HTMLDialogElement>("dialog")!.style.removeProperty("--stillness-warning");
 		this.querySelector<HTMLElement>("[data-stillness-status]")!.textContent = "";
 		const signal = this.mount("/music/");
+		if (import.meta.env.DEV) {
+			window.addEventListener("palib:debug-pause", () => {
+				this.entry?.cancel(false); this.cancelEchoDrag(); this.onVisibility(false);
+			}, { signal });
+			this.addEventListener("palib:debug-stage", event => {
+				const stage = (event as CustomEvent<string>).detail;
+				this.holdStart = null; this.holdPoint = null; this.cancelEchoDrag(); this.resetStillness();
+				if (stage === "residue" || stage === "resonance") {
+					this.residueReady = true; this.residue = { ...DEFAULT_ECHO_RESIDUE };
+					this.residueRendered = false; this.renderResidue();
+					if (stage === "resonance") this.enterEchoMode();
+				} else if (stage === "morse") this.enterMode();
+				else if (stage === "flatline") {
+					this.flatlineElapsed = 0; this.setAttribute("data-flatline", ""); this.hideResidue();
+				} else if (stage === "entry-newworld") this.beginEntry("newworld", true);
+				else if (stage === "entry-starfield") this.beginEntry("starfield", true);
+				else if (stage === "entry-echo") this.beginEntry("echo", true);
+				this.updateStillnessAccess();
+			}, { signal });
+		}
+		if (recoveredInput) {
+			const saved = recoveredInput; recoveredInput = null;
+			this.input.symbols = saved.symbols; this.input.letters = saved.letters;
+			if (saved.mode) this.enterMode();
+			this.updateReadout(); this.retryDestination = saved.destination;
+			this.querySelector<HTMLElement>("[data-entry-error]")!.hidden = !saved.failed;
+		}
 		this.updateStillnessAccess();
-		const onStillnessAbort = (visit: { to?: { url?: string } }) => {
-			if (!this.stillnessNavigating || !this.active || !visit.to?.url?.includes("/stillness/")) return;
-			this.recoverStillnessNavigation();
-		};
-		window.swup?.hooks.on("visit:abort", onStillnessAbort);
-		signal.addEventListener("abort", () => window.swup?.hooks.off("visit:abort", onStillnessAbort), { once: true });
+		this.querySelector<HTMLButtonElement>("[data-entry-retry]")!.addEventListener("click", () => {
+			if (this.retryDestination) this.beginEntry(this.retryDestination);
+		}, { signal });
+		const onEntryAbort = () => this.entry?.cancel(true);
+		window.swup?.hooks.on("visit:abort", onEntryAbort);
+		signal.addEventListener("abort", () => window.swup?.hooks.off("visit:abort", onEntryAbort), { once: true });
 		const refreshAccess = () => {
 			if (!this.active) return;
 			const current = getPuzzleProgress();
+			if (this.entry && this.retryDestination && !this.entryAllowed(this.retryDestination)) this.entry.cancel(false);
 			if (!current.unlocked) {
 				this.navigate("/music/");
 				return;
@@ -178,7 +260,7 @@ export class PulseScene extends EasterEggScene {
 			button.addEventListener("click", () => this.stillnessStrike(button.dataset.stillnessKey as RhythmKey), { signal }),
 		);
 		this.querySelector<HTMLButtonElement>("[data-stillness-revisit]")!.addEventListener("click", () => {
-			if (getPuzzleProgress().stillnessUnlocked && isStillnessReady(getPuzzleProgress())) this.navigate("/stillness/");
+			if (getPuzzleProgress().stillnessUnlocked && isStillnessReady(getPuzzleProgress())) this.beginEntry("stillness");
 		}, { signal });
 		this.querySelector<SVGPathElement>("[data-echo-primary]")!.setAttribute(
 			"d",
@@ -189,11 +271,15 @@ export class PulseScene extends EasterEggScene {
 			ECHO_PATH,
 		);
 		const echo = this.querySelector<HTMLButtonElement>("[data-echo-handle]")!;
-		echo.addEventListener(
+		const hit = this.querySelector<SVGPathElement>("[data-echo-hit]")!;
+		hit.setAttribute("d", ECHO_PATH);
+		for (const target of [echo, hit]) {
+		target.addEventListener(
 			"pointerdown",
 			(event) => {
+				if (!(event instanceof PointerEvent) || this.echoPointer) return;
 				if (
-					this.mode ||
+					this.entry || this.mode ||
 					this.echoSucceeded ||
 					!this.echoEligible ||
 					!this.residueReady ||
@@ -202,10 +288,12 @@ export class PulseScene extends EasterEggScene {
 					return;
 				if (getPuzzleProgress().echoUnlocked) {
 					event.preventDefault();
-					this.navigate("/echo/");
+					this.beginEntry("echo");
 					return;
 				}
-				echo.setPointerCapture(event.pointerId);
+				event.preventDefault();
+				target.setPointerCapture(event.pointerId);
+				this.echoPointer = { element: target, id: event.pointerId };
 				this.echoDrag = {
 					x: event.clientX,
 					y: event.clientY,
@@ -215,10 +303,10 @@ export class PulseScene extends EasterEggScene {
 			},
 			{ signal },
 		);
-		echo.addEventListener(
+		target.addEventListener(
 			"pointermove",
 			(event) => {
-				if (!this.echoDrag) return;
+				if (!(event instanceof PointerEvent) || !this.echoDrag || this.echoPointer?.id !== event.pointerId) return;
 				if (!this.echoMode) {
 					if (
 						!draggedEchoResidue(
@@ -230,19 +318,18 @@ export class PulseScene extends EasterEggScene {
 					)
 						return;
 					this.enterEchoMode();
+					this.echoDrag = { x: event.clientX, y: event.clientY, offsetX: this.echoTarget.x, offsetY: this.echoTarget.y };
+					return;
 				}
 				if (!this.echoMode) return;
 				const bounds =
 					this.querySelector<SVGSVGElement>(
 						".pulse-wave",
 					)!.getBoundingClientRect();
-				this.echoTarget = clampEchoOffset(
-					this.echoDrag.offsetX +
-						((event.clientX - this.echoDrag.x) * 1200) /
-							Math.max(1, bounds.width),
-					this.echoDrag.offsetY +
-						((event.clientY - this.echoDrag.y) * 400) /
-							Math.max(1, bounds.height),
+				this.echoTarget = echoDragOffset(
+					{ x: this.echoDrag.offsetX, y: this.echoDrag.offsetY },
+					{ x: event.clientX - this.echoDrag.x, y: event.clientY - this.echoDrag.y },
+					bounds,
 				);
 			},
 			{ signal },
@@ -252,13 +339,14 @@ export class PulseScene extends EasterEggScene {
 			"pointercancel",
 			"lostpointercapture",
 		] as const)
-			echo.addEventListener(
+			target.addEventListener(
 				name,
-				() => {
-					this.echoDrag = null;
+				(event) => {
+					if (event instanceof PointerEvent && this.echoPointer?.id === event.pointerId) this.cancelEchoDrag();
 				},
 				{ signal },
 			);
+		}
 		this.querySelector<HTMLButtonElement>(
 			"[data-echo-leave]",
 		)!.addEventListener("click", () => this.leaveEchoMode(), { signal });
@@ -272,6 +360,7 @@ export class PulseScene extends EasterEggScene {
 		window.addEventListener(
 			"resize",
 			() => {
+				this.cancelEchoDrag();
 				this.residueRendered = false;
 				this.renderResidue();
 			},
@@ -285,7 +374,7 @@ export class PulseScene extends EasterEggScene {
 		hold.addEventListener(
 			"pointerdown",
 			(event) => {
-				if (this.mode || this.flatlineElapsed !== null || event.button !== 0) return;
+				if (this.entry || this.mode || this.echoMode || this.flatlineElapsed !== null || event.button !== 0) return;
 				hold.setPointerCapture(event.pointerId);
 				this.holdStart = this.visibleTime;
 				this.holdPoint = { x: event.clientX, y: event.clientY };
@@ -338,7 +427,7 @@ export class PulseScene extends EasterEggScene {
 					if (!this.echoEligible || !this.residueReady) return;
 					if (getPuzzleProgress().echoUnlocked) {
 						if (!event.repeat && ["Enter", "Space"].includes(event.code))
-							this.navigate("/echo/");
+							this.beginEntry("echo");
 						return;
 					}
 					if (["Enter", "Space"].includes(event.code)) {
@@ -348,6 +437,7 @@ export class PulseScene extends EasterEggScene {
 					if (!this.echoArmed) return;
 					if (!this.echoMode) this.enterEchoMode();
 					if (!this.echoMode) return;
+					this.echoArmed = true;
 					const step = event.shiftKey ? 24 : 8;
 					this.echoTarget = clampEchoOffset(
 						this.echoTarget.x +
@@ -430,7 +520,7 @@ export class PulseScene extends EasterEggScene {
 			"click",
 			(event) => {
 				event.preventDefault();
-				this.navigate("/newworld/");
+				this.beginEntry("newworld");
 			},
 			{ signal },
 		);
@@ -442,7 +532,7 @@ export class PulseScene extends EasterEggScene {
 			"click",
 			(event) => {
 				event.preventDefault();
-				this.navigate("/starfield/");
+				this.beginEntry("starfield");
 			},
 			{ signal },
 		);
@@ -451,7 +541,7 @@ export class PulseScene extends EasterEggScene {
 		if (!visible) {
 			this.holdStart = null;
 			this.holdPoint = null;
-			this.echoDrag = null;
+			this.cancelEchoDrag();
 			this.echoArmed = false;
 		}
 	}
@@ -479,8 +569,11 @@ export class PulseScene extends EasterEggScene {
 		this.querySelector<HTMLElement>("[data-stillness-status]")!.textContent = "";
 	}
 	private stillnessStrike(key: RhythmKey): void {
-		if (!this.active || !this.stillnessEligible || this.mode || this.echoMode || this.flatlineElapsed !== null || this.stillnessUnlocked) return;
-		const result = strikeStillnessRhythm(this.stillness, key, this.visibleTime);
+		if (this.entry || !this.active || !this.stillnessEligible || this.mode || this.echoMode || this.flatlineElapsed !== null || this.stillnessUnlocked) return;
+		const previous = this.stillness;
+		const result = strikeStillnessRhythm(previous, key, this.visibleTime);
+		if (previous.lastKey !== key) this.beatFeedback[key] = this.visibleTime;
+		if (!previous.armed && result.state.armed) this.criticalAt = this.visibleTime;
 		this.stillness = result.state;
 		const intensity = stillnessIntensity(this.stillness, this.visibleTime);
 		this.warningStrength = Math.max(this.warningStrength, this.reduced ? 0.25 : 0.14 + intensity * 0.5);
@@ -497,6 +590,21 @@ export class PulseScene extends EasterEggScene {
 		this.updateStillnessAccess();
 	}
 	protected renderFrame(delta: number): void {
+		if (this.entry) return;
+		const desired = this.holdStart === null ? 0 : Math.min(1, (this.visibleTime - this.holdStart) / 2000);
+		this.holdFeedback = this.reduced ? desired : this.holdFeedback + (desired - this.holdFeedback) * Math.min(1, delta / 80);
+		const holdMark = this.querySelector<SVGPathElement>("[data-hold-feedback]")!;
+		const bounds = this.querySelector<SVGSVGElement>(".pulse-wave")!.getBoundingClientRect();
+		const x = this.holdPoint ? Math.max(80, Math.min(1120, (this.holdPoint.x - bounds.left) / Math.max(1, bounds.width) * 1200)) : 600;
+		const h = this.holdFeedback, a = 34 * (1-h);
+		holdMark.setAttribute("d", `M${x-70} 200 H${x-25} L${x-10} ${200-a} L${x+5} ${200+a*.6} L${x+20} 200 H${x+70}`);
+		holdMark.setAttribute("opacity", String(this.mode || this.echoMode || this.flatlineElapsed !== null ? 0 : h));
+		holdMark.setAttribute("stroke-width", String(1.4+h));
+		for (const key of ["J","K"] as const)
+			this.querySelector<HTMLElement>(`[data-stillness-key="${key}"]`)!.style.setProperty("--beat", String(Math.max(0, 1-(this.visibleTime-this.beatFeedback[key])/240)));
+		const critical = this.querySelector<SVGPathElement>("[data-critical-feedback]")!;
+		critical.setAttribute("opacity", String(this.stillness.armed && !this.mode && !this.echoMode ? (this.reduced ? 0.6 : Math.max(0, 1-(this.visibleTime-this.criticalAt)/650)) : 0));
+		this.querySelector<HTMLElement>("[data-morse-letters]")!.style.opacity = String(this.visibleTime-this.confirmedAt < 180 ? 0.6 : 1);
 		if (this.flatlineElapsed === null && this.holdStart !== null && this.visibleTime - this.holdStart >= 2000)
 			this.enterMode();
 		const staticLine = this.querySelector<SVGPathElement>("[data-static]")!;
@@ -546,17 +654,31 @@ export class PulseScene extends EasterEggScene {
 		} else this.querySelector<SVGSVGElement>(".pulse-wave")!.style.height = "";
 		if (this.echoMode) {
 			this.hideResidue(true);
-			trail.replaceChildren();
+			const reveal = echoReveal(this.visibleTime - this.echoRevealAt, this.reduced);
+			trail.style.opacity = String(1 - reveal);
+			if (reveal === 1) trail.replaceChildren();
 			staticLine.setAttribute("d", "");
 			head.setAttribute("visibility", "hidden");
 			primary.setAttribute("visibility", "visible");
 			ghost.setAttribute("visibility", "visible");
-			const easing = this.reduced ? 1 : Math.min(1, delta / 140);
-			this.echoPosition.x += (this.echoTarget.x - this.echoPosition.x) * easing;
-			this.echoPosition.y += (this.echoTarget.y - this.echoPosition.y) * easing;
+			this.echoPosition = { ...this.echoTarget };
+			primary.setAttribute("transform", `translate(0 ${this.echoBaseline})`);
+			primary.setAttribute("opacity", String(reveal));
+			const hit = this.querySelector<SVGPathElement>("[data-echo-hit]")!;
+			const transform = `translate(${this.echoPosition.x} ${this.echoPosition.y + this.echoBaseline})`;
+			hit.setAttribute("transform", transform); hit.setAttribute("visibility", "visible");
+			const center = (this.residue?.x ?? 720) - ECHO_START.x;
+			const clip = this.querySelector<SVGRectElement>("[data-echo-clip]")!;
+			const span = 13 + 1400 * reveal;
+			clip.setAttribute("x", String(center-span)); clip.setAttribute("width", String(span*2));
+			const bounds = this.querySelector<SVGSVGElement>(".pulse-wave")!.getBoundingClientRect();
+			const handle = this.querySelector<HTMLElement>("[data-echo-handle]")!;
+			handle.hidden = false;
+			handle.style.setProperty("--echo-hit-x", `${bounds.left + (center+this.echoPosition.x)*bounds.width/1200}px`);
+			handle.style.setProperty("--echo-hit-y", `${bounds.top + (200+this.echoBaseline+this.echoPosition.y)*bounds.height/400}px`);
 			ghost.setAttribute(
 				"transform",
-				`translate(${this.echoPosition.x.toFixed(2)} ${this.echoPosition.y.toFixed(2)})`,
+				`translate(${this.echoPosition.x.toFixed(2)} ${(this.echoPosition.y + this.echoBaseline).toFixed(2)})`,
 			);
 			const closeness = echoCloseness(this.echoPosition.x, this.echoPosition.y);
 			ghost.setAttribute("opacity", String((0.4 + closeness * 0.6).toFixed(2)));
@@ -567,7 +689,7 @@ export class PulseScene extends EasterEggScene {
 			this.echoHold = advanceEchoHold(
 				this.echoHold,
 				delta,
-				echoAligned(this.echoPosition.x, this.echoPosition.y),
+				reveal === 1 && echoAligned(this.echoPosition.x, this.echoPosition.y),
 			);
 			if (
 				!this.echoSucceeded &&
@@ -577,21 +699,12 @@ export class PulseScene extends EasterEggScene {
 				this.echoSucceeded = true;
 				this.querySelector<HTMLElement>("[data-echo-status]")!.textContent =
 					"两道信号重合了。";
-				const timer = window.setTimeout(
-					() => {
-						if (this.active && getPuzzleProgress().echoUnlocked)
-							this.navigate("/echo/");
-					},
-					this.reduced ? 120 : 500,
-				);
-				this.abort?.signal.addEventListener(
-					"abort",
-					() => clearTimeout(timer),
-					{ once: true },
-				);
+				this.beginEntry("echo", true);
 			}
 			return;
 		}
+		trail.style.opacity = "1";
+		this.querySelector<SVGPathElement>("[data-echo-hit]")!.setAttribute("visibility", "hidden");
 		primary.setAttribute("visibility", "hidden");
 		ghost.setAttribute("visibility", "hidden");
 		if (this.mode) {
@@ -604,11 +717,11 @@ export class PulseScene extends EasterEggScene {
 			this.inputSignals = this.inputSignals.filter(
 				(item) => item.end > this.visibleTime,
 			);
-			if (this.reduced || !active || active.symbol === "-")
+			if ((!active && !this.reduced) || (this.reduced && !this.input.symbols.endsWith(".")) || active?.symbol === "-")
 				staticLine.setAttribute("d", "M0 130 H1200");
 			else {
 				const phase =
-					(this.visibleTime - active.start) / (active.end - active.start);
+					this.reduced ? 0.5 : (this.visibleTime - active!.start) / (active!.end - active!.start);
 				const peak = Math.sin(Math.PI * phase) * 65;
 				staticLine.setAttribute(
 					"d",
@@ -666,7 +779,7 @@ export class PulseScene extends EasterEggScene {
 			);
 			line.setAttribute(
 				"d",
-				`M${segment.x1} ${segment.y1} L${segment.x2} ${segment.y2}`,
+				`M${segment.x1} ${200 + (segment.y1-200)*(1-h*Math.max(0,1-Math.abs(segment.x1-x)/110)*.65)} L${segment.x2} ${200 + (segment.y2-200)*(1-h*Math.max(0,1-Math.abs(segment.x2-x)/110)*.65)}`,
 			);
 			line.setAttribute("stroke", "#111");
 			line.setAttribute("stroke-width", "1.4");
@@ -686,36 +799,7 @@ export class PulseScene extends EasterEggScene {
 		else this.renderResidue();
 	}
 	private async enterStillness(): Promise<void> {
-		if (!this.abort) return;
-		const destination = url("/stillness/");
-		try {
-			const response = await fetch(destination, {
-				headers: { "X-Requested-With": "swup" },
-				signal: AbortSignal.any([this.abort.signal, AbortSignal.timeout(10000)]),
-			});
-			if (!response.ok) throw new Error("Stillness scene unavailable");
-			const html = await response.text();
-			const parsed = new DOMParser().parseFromString(html, "text/html");
-			if (!parsed.querySelector("stillness-scene")) throw new Error("Stillness scene missing");
-			if (!this.active || this.abort.signal.aborted) return;
-			if (window.swup) {
-				if (!(window.swup.options.containers as string[]).every((selector) => parsed.querySelector(selector)))
-					throw new Error("Stillness page incomplete");
-				window.swup.cache.set(destination, { url: destination, html });
-				window.swup.navigate(destination, { animate: false, cache: { read: true } });
-				const timer = window.setTimeout(() => {
-					if (this.active && this.stillnessNavigating) this.recoverStillnessNavigation();
-				}, 15000);
-				this.abort.signal.addEventListener("abort", () => clearTimeout(timer), { once: true });
-			} else location.assign(destination);
-		} catch {
-			if (this.active && !this.abort.signal.aborted) this.recoverStillnessNavigation();
-		}
-	}
-	private recoverStillnessNavigation(): void {
-		this.resetStillness();
-		this.updateStillnessAccess();
-		this.querySelector<HTMLElement>("[data-stillness-status]")!.textContent = "暂时无法进入，可重试静止的线。";
+		this.beginEntry("stillness", true, true);
 	}
 	private hideResidue(keepHandle = false): void {
 		this.querySelector<SVGPathElement>("[data-echo-residue]")!.setAttribute(
@@ -762,6 +846,8 @@ export class PulseScene extends EasterEggScene {
 		this.stillness = emptyStillnessRhythm();
 		this.removeAttribute("data-stillness-building");
 		this.echoMode = true;
+		this.echoRevealAt = this.visibleTime;
+		this.echoBaseline = (this.residue?.y ?? 203) - 200 - ECHO_START.y;
 		this.querySelector<SVGSVGElement>(".pulse-wave")!.setAttribute("viewBox", "0 0 1200 400");
 		this.updateStillnessAccess();
 		this.echoArmed = false;
@@ -775,6 +861,7 @@ export class PulseScene extends EasterEggScene {
 	}
 	private leaveEchoMode(): void {
 		if (this.echoSucceeded) return;
+		this.cancelEchoDrag();
 		this.echoMode = false;
 		this.updateStillnessAccess();
 		this.echoArmed = false;
@@ -825,6 +912,8 @@ export class PulseScene extends EasterEggScene {
 			!getPuzzleProgress().starfieldUnlocked;
 	}
 	private action(action: string): void {
+		if (this.entry) return;
+		const prior = getPuzzleProgress();
 		this.status("");
 		if (action === "dot" || action === "dash") {
 			const symbol = action === "dot" ? "." : "-";
@@ -844,6 +933,7 @@ export class PulseScene extends EasterEggScene {
 		} else if (action === "confirm") {
 			if (!this.input.confirm())
 				this.status("这组点划不是有效字母，请修改后再确认。");
+			else this.confirmedAt = this.visibleTime;
 		} else if (action === "undo") this.input.undo();
 		else if (action === "clear") {
 			this.input.clear();
@@ -870,11 +960,11 @@ export class PulseScene extends EasterEggScene {
 			else if (tryUnlockWorld(this.input.letters)) {
 				this.status("信号已接通。");
 				this.updateReadout();
-				this.navigate("/newworld/");
+				this.beginEntry("newworld", !prior.worldUnlocked);
 			} else if (tryUnlockStarfield(this.input.letters)) {
 				this.status("信号已接通。");
 				this.updateReadout();
-				this.navigate("/starfield/");
+				this.beginEntry("starfield", !prior.starfieldUnlocked);
 			} else this.status("信号未接通，输入仍然保留。可以继续修改。");
 		}
 		this.updateReadout();

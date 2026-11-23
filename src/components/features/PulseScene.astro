@@ -4,7 +4,7 @@ import { url } from "@/utils/url-utils";
 <pulse-scene data-pagefind-ignore>
 	<dialog class="pulse-screen" aria-label="装饰心电线场景" tabindex="-1">
 		<div class="stillness-warning" aria-hidden="true"></div>
-		<svg class="pulse-wave" viewBox="0 0 1200 400" preserveAspectRatio="none" aria-hidden="true"><g data-trail></g><path data-static fill="none" stroke="#111" stroke-width="1.4" vector-effect="non-scaling-stroke" /><circle data-scan-head r="2" fill="#111" visibility="hidden" /><path data-echo-residue fill="none" stroke="#777" stroke-opacity="0.43" stroke-width="1.1" vector-effect="non-scaling-stroke" visibility="hidden" /><path data-echo-primary fill="none" stroke="#111" stroke-width="1.6" vector-effect="non-scaling-stroke" visibility="hidden" /><path data-echo-ghost fill="none" stroke="#888" stroke-width="1.6" vector-effect="non-scaling-stroke" visibility="hidden" /></svg>
+		<svg class="pulse-wave" viewBox="0 0 1200 400" preserveAspectRatio="none" aria-hidden="true"><defs><clipPath id="pulse-echo-reveal" clipPathUnits="userSpaceOnUse"><rect data-echo-clip x="0" y="-500" width="0" height="1400" /></clipPath></defs><g data-trail></g><path data-static fill="none" stroke="#111" stroke-width="1.4" vector-effect="non-scaling-stroke" /><circle data-scan-head r="2" fill="#111" visibility="hidden" /><path data-echo-residue fill="none" stroke="#777" stroke-opacity="0.43" stroke-width="1.1" vector-effect="non-scaling-stroke" visibility="hidden" /><path data-echo-primary fill="none" stroke="#111" stroke-width="1.6" vector-effect="non-scaling-stroke" visibility="hidden" /><path clip-path="url(#pulse-echo-reveal)" data-echo-ghost fill="none" stroke="#888" stroke-width="1.6" vector-effect="non-scaling-stroke" visibility="hidden" /><path data-hold-feedback opacity="0" fill="none" stroke="#111" vector-effect="non-scaling-stroke" /><path data-critical-feedback opacity="0" fill="none" stroke="#111" stroke-width="1.8" vector-effect="non-scaling-stroke" d="M510 200 L535 160 L549 230 L562 200 L585 145 L601 225 L620 200" /><path data-echo-hit clip-path="url(#pulse-echo-reveal)" visibility="hidden" fill="none" stroke="transparent" stroke-width="44" vector-effect="non-scaling-stroke" /></svg>
 		<button class="wave-interaction" aria-label="让心电线停留：按住空格" data-wave-hold></button>
 		<div class="stillness-keys" data-stillness-keys hidden><button type="button" data-stillness-key="J" aria-label="左侧节拍"></button><button type="button" data-stillness-key="K" aria-label="右侧节拍"></button></div>
 		<button class="stillness-revisit" data-stillness-revisit type="button" aria-label="再次进入静止空间" hidden></button>
@@ -20,6 +20,7 @@ import { url } from "@/utils/url-utils";
 			<a data-world-entry hidden href={url("/newworld/")}>进入深处</a>
 			<a data-starfield-entry hidden href={url("/starfield/")}>进入星空</a>
 		</section>
+		<div class="entry-error" data-entry-error role="status" hidden>暂时无法进入，解锁与输入已保留。<button type="button" data-entry-retry>重试</button></div>
 		<a class="pulse-return" data-scene-return href={url("/music/")} hidden>返回</a>
 	</dialog>
 </pulse-scene>
@@ -52,7 +53,7 @@ import { url } from "@/utils/url-utils";
 	.echo-leave { position:absolute; z-index:2; left:50%; top:calc(50% + min(20dvh,200px) + 34px); transform:translateX(-50%); min-height:40px; padding:8px 12px; border:1px solid #aaa; background:#fff; color:#333; font-size:12px; cursor:pointer; }
 	.echo-leave[hidden] { display:none; }
 	.echo-leave:focus-visible { outline:2px solid #111; outline-offset:3px; }
-	pulse-scene[data-echo] .echo-interaction { left:0; top:30%; width:100%; height:40%; transform:none; }
+	[data-echo-hit] { pointer-events:stroke; touch-action:none; }
 	pulse-scene[data-echo] .wave-interaction,pulse-scene[data-morse] .echo-interaction { pointer-events:none; }
 	pulse-scene[data-morse] .echo-interaction,pulse-scene[data-morse] .echo-status { display:none; }
 	pulse-scene[data-flatline] .wave-interaction,pulse-scene[data-flatline] .echo-interaction { pointer-events:none; }
@@ -71,6 +72,13 @@ import { url } from "@/utils/url-utils";
 	.morse-panel a { display:inline-block; margin-top:8px; padding:8px 12px; border:1px solid #333; } .morse-panel a[hidden] { display:none; }
 	.pulse-return { position:absolute; bottom:max(28px,env(safe-area-inset-bottom)); right:28px; padding:10px 18px; color:#222; background:#fff; border:1px solid #bbb; font-size:14px; text-decoration:none; }
 	.pulse-return[hidden] { display:none; } .pulse-return:focus-visible { outline:2px solid #111; outline-offset:4px; }
+	.entry-error { position:absolute;bottom:100px;left:50%;transform:translateX(-50%);width:min(460px,calc(100% - 32px));background:#fff;color:#333;border:1px solid #aaa;padding:12px;font-size:13px;z-index:4; }
+	.entry-error[hidden] { display:none; }
+	.entry-error button { min-height:44px;padding:8px 16px;border:1px solid #777;margin-left:8px; }
+	.stillness-keys button::after { opacity:calc(.4 + var(--beat,0)*.6);background:#333; }
+	.stillness-status,.echo-status { clip-path:inset(50%);width:1px;height:1px;overflow:hidden; }
+	.pulse-wave { transition:height 200ms ease; }
+	@media(prefers-reduced-motion:reduce) { .pulse-wave { transition:none; } }
 	@media(max-width:480px) { .morse-panel { top:calc(50% + 65px); max-height:calc(50dvh - 85px); padding:.75rem 0; } .morse-actions button { padding:5px 9px; font-size:12px; } .echo-leave { top:calc(50% + min(20dvh,200px) + 18px); } .stillness-keys { gap:42px; } }
-	@media(max-height:520px) { .pulse-wave,.wave-interaction { top:30%; } pulse-scene[data-stillness-building] .pulse-wave,pulse-scene[data-stillness-building] .wave-interaction { top:50%; } pulse-scene[data-echo] .echo-interaction { top:10%; height:40%; } .echo-status { top:calc(30% + min(20dvh,200px) + 4px); } .echo-leave { top:calc(30% + min(20dvh,200px) + 26px); } .morse-panel { top:calc(30% + 50px); max-height:calc(70dvh - 66px); } .pulse-return { top:12px; bottom:auto; right:16px; } }
+	@media(max-height:520px) { .pulse-wave,.wave-interaction { top:30%; } pulse-scene[data-stillness-building] .pulse-wave,pulse-scene[data-stillness-building] .wave-interaction { top:50%; }  .echo-status { top:calc(30% + min(20dvh,200px) + 4px); } .echo-leave { top:calc(30% + min(20dvh,200px) + 26px); } .morse-panel { top:calc(30% + 50px); max-height:calc(70dvh - 66px); } .pulse-return { top:12px; bottom:auto; right:16px; } }
 </style>

@@ -6,6 +6,8 @@ import {
 	draggedEchoResidue,
 	echoAligned,
 	echoCloseness,
+	echoDragOffset,
+	echoReveal,
 	echoResidueAvailable,
 	echoResiduePath,
 	ECHO_DRAG_THRESHOLD_PX,
@@ -33,6 +35,39 @@ test("the second signal starts displaced and requires a sustained overlap", () =
 test("signal offsets remain finite and on the page", () => {
 	assert.deepEqual(clampEchoOffset(999, -999), { x: 180, y: -90 });
 	assert.deepEqual(clampEchoOffset(-999, 999), { x: -180, y: 90 });
+});
+
+test("pointer travel maps exactly to displayed displacement at every viewport", () => {
+	for (const width of [390, 768, 1440]) {
+		const bounds = { width, height: 320 };
+		const next = echoDragOffset({ x: 0, y: 0 }, { x: 20, y: -30 }, bounds);
+		assert.ok(Math.abs((next.x * width) / 1200 - 20) < 1e-9);
+		assert.equal((next.y * bounds.height) / 400, -30);
+		// Releasing and grabbing at the current offset never resets to ECHO_START.
+		assert.deepEqual(echoDragOffset(next, { x: 0, y: 0 }, bounds), next);
+		assert.deepEqual(echoDragOffset(next, { x: -20, y: 30 }, bounds), {
+			x: 0,
+			y: 0,
+		});
+	}
+	assert.deepEqual(
+		echoDragOffset(
+			ECHO_START,
+			{ x: 999, y: -999 },
+			{ width: 390, height: 320 },
+		),
+		{ x: 180, y: -90 },
+	);
+});
+
+test("unfold completes before synchronization starts, reduced motion unfolds immediately", () => {
+	assert.equal(echoReveal(0, false), 0);
+	assert.equal(echoReveal(225, false), 0.5);
+	assert.equal(echoReveal(449, false) < 1, true);
+	assert.equal(echoReveal(450, false), 1);
+	assert.equal(echoReveal(900, false), 1);
+	assert.equal(echoReveal(0, true), 1);
+	assert.equal(advanceEchoHold(0, 450, echoReveal(449, false) === 1), 0);
 });
 
 test("the residue needs three scans and a real drag, not a tap", () => {

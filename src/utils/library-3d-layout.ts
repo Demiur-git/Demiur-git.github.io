@@ -168,6 +168,15 @@ export const ANNEX_WALLS: FloorBox[] = [
 	),
 ];
 export const UPPER_WALLS: FloorBox[] = [
+	// Enclose the annex roofs behind the balcony; retain the central corridor.
+	...[-5.7, 5.7].map((x) => ({
+		x,
+		z: 14,
+		width: 8.6,
+		depth: 0.24,
+		base: UPPER,
+		height: LIBRARY.height - UPPER,
+	})),
 	{ x: 1.5, z: 23.75, width: 0.2, depth: 19.5, base: UPPER, height: 3.4 },
 	...[
 		[14, 28.75],
@@ -197,14 +206,6 @@ export const GUARDS: FloorBox[] = [
 		z: 12.4,
 		width: 0.12,
 		depth: 3.2,
-		base: UPPER,
-		height: 1.1,
-	})),
-	...[-5.1, 5.1].map((x) => ({
-		x,
-		z: 14,
-		width: 7.4,
-		depth: 0.12,
 		base: UPPER,
 		height: 1.1,
 	})),
@@ -442,7 +443,7 @@ export const ROOM_FIXTURES: RoomFixture[] = [
 		id: "notice",
 		kind: "notice",
 		x: 4.1,
-		z: 13.62,
+		z: 13.81,
 		width: 1.65,
 		depth: 0.14,
 		height: 2.25,

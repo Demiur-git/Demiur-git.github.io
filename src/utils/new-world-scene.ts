@@ -63,6 +63,11 @@ export class NewWorldScene extends EasterEggScene {
 			"自动推进：关闭",
 		);
 		const signal = this.mount(pulseSceneRoute());
+		if (import.meta.env.DEV) this.addEventListener("palib:debug-stage", event => {
+			if ((event as CustomEvent<string>).detail !== "dialogue") return;
+			this.moving = false; this.progress = 1; this.discovered = true;
+			this.renderGeometry(); this.beginDialogue();
+		}, { signal });
 		this.querySelector<HTMLButtonElement>(
 			"[data-world-home]",
 		)!.addEventListener(

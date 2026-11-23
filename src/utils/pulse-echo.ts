@@ -9,6 +9,23 @@ export const ECHO_START = { x: 84, y: 44 } as const;
 export const ECHO_HOLD_MS = 1200;
 export const ECHO_RESIDUE_REVEAL_MS = 13000;
 export const ECHO_DRAG_THRESHOLD_PX = 20;
+export const ECHO_UNFOLD_MS = 450;
+
+export function echoDragOffset(
+	origin: { x: number; y: number },
+	delta: { x: number; y: number },
+	bounds: { width: number; height: number },
+): { x: number; y: number } {
+	return clampEchoOffset(
+		origin.x + (delta.x * 1200) / Math.max(1, bounds.width),
+		origin.y + (delta.y * 400) / Math.max(1, bounds.height),
+	);
+}
+
+export function echoReveal(elapsed: number, reduced: boolean): number {
+	const t = reduced ? 1 : Math.max(0, Math.min(1, elapsed / ECHO_UNFOLD_MS));
+	return t * t * (3 - 2 * t);
+}
 
 export function echoResidueAvailable(
 	clueSeen: boolean,
@@ -18,9 +35,7 @@ export function echoResidueAvailable(
 ): boolean {
 	return (
 		clueSeen &&
-		(unlocked ||
-			reducedMotion ||
-			elapsedSinceClueMs >= ECHO_RESIDUE_REVEAL_MS)
+		(unlocked || reducedMotion || elapsedSinceClueMs >= ECHO_RESIDUE_REVEAL_MS)
 	);
 }
 
@@ -82,7 +97,8 @@ export function clampEchoOffset(
 
 export function echoCloseness(x: number, y: number): number {
 	const distance = Math.hypot(x / 115, y / 75);
-	return Math.max(0, Math.min(1, 1 - distance));
+	const proximity = Math.max(0, Math.min(1, 1 - distance));
+	return proximity * proximity * (3 - 2 * proximity);
 }
 
 export function echoAligned(x: number, y: number): boolean {

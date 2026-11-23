@@ -602,4 +602,7 @@ const ogImageAlt = propsOgImageAlt ?? pageTitle;
 <script>
   import { initLayout } from "@/utils/layout-init";
   initLayout();
+  if (import.meta.env.DEV) {
+    void import("@/utils/pulse-debug").then(({ initPulseDebug }) => initPulseDebug());
+  }
 </script>

@@ -1,4 +1,5 @@
 import { pulsePuzzle } from "../config/pulsePuzzle";
+import { debugProgress } from "./pulse-debug-store";
 
 export interface PuzzleProgress {
 	version: number;
@@ -140,6 +141,10 @@ let memory = emptyProgress();
 let storageAvailable = true;
 
 export function getPuzzleProgress(): PuzzleProgress {
+	if (import.meta.env?.DEV && typeof window !== "undefined") {
+		const debug = debugProgress.read();
+		if (debug) return parseProgress(JSON.stringify(debug));
+	}
 	if (typeof window !== "undefined" && storageAvailable) {
 		try {
 			const current = window.localStorage.getItem(pulsePuzzle.storageKey);
@@ -168,6 +173,11 @@ export function getPuzzleProgress(): PuzzleProgress {
 }
 
 export function savePuzzleProgress(progress: PuzzleProgress): void {
+	if (import.meta.env?.DEV && debugProgress.read()) {
+		debugProgress.write(parseProgress(JSON.stringify(progress)));
+		window.dispatchEvent(new Event("pulse:progress"));
+		return;
+	}
 	memory = parseProgress(JSON.stringify(progress));
 	try {
 		if (storageAvailable)

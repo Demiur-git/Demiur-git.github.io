@@ -1,3 +1,4 @@
+import { crossesSections } from "./navigation-section";
 import {
 	expressiveCodeConfig,
 	navbarMode,
@@ -35,17 +36,25 @@ let activePageTurnVisit: object | null = null;
 let activeHomeEntranceVisit: object | null = null;
 const pendingPageTurnWaits = new Set<() => void>();
 
+function relativePath(pathname: string): string {
+	const base = new URL(url("/"), location.href).pathname;
+	return pathname.startsWith(base) ? "/" + pathname.slice(base.length) : pathname;
+}
+
+interface MotionVisit {
+	from: { url: string };
+	to: { url: string };
+	history: { popstate: boolean };
+	animation: { animate: boolean; selector: string | false; wait: boolean };
+}
+
 function destinationLabel(destination: string): string {
 	const pathname = new URL(destination, window.location.href).pathname;
-	const base = new URL(url("/"), window.location.href).pathname;
-	const relativePath = pathname.startsWith(base)
-		? `/${pathname.slice(base.length)}`
-		: pathname;
-	const normalized = `/${relativePath.replace(/^\/+|\/+$/g, "")}/`.replace("//", "/");
+	const normalized = "/" + relativePath(pathname).split("/").filter(Boolean).join("/") + "/";
 	const labels = pageTransitionConfig.destinationLabels;
 	if (labels[normalized]) return labels[normalized];
 	if (normalized.startsWith("/posts/")) return "Articles";
-		if (normalized.startsWith("/library/posts/")) return "Articles";
+	if (normalized.startsWith("/library/posts/")) return "Articles";
 	if (normalized.startsWith("/dynamic/")) return "Memos";
 	if (normalized.startsWith("/gallery/")) return "Gallery";
 	if (normalized.startsWith("/projects/")) return "Projects";
@@ -61,6 +70,7 @@ function shouldTurnPage(destination: string, source: string): boolean {
 		const current = new URL(source, window.location.origin);
 		return (
 			next.origin === window.location.origin &&
+			crossesSections(relativePath(current.pathname), relativePath(next.pathname)) &&
 			!isEasterEggPath(next.pathname) &&
 			!isEasterEggPath(current.pathname) &&
 			!isHomePath(next.pathname) &&
@@ -106,9 +116,9 @@ async function waitUntil(deadline: number): Promise<void> {
 	if (generation !== pageTurnGeneration) return;
 }
 
-function startPageTurn(destination: string, source: string): void {
+function startPageTurn(destination: string, source: string, enabled: boolean): void {
 	clearPageTurnState();
-	pageTurnActive = shouldTurnPage(destination, source);
+	pageTurnActive = enabled && shouldTurnPage(destination, source);
 	if (!pageTurnActive) return;
 	const { enter, open, writeMin, writeMax, writePerCharacter, hold } =
 		pageTransitionConfig.timing;
@@ -187,6 +197,15 @@ function finishProgressBar(): void {
  * 注册 link:click / content:replace / visit:start / page:view / visit:end 钩子。
  */
 function registerSwupHooks(): void {
+	const positions = new Map<number, number>();
+	let displayedIndex: number = history.state?.index ?? 1;
+	history.scrollRestoration = "manual";
+	window.swup.hooks.on("content:scroll", (visit: MotionVisit) => {
+		displayedIndex = history.state?.index ?? displayedIndex;
+		const saved = positions.get(displayedIndex);
+		if (visit.history.popstate && saved !== undefined)
+			window.scrollTo({ top: saved, behavior: "instant" });
+	});
 	if (import.meta.env.DEV) {
 		// Run before SwupHeadPlugin (priority 0). Cached SSR styles can predate
 		// HMR and otherwise replace the live global CSS on the second visit.
@@ -238,6 +257,7 @@ function registerSwupHooks(): void {
 		if (visit === activePageTurnVisit) await waitUntil(pageTurnReadyAt);
 	});
 	window.swup.hooks.on("content:replace", (visit: object) => {
+		document.body.classList.toggle("is-home", isHomePath(location.pathname));
 		if (visit === activePageTurnVisit) revealPageTurn();
 		if (visit === activeHomeEntranceVisit)
 			document.dispatchEvent(new Event("firefly:home-entrance-ready"));
@@ -276,7 +296,7 @@ function registerSwupHooks(): void {
 		// 保证揭页完整离场后再结束本次访问，避免遮罩被提前清理。
 		if (visit === activePageTurnVisit) await waitUntil(pageTurnRevealReadyAt);
 	});
-	window.swup.hooks.on("visit:start", (visit: { from: { url: string }; to: { url: string } }) => {
+	window.swup.hooks.on("visit:start", (visit: MotionVisit) => {
 		// visit:start 同时覆盖普通链接和浏览器前进/后退。
 		const destinationPath = new URL(visit.to.url, window.location.href).pathname;
 		const sourcePath = new URL(visit.from.url, window.location.href).pathname;
@@ -285,58 +305,20 @@ function registerSwupHooks(): void {
 		if (playHomeEntrance) document.dispatchEvent(new Event("firefly:home-entrance-start"));
 		else document.dispatchEvent(new Event("firefly:home-entrance-cancel"));
 		activeHomeEntranceVisit = playHomeEntrance ? visit : null;
-		startPageTurn(visit.to.url, visit.from.url);
+		positions.set(displayedIndex, window.scrollY);
+		const ordinary = !playHomeEntrance && !isEasterEggPath(destinationPath) && !isEasterEggPath(sourcePath);
+		if (visit.history.popstate && ordinary) visit.animation.animate = true;
+		startPageTurn(visit.to.url, visit.from.url, ordinary && !visit.history.popstate && visit.animation.animate);
+		document.documentElement.dataset.navigationMotion = pageTurnActive ? "book" : ordinary ? "fade" : "scene";
+		if (ordinary) {
+			visit.animation.selector = pageTurnActive ? false : "#swup-container";
+			visit.animation.wait = !pageTurnActive;
+		}
 		activePageTurnVisit = pageTurnActive ? visit : null;
 		// Start progress bar（WAAPI 合成线程动画，不强制回流）
 		startProgressBar();
 
-		// 先回顶，让后续 FLIP 在 scroll=0 的坐标系内计算：
-		// 若在切页后才回顶，FLIP 的 invert 是按切页前滚动位置校准的，scroll 一复位就会导致
-		// 内容区从视口上方之外（滚动较深时 top<0）开始、再落回，表现为“冲过头再回落”。
-		// 必须用 instant：html 上有 scroll-behavior:smooth（main.css），behavior:"auto" 会被当作平滑滚动，
-		// 在 FLIP 期间与内容位移叠加、同样造成“顶到最顶部再回落”。
-		// 移动端（<768）不使用即时回顶，避免闪烁（由 swup 默认滚动接管）
-		if (window.innerWidth >= 768) {
-			window.scrollTo({ top: 0, behavior: "instant" });
-		}
-
-		// 更新首页状态（body.is-home 驱动 CSS --content-top 等）
-		const bodyElement = document.querySelector("body") as HTMLElement;
-		const isHomePage = pathsEqual(visit.to.url, url("/"));
-		const wasHome = bodyElement.classList.contains("is-home");
-		const contentPanel = document.querySelector(
-			".content-panel",
-		) as HTMLElement | null;
-		// FLIP 只在 is-home 状态变化（首页↔非首页）时才有意义；文章↔文章、首页↔首页
-		// 类未变 → delta 必为 0，直接短路，避免常见切页白付两次强制布局读取
-		if (isHomePage !== wasHome && contentPanel) {
-			const oldTop = contentPanel.getBoundingClientRect().top; // 类切换前读
-			bodyElement.classList.toggle("is-home", isHomePage);
-			const newTop = contentPanel.getBoundingClientRect().top; // 类切换后读
-			const delta = oldTop - newTop;
-			// 全屏首页↔非首页 delta ≈ 92vh，总是超过 0.75 视口，此前被跳过导致内容区瞬间跳变；
-			// 现在放行，改用与移动端横幅模式完全一致的标准 FLIP（强制回流提交 invert + CSS 过渡），
-			// 让内容区整屏丝滑上移/下移（非全屏仍受 0.75 视口阈值保护）
-			const isFullscreen =
-				document.documentElement.getAttribute("data-wallpaper-mode") ===
-				"fullscreen";
-			if (
-				delta !== 0 &&
-				(isFullscreen || Math.abs(delta) <= window.innerHeight * 0.75)
-			) {
-				// 标准 FLIP：禁用过渡→设 invert transform→回流提交→启用过渡→移除 transform（触发合成动画）
-				// 不再设置 will-change:transform——它把整个 .content-panel（含全页文字）预先且持续地提升为
-				// 独立合成层，软导航结束后的旧光栅贴图因该提示而保留，导致残留发糊（#615）。
-				// transform 过渡本身会在动画期间由浏览器自动提升到合成层（compositor 驱动，丝滑不减），
-				// 动画结束后自动降级并按普通路径重光栅，文字恢复清晰。
-				contentPanel.style.transition = "none";
-				contentPanel.style.transform = `translateY(${delta}px)`;
-				void contentPanel.offsetWidth;
-				contentPanel.style.transition = "";
-				contentPanel.style.transform = "";
-			}
-		}
-
+		const isHomePage = isHomePath(destinationPath);
 		// Control navbar transparency based on page
 		const navbar = document.getElementById("navbar");
 		if (navbar) {

@@ -22,6 +22,7 @@ export abstract class EasterEggScene extends HTMLElement {
 	protected mount(backPath: string): AbortSignal {
 		this.active = true;
 		this.visibleTime = 0;
+		this.removeAttribute("data-frame-painted");
 		this.lastFrame = 0;
 		this.abort = new AbortController();
 		const signal = this.abort.signal;
@@ -39,6 +40,8 @@ export abstract class EasterEggScene extends HTMLElement {
 		document.documentElement.style.overflow = "hidden";
 		acquireEasterEggMusic(this);
 		this.dialog.showModal();
+		const handoff = document.querySelector<HTMLElement>("dialog[data-pulse-entry] > [data-entry-veil]");
+		if (handoff) this.dialog.append(handoff);
 		this.dialog.focus({ preventScroll: true });
 		document.documentElement.removeAttribute("data-pulse-pending");
 		document.documentElement.removeAttribute("data-world-pending");
@@ -60,6 +63,7 @@ export abstract class EasterEggScene extends HTMLElement {
 		motion.addEventListener("change", update, { signal });
 		document.addEventListener("visibilitychange", update, { signal });
 		window.addEventListener("blur", () => this.onVisibility(false), { signal });
+		if (import.meta.env.DEV) window.addEventListener("palib:debug-pause", () => this.onVisibility(false), { signal });
 		window.addEventListener("pagehide", () => this.cleanup(), { signal });
 		this.dialog.addEventListener(
 			"cancel",
@@ -116,8 +120,13 @@ export abstract class EasterEggScene extends HTMLElement {
 		if (!this.active) return;
 		const delta = this.lastFrame ? Math.min(60, time - this.lastFrame) : 0;
 		this.lastFrame = time;
+		if (import.meta.env.DEV && document.documentElement.hasAttribute("data-pulse-debug-open")) {
+			this.frame = requestAnimationFrame(this.tick);
+			return;
+		}
 		this.visibleTime += delta;
 		this.renderFrame(delta);
+		if (!this.hasAttribute("data-frame-painted")) this.setAttribute("data-frame-painted", "");
 		this.frame = requestAnimationFrame(this.tick);
 	};
 	protected abstract renderFrame(delta: number): void;

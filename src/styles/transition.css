@@ -132,3 +132,35 @@ html.is-animating .transition-swup-fade {
     /* 提升到合成层：切页期间主线程忙碌时进度条仍由合成线程平滑推进 */
     will-change: transform;
 }
+
+/* Swup owns the main sheet. Keep the wallpaper and persistent controls steady. */
+html[data-navigation-motion] .transition-swup-fade,
+html[data-navigation-motion] #content-wrapper.transition-leaving,
+html[data-navigation-motion] #swup-container .onload-animation {
+	animation: none;
+	transition: none;
+	transform: none;
+	opacity: 1;
+}
+html[data-navigation-motion] #swup-container {
+	transform: none;
+	will-change: auto;
+	transition: none;
+	opacity: 1;
+}
+html[data-navigation-motion="fade"] #swup-container {
+	transition: opacity 160ms cubic-bezier(.22,.61,.36,1);
+}
+html[data-navigation-motion="fade"].is-leaving #swup-container {
+	transition-duration: 90ms;
+}
+html[data-navigation-motion="fade"].is-animating #swup-container {
+	opacity: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+	html[data-navigation-motion="fade"] #swup-container,
+	html[data-navigation-motion="fade"].is-leaving #swup-container { transition-duration: 60ms; }
+}
+dialog[data-pulse-entry]::backdrop { background: transparent; }
+
+html.is-changing { scroll-behavior: auto; }

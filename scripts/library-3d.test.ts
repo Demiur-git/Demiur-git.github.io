@@ -18,6 +18,7 @@ import {
 	ROOMS,
 	roomAt,
 	UPPER,
+	UPPER_WALLS,
 	supportHeight,
 	ROOM_FIXTURES,
 	fixturePoint,
@@ -229,6 +230,31 @@ test("stairs are continuous, traversable both ways, bounded and never switch lev
 		hasLibrarySight({ x: 0, z: 20, y: 1.65 }, { x: 0, z: 20, y: 6.05 }),
 		false,
 		"floor blocks vertical rays",
+	);
+});
+test("upper balcony encloses side voids, supports the notice and keeps its corridor open", () => {
+	for (const x of [-5, 5]) {
+		assert.ok(canStand(x, 12.4, UPPER));
+		assert.equal(canStand(x, 14, UPPER), false);
+		for (const y of [UPPER + 1.65, 7.9])
+			assert.equal(hasLibrarySight({ x, z: 12.4, y }, { x, z: 16, y }), false);
+	}
+	for (const z of [12.4, 13.8, 14, 14.2, 16])
+		assert.ok(canStand(0, z, UPPER), `blocked upper corridor at ${z}`);
+	assert.ok(
+		hasLibrarySight({ x: 0, z: 12.4, y: 6.05 }, { x: 0, z: 16, y: 6.05 }),
+	);
+	const notice = ROOM_FIXTURES.find((f) => f.id === "notice")!;
+	const backing = UPPER_WALLS.find((f) => f.z === 14 && f.x > 0)!;
+	assert.ok(
+		Math.abs(notice.z + notice.depth / 2 - (backing.z - backing.depth / 2)) <
+			1e-9,
+	);
+	assert.ok(
+		hasLibrarySight(
+			{ x: notice.x, z: 12.4, y: UPPER + 1.65 },
+			fixturePoint(notice, 0, 1.55, -0.09),
+		),
 	);
 });
 test("furniture anchors use the same fixed rotation and elevation as drawing and collisions", () => {
