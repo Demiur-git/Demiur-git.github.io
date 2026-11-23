@@ -286,11 +286,6 @@ export class PulseScene extends EasterEggScene {
 					event.button !== 0
 				)
 					return;
-				if (getPuzzleProgress().echoUnlocked) {
-					event.preventDefault();
-					this.beginEntry("echo");
-					return;
-				}
 				event.preventDefault();
 				target.setPointerCapture(event.pointerId);
 				this.echoPointer = { element: target, id: event.pointerId };
@@ -342,7 +337,12 @@ export class PulseScene extends EasterEggScene {
 			target.addEventListener(
 				name,
 				(event) => {
-					if (event instanceof PointerEvent && this.echoPointer?.id === event.pointerId) this.cancelEchoDrag();
+					if (!(event instanceof PointerEvent) || this.echoPointer?.id !== event.pointerId) return;
+					const start = this.echoDrag;
+					this.cancelEchoDrag();
+					if (name === "pointerup" && start && !this.echoMode &&
+						!draggedEchoResidue(start.x, start.y, event.clientX, event.clientY) &&
+						getPuzzleProgress().echoUnlocked) this.beginEntry("echo");
 				},
 				{ signal },
 			);
@@ -425,9 +425,8 @@ export class PulseScene extends EasterEggScene {
 				) {
 					event.preventDefault();
 					if (!this.echoEligible || !this.residueReady) return;
-					if (getPuzzleProgress().echoUnlocked) {
-						if (!event.repeat && ["Enter", "Space"].includes(event.code))
-							this.beginEntry("echo");
+					if (!this.echoMode && event.code === "Enter" && getPuzzleProgress().echoUnlocked) {
+						if (!event.repeat) this.beginEntry("echo");
 						return;
 					}
 					if (["Enter", "Space"].includes(event.code)) {
@@ -829,6 +828,9 @@ export class PulseScene extends EasterEggScene {
 		mark.setAttribute("d", echoResiduePath(residue, bounds.width));
 		mark.setAttribute("visibility", "visible");
 		const handle = this.querySelector<HTMLButtonElement>("[data-echo-handle]")!;
+		handle.setAttribute("aria-label", getPuzzleProgress().echoUnlocked
+			? "轻点或按 Enter 进入裂缝。拖动可重演共振，也可按空格选取后用方向键移动。"
+			: "没有消失的短线。按 Enter 或空格选取，再用方向键移动；也可拖动");
 		handle.style.setProperty(
 			"--echo-hit-x",
 			`${bounds.left + (residue.x / 1200) * bounds.width}px`,
